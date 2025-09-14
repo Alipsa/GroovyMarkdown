@@ -1,13 +1,10 @@
 package se.alipsa.gmd.core
-// We fetch javafx using Grab as doing
-// implementation "org.openjfx:javafx-base:${javaFxVersion}:${qualifier}"
-// in in build.gradle makes the fatJar os dependent
-@groovy.lang.Grab("org.openjfx:javafx-controls:23.0.2")
-@groovy.lang.Grab("org.openjfx:javafx-swing:23.0.2")
+
 import com.openhtmltopdf.mathmlsupport.MathMLDrawer
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer
 import com.openhtmltopdf.util.XRLog
+import groovy.grape.Grape
 import javafx.application.Platform
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
@@ -45,6 +42,34 @@ import static HtmlDecorator.decorate
  * Key class for this Groovy Markdown implementation
  */
 class Gmd {
+
+  static {
+    GroovyClassLoader cl
+    if (Gmd.class.classLoader instanceof GroovyClassLoader) {
+      cl = Gmd.class.classLoader
+    } else if (Thread.currentThread().getContextClassLoader() instanceof GroovyClassLoader) {
+      cl = Thread.currentThread().getContextClassLoader()
+    } else {
+      // Build a Groovy-aware loader and make it the context loader
+      cl = new GroovyClassLoader(Gmd.class.classLoader)
+      Thread.currentThread().setContextClassLoader(cl)
+    }
+
+    // Use the single-map form so Groovy binds to grab(Map) and NEVER calls chooseClassLoader
+    Map<String, Object> common = [
+        classLoader     : cl,
+        transitive      : true,
+        autoDownload    : true,
+        initClassLoader : true
+    ]
+    // We fetch javafx using Grab as doing
+    // implementation "org.openjfx:javafx-base:${javaFxVersion}:${qualifier}"
+    // in in build script makes the fatJar os dependent
+    Grape.grab(common + [group:'org.openjfx', module:'javafx-controls', version:'23.0.2'])
+    Grape.grab(common + [group:'org.openjfx', module:'javafx-swing',    version:'23.0.2'])
+
+  }
+
   private static final Logger LOG = LogManager.getLogger(Gmd.class)
   final Parser parser
   final HtmlRenderer renderer

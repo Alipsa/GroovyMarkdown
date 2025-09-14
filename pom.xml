@@ -1,0 +1,77 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>se.alipsa.gmd</groupId>
+  <artifactId>gmd-parent</artifactId>
+  <version>3.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>GMD Parent</name>
+
+  <modules>
+    <module>gmd-core</module>
+    <module>gmd-maven-plugin</module>
+    <module>gmd-gradle-plugin</module> <!-- see note below -->
+    <module>GmdTestGui</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+    <junit.jupiter.version>5.13.4</junit.jupiter.version>
+    <groovy.version>5.0.1</groovy.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- JUnit BOM -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.jupiter.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Java toolchain via release flag -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.1</version>
+          <configuration>
+            <useModulePath>false</useModulePath>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.2</version>
+        </plugin>
+
+        <!-- add spotless/formatter/checkstyle/pmd/jacoco analogs here if needed -->
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

@@ -1,0 +1,422 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>se.alipsa.gmd</groupId>
+    <artifactId>gmd-parent</artifactId>
+    <version>3.0.1-SNAPSHOT</version> <!-- GMD_version_mark -->
+  </parent>
+  <artifactId>gmd-core</artifactId>
+  <name>Groovy Markdown (gmd-core)</name>
+  <description>Processing Markdown text with groovy enhancements embedded and creating markdown, HTML or PDF</description>
+  <url>https://github.com/Alipsa/gmd</url>
+  <packaging>jar</packaging>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://github.com/Alipsa/gmd/blob/main/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/Alipsa/gmd</url>
+    <connection>scm:git:https://github.com/ALipsa/gmd.git</connection>
+    <developerConnection>scm:git:git@github.com:Alipsa/gmd.git</developerConnection>
+  </scm>
+
+  <developers>
+    <developer>
+      <id>perNyfelt</id>
+      <name>Per Nyfelt</name>
+    </developer>
+  </developers>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+
+    <groovy.version>5.0.1</groovy.version>
+    <log4j.version>2.25.1</log4j.version>
+    <openhtmltopdf.version>1.1.31</openhtmltopdf.version>
+    <commonmark.version>0.26.0</commonmark.version>
+    <junit.version>5.13.4</junit.version>
+
+    <!-- paths for groovydoc -> javadoc jar -->
+    <groovydoc.output>${project.build.directory}/site/groovydoc</groovydoc.output>
+    <main.class>se.alipsa.gmd.core.Gmd</main.class>
+  </properties>
+
+  <!-- Import external BOM(s) just like Gradle's platform(...) -->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>se.alipsa.matrix</groupId>
+        <artifactId>matrix-bom</artifactId>
+        <version>2.3.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- JUnit BOM for tests -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+    <!-- Groovy "compileOnly" => use scope provided (available at compile, not packaged) -->
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy</artifactId>
+      <version>${groovy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-templates</artifactId>
+      <version>${groovy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.groovy</groupId>
+      <artifactId>groovy-jsr223</artifactId>
+      <version>${groovy.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Needed for @Grab at compile only -->
+    <dependency>
+      <groupId>org.apache.ivy</groupId>
+      <artifactId>ivy</artifactId>
+      <version>2.5.3</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Runtime / implementation deps -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>${log4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark</artifactId>
+      <version>${commonmark.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.commonmark</groupId>
+      <artifactId>commonmark-ext-gfm-tables</artifactId>
+      <version>${commonmark.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.github.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-core</artifactId>
+      <version>${openhtmltopdf.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-pdfbox</artifactId>
+      <version>${openhtmltopdf.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-mathml-support</artifactId>
+      <version>${openhtmltopdf.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-svg-support</artifactId>
+      <version>${openhtmltopdf.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.21.2</version>
+    </dependency>
+
+    <!-- Remember to update HtmlDecorator.BOOTSTRAP_CSS_PATH if this changes -->
+    <dependency>
+      <groupId>org.webjars</groupId>
+      <artifactId>bootstrap</artifactId>
+      <version>5.3.8</version>
+    </dependency>
+
+    <!-- Matrix deps resolved via imported BOM -->
+    <dependency>
+      <groupId>se.alipsa.matrix</groupId>
+      <artifactId>matrix-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>se.alipsa.matrix</groupId>
+      <artifactId>matrix-charts</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-base</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-graphics</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-controls</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>javafx-swing</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>se.alipsa.matrix</groupId>
+      <artifactId>matrix-xchart</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.20.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>fontbox</artifactId>
+      <version>3.0.5</version>
+    </dependency>
+
+    <!-- Tests (JUnit 5; BOM above) -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-launcher</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Your Gradle build shaded log4j-core from testRuntime into fatJar.
+         To mimic that, declare it as runtime (optional) so the shaded jar includes it
+         but regular consumers aren’t forced to use it. -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j.version}</version>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.18.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Java release flag -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>${maven.compiler.release}</release>
+        </configuration>
+      </plugin>
+
+      <!-- Compile Groovy sources & generate GroovyDoc (matches Gradle 'groovy' plugin) -->
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>4.2.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>addSources</goal>
+              <goal>addTestSources</goal>
+              <goal>compile</goal>
+              <goal>compileTests</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <targetBytecode>${maven.compiler.release}</targetBytecode>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>${groovy.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <plugin>
+        <!-- Gmaven plus does not handle groovydoc for 5.0.1, so use antrun -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>groovydoc</id>
+            <phase>prepare-package</phase>
+            <configuration>
+              <target name="groovydoc">
+                <!-- Make GroovyDoc task available -->
+                <taskdef name="groovydoc"
+                         classname="org.codehaus.groovy.ant.Groovydoc"
+                         classpathref="maven.plugin.classpath"/>
+
+                <mkdir dir="${project.build.directory}/site/groovydoc"/>
+
+                <!-- Use attributes: sourcepath + classpath -->
+                <groovydoc
+                    destdir="${project.build.directory}/site/groovydoc"
+                    use="true"
+                    private="false"
+                    windowtitle="${project.name} ${project.version} API"
+                    doctitle="${project.name} ${project.version} API"
+                    sourcepath="${project.basedir}/src/main/groovy${path.separator}${project.basedir}/src/main/java"
+                />
+              </target>
+            </configuration>
+            <goals><goal>run</goal></goals>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>${groovy.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-groovydoc</artifactId>
+            <version>${groovy.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-ant</artifactId>
+            <version>${groovy.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-templates</artifactId>
+            <version>${groovy.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <!-- Create sources.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals><goal>jar-no-fork</goal></goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Package GroovyDoc as javadoc.jar (like your Gradle javadocJar from groovydoc) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <executions>
+          <execution>
+            <id>groovydoc-jar</id>
+            <phase>package</phase>
+            <goals><goal>jar</goal></goals>
+            <configuration>
+              <classifier>javadoc</classifier>
+              <classesDirectory>${project.build.directory}/site/groovydoc</classesDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.7.1</version>
+        <executions>
+          <execution>
+            <id>fat-jar</id>
+            <phase>package</phase>
+            <goals><goal>single</goal></goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/main/assembly/fatjar.xml</descriptor>
+              </descriptors>
+              <finalName>gmd-${project.version}</finalName>
+              <appendAssemblyId>false</appendAssemblyId>
+              <archive>
+                <manifest>
+                  <mainClass>se.alipsa.gmd.core.Gmd</mainClass>
+                </manifest>
+              </archive>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- JUnit 5 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+          <useSystemClassLoader>false</useSystemClassLoader>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <!-- If you want to separate release/snapshot deployment and GPG, add profiles here. -->
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.4</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals><goal>sign</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+    </profile>
+  </profiles>
+</project>

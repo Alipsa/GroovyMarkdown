@@ -10,7 +10,7 @@ class HtmlDecorator {
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
   public static final String HIGHLIGHT_JS_SCRIPT_PATH = "/highlightJs/highlight.min.js"
   // "/META-INF/resources/webjars/bootstrap/5.2.3/css/bootstrap.min.css"
-  public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.5/css/bootstrap.css"
+  public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
   public static final String HIGHLIGHT_JS_INIT = "\n<script>hljs.highlightAll();</script>\n"
   public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
   public static final String HIGHLIGHT_JS_SCRIPT = script(HIGHLIGHT_JS_SCRIPT_PATH) +

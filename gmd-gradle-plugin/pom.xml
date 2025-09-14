@@ -1,0 +1,91 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>se.alipsa.gmd</groupId>
+    <artifactId>gmd-parent</artifactId>
+    <version>3.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>gmd-gradle-plugin</artifactId>
+  <name>gmd-gradle-plugin (Maven driver)</name>
+  <packaging>pom</packaging>
+
+  <properties>
+    <!-- forward Maven version to Gradle so they stay in sync -->
+    <gradle.publish.version>${project.version}</gradle.publish.version>
+
+    <!-- optional: toggle with -DskipGradleDriver=true -->
+    <skipGradleDriver>false</skipGradleDriver>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <!-- mvn clean  ->  ./gradlew clean -->
+          <execution>
+            <id>gradle-clean-unix</id>
+            <phase>clean</phase>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <skip>${skipGradleDriver}</skip>
+              <executable>bash</executable>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <arguments>
+                <argument>./gradlew</argument>
+                <argument>clean</argument>
+                <argument>-Ppublish.version=${gradle.publish.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+
+          <!-- mvn install  ->  ./gradlew build publishToMavenLocal -->
+          <execution>
+            <id>gradle-install-unix</id>
+            <phase>install</phase>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <skip>${skipGradleDriver}</skip>
+              <executable>bash</executable>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <arguments>
+                <argument>./gradlew</argument>
+                <argument>build</argument>
+                <argument>publishToMavenLocal</argument>
+                <argument>-Ppublish.version=${gradle.publish.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+
+          <!-- mvn deploy  ->  ./gradlew publishPlugins -->
+          <execution>
+            <id>gradle-deploy-unix</id>
+            <phase>deploy</phase>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <skip>${skipGradleDriver}</skip>
+              <executable>bash</executable>
+              <workingDirectory>${project.basedir}</workingDirectory>
+              <environmentVariables>
+                <!-- picks up your env vars for the Plugin Portal -->
+                <GRADLE_PUBLISH_KEY>${env.GRADLE_PUBLISH_KEY}</GRADLE_PUBLISH_KEY>
+                <GRADLE_PUBLISH_SECRET>${env.GRADLE_PUBLISH_SECRET}</GRADLE_PUBLISH_SECRET>
+              </environmentVariables>
+              <arguments>
+                <argument>./gradlew</argument>
+                <argument>publishPlugins</argument>
+                <argument>-Ppublish.version=${gradle.publish.version}</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

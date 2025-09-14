@@ -12,7 +12,7 @@ plugins {
 
 group = 'se.alipsa.gmd'
 // NOTE: remember to bump version in GmdTemplateEngine when changed
-version = '3.0.0' // GMD_version_mark
+version = '3.0.1-SNAPSHOT' // GMD_version_mark
 
 repositories {
     if (version.contains('SNAPSHOT')) {
@@ -29,10 +29,10 @@ java {
 
 dependencies {
     // gmd-maven-plugin does not work with version ranges or bom files
-    def openhtmltopdfVersion = "1.1.26"
-    def log4jVersion = "2.24.3"
-    def groovyVersion = "4.0.26"
-    def commonMarkVersion = "0.24.0"
+    def openhtmltopdfVersion = "1.1.31"
+    def log4jVersion = "2.25.1"
+    def groovyVersion = "5.0.1"
+    def commonMarkVersion = "0.26.0"
 
     // By using compileOnly instead of implementation, the jar will not be available at runtime
     // and hence users can use whatever compatible version of Groovy that they want
@@ -47,22 +47,23 @@ dependencies {
     implementation("io.github.openhtmltopdf:openhtmltopdf-pdfbox:${openhtmltopdfVersion}")
     implementation("io.github.openhtmltopdf:openhtmltopdf-mathml-support:${openhtmltopdfVersion}")
     implementation "io.github.openhtmltopdf:openhtmltopdf-svg-support:${openhtmltopdfVersion}"
-    implementation 'org.jsoup:jsoup:1.19.1'
+    implementation 'org.jsoup:jsoup:1.21.2'
     // Remember to update HtmlDecorator.BOOTSTRAP_CSS_PATH if the dependency changes
-    implementation 'org.webjars:bootstrap:5.3.5'
+    implementation 'org.webjars:bootstrap:5.3.8'
 
-    implementation 'se.alipsa.matrix:matrix-core:3.2.0'
-    implementation('se.alipsa.matrix:matrix-charts:0.3.0') {
+    implementation(platform('se.alipsa.matrix:matrix-bom:2.3.0'))
+    implementation 'se.alipsa.matrix:matrix-core'
+    implementation('se.alipsa.matrix:matrix-charts') {
         exclude(group: "org.openjfx", module: "javafx-base")
         exclude(group: "org.openjfx", module: "javafx-graphics")
         exclude(group: "org.openjfx", module: "javafx-controls")
         exclude(group: "org.openjfx", module: "javafx-swing")
     }
-    implementation('se.alipsa.matrix:matrix-xchart:0.2.0')
-    implementation 'commons-io:commons-io:2.18.0'
-    implementation('org.apache.pdfbox:fontbox:3.0.4')
+    implementation('se.alipsa.matrix:matrix-xchart')
+    implementation 'commons-io:commons-io:2.20.0'
+    implementation('org.apache.pdfbox:fontbox:3.0.5')
 
-    testImplementation(platform("org.junit:junit-bom:5.12.1"))
+    testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation "org.junit.jupiter:junit-jupiter-api"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -70,7 +71,7 @@ dependencies {
     testImplementation "org.apache.groovy:groovy:${groovyVersion}"
     testImplementation "org.apache.groovy:groovy-templates:${groovyVersion}"
     testImplementation "org.apache.groovy:groovy-jsr223:${groovyVersion}"
-    testImplementation 'org.apache.commons:commons-lang3:3.17.0'
+    testImplementation 'org.apache.commons:commons-lang3:3.18.0'
     testImplementation 'org.apache.ivy:ivy:2.5.3' // needed for @Grab)
 }
 
@@ -117,7 +118,7 @@ task fatJar(type: Jar, dependsOn: jar) {
     manifest {
         attributes 'Main-Class': 'se.alipsa.gmd.core.Gmd'
     }
-    archiveBaseName = 'gmd-bundled'
+    archiveBaseName = 'gmd'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         def cp = configurations.compileClasspath.collect {

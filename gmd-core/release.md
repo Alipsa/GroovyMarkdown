@@ -1,5 +1,26 @@
 # Gmd Release History
 
+### v3.0.1, In progress
+- commons-io:commons-io [2.18.0 -> 2.20.0]
+- io.github.openhtmltopdf:openhtmltopdf-core [1.1.26 -> 1.1.31]
+- io.github.openhtmltopdf:openhtmltopdf-mathml-support [1.1.26 -> 1.1.31]
+- io.github.openhtmltopdf:openhtmltopdf-pdfbox [1.1.26 -> 1.1.31]
+- io.github.openhtmltopdf:openhtmltopdf-svg-support [1.1.26 -> 1.1.31]
+- org.apache.commons:commons-lang3 [3.17.0 -> 3.18.0]
+- org.apache.logging.log4j:log4j-api [2.24.3 -> 2.25.1]
+- org.apache.logging.log4j:log4j-core [2.24.3 -> 2.25.1]
+- org.apache.pdfbox:fontbox [3.0.4 -> 3.0.5]
+- org.commonmark:commonmark [0.24.0 -> 0.26.0]
+- org.commonmark:commonmark-ext-gfm-tables [0.24.0 -> 0.26.0]
+- org.jsoup:jsoup [1.19.1 -> 1.21.2]
+- org.junit:junit-bom [5.12.1 -> 5.13.4]
+- org.junit.jupiter:junit-jupiter-api [5.12.1 -> 5.13.4]
+- org.junit.jupiter:junit-jupiter-engine [5.12.1 -> 5.13.4]
+- org.junit.platform:junit-platform-launcher [1.12.1 -> 1.13.4]
+- org.webjars:bootstrap [5.3.5 -> 5.3.8]
+- se.alipsa.matrix:matrix-charts [0.3.0 -> 0.3.1]
+- se.alipsa.matrix:matrix-core [3.2.0 -> 3.5.0]
+- se.alipsa.matrix:matrix-xchart [0.2.0 -> 0.2.2]
 ### v3.0.0, 2025-04-28
 - change group name to se.alipsa.gmd
 - change artifact name to gmd-core
