@@ -3,9 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>se.alipsa.gmd</groupId>
+  <parent>
+    <groupId>se.alipsa.gmd</groupId>
+    <artifactId>gmd-parent</artifactId>
+    <version>3.0.1</version>
+  </parent>
+
   <artifactId>gmd-maven-plugin</artifactId>
-  <version>1.0.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
   <name>GmdMavenPlugin</name>
   <description>Compile gmd files into markdown, html or pdf</description>
@@ -30,42 +34,37 @@
     <url>https://github.com/Alipsa/GroovyMarkdown/tree/main</url>
   </scm>
   <properties>
-    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <groovy.version>5.0.1</groovy.version>
     <maven.version>3.9.11</maven.version>
   </properties>
   <dependencies>
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.0.0</version>
+      <version>${project.parent.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-templates</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>2.25.1</version>
+      <version>${log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j2-impl</artifactId>
-      <version>2.25.1</version>
+      <version>${log4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.ivy</groupId>
@@ -133,7 +132,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
       </plugin>
       <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -189,20 +187,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.1</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.11.3</version>
+        <version>3.12.0</version>
         <configuration>
           <sourcepath>src/main/java</sourcepath>
         </configuration>
@@ -240,9 +229,8 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>versions-maven-plugin</artifactId>
-        <version>2.19.0</version>
         <configuration>
-          <rulesUri>file://${basedir}/version-plugin-rules.xml</rulesUri>
+          <rulesUri>file://${project.parent.basedir}/version-plugin-rules.xml</rulesUri>
         </configuration>
       </plugin>
     </plugins>
@@ -256,16 +244,6 @@
       </plugin>
     </plugins>
   </reporting>
-  <distributionManagement>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
 
   <profiles>
     <profile>
@@ -275,27 +253,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.2.8</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.7.0</version>
-            <extensions>true</extensions>
-            <configuration>
-              <serverId>ossrh</serverId>
-              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-              <autoReleaseAfterClose>true</autoReleaseAfterClose>
-            </configuration>
           </plugin>
         </plugins>
       </build>

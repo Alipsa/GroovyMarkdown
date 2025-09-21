@@ -3,9 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>se.alipsa.gmd</groupId>
+  <parent>
+    <groupId>se.alipsa.gmd</groupId>
+    <artifactId>gmd-parent</artifactId>
+    <version>3.0.1</version>
+  </parent>
+
   <artifactId>GmdTestGui</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <name>GmdTestGui</name>
   <packaging>jar</packaging>
 
@@ -13,45 +18,28 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
-    <groovy.version>4.0.26</groovy.version>
-    <junit.version>5.12.1</junit.version>
+    <maven.deploy.skip>true</maven.deploy.skip>
     <javafx.version>23.0.2</javafx.version>
     <!-- Will be set by OS profiles below -->
     <javafx.platform></javafx.platform>
     <main.class>se.alipsa.gmdtest.GmdTestGui</main.class>
   </properties>
 
-  <!-- JUnit BOM (matches Gradle's platform(...) usage) -->
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>${junit.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
-    <!-- Groovy -->
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
-      <version>${groovy.version}</version>
     </dependency>
 
     <!-- Your library -->
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.0.0</version>
+      <version>${project.parent.version}</version>
     </dependency>
 
     <!-- JavaFX (use OS classifiers just like the Gradle plugin handles for you) -->
@@ -66,6 +54,15 @@
       <artifactId>javafx-swing</artifactId>
       <version>${javafx.version}</version>
       <classifier>${javafx.platform}</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j.version}</version>
     </dependency>
 
     <!-- Tests -->
@@ -87,7 +84,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
         </configuration>
@@ -97,20 +93,7 @@
       <plugin>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>4.2.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>addSources</goal>
-              <goal>addTestSources</goal>
-              <goal>compile</goal>
-              <goal>compileTests</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
-
-      <!-- Run the app (like Gradle's application plugin) -->
       <plugin>
         <groupId>org.openjfx</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
@@ -126,10 +109,16 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.1</version>
         <configuration>
           <!-- Groovy + JPMS sometimes clash on module path; keep it off -->
           <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <configuration>
+          <rulesUri>file://${project.parent.basedir}/version-plugin-rules.xml</rulesUri>
         </configuration>
       </plugin>
     </plugins>

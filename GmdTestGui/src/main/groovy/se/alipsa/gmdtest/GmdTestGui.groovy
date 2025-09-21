@@ -14,10 +14,15 @@ import javafx.stage.Stage
 
 import se.alipsa.gmd.core.*
 
+import java.awt.Desktop
+
 class GmdTestGui extends Application {
 
+  TextField tf = new TextField()
+  TextArea ta
+
   static void main(String[] args) {
-    Application.launch(GmdTestGui.class, args)
+    launch(GmdTestGui.class, args)
   }
 
   /**
@@ -38,7 +43,7 @@ class GmdTestGui extends Application {
   @Override
   void start(Stage primaryStage) throws Exception {
     BorderPane root = new BorderPane()
-    TextArea ta = new TextArea('''
+    ta = new TextArea('''
     # Test
     
     ```{groovy}
@@ -54,43 +59,48 @@ class GmdTestGui extends Application {
     root.setCenter(ta)
     HBox infoBox = new HBox()
     root.setTop(infoBox)
-    TextField tf = new TextField()
+
+    tf.setDisable(true)
     HBox.setHgrow(tf, Priority.ALWAYS)
     infoBox.getChildren().add(tf)
 
     HBox actionBox = new HBox()
     root.setBottom(actionBox)
-    File file = new File("build/test.pdf")
+    File file = new File("target/test.pdf")
     TextField toFile = new TextField(file.getAbsolutePath())
     HBox.setHgrow(toFile, Priority.ALWAYS)
+    Button openPdfButton = new Button("Open PDF")
+    openPdfButton.setOnAction {
+      Thread.start {
+        try {
+          tf.setText("Creating pdf file...")
+          Gmd gmd = new Gmd()
+          gmd.gmdToPdf(ta.getText(), file)
+          tf.setText("Opening pdf file...")
+          Desktop.desktop.open(file)
+        } catch (Exception e) {
+          tf.setText(e.getMessage() + "; " + e.getCause())
+        }
+      }
+    }
     Button exportButton = new Button("Export to pdf")
 
     exportButton.setOnAction {
       final String filePath = toFile.getText()
       tf.setText("Exporting to pdf file...")
-      Task<Void> task = new Task<Void>() {
-
-        @Override
-        protected Void call() throws Exception {
+      Thread.start {
+        try {
           String txt = ta.getText()
           File f = new File(filePath)
           Gmd gmd = new Gmd()
           gmd.gmdToPdf(txt, f)
-          return null
+          tf.setText("Exported file to " + filePath + ", size = " + new File(filePath).length() + " bytes")
+        } catch (Exception e) {
+          tf.setText(e.getMessage() + "; " + e.getCause())
         }
       }
-      task.setOnFailed {
-        def e = task.getException()
-        tf.setText(e.getMessage() + "; " + e.getCause())
-      }
-      task.setOnSucceeded {
-        tf.setText("Exported file to " + filePath + ", size = " + new File(filePath).length() + " bytes")
-      }
-      Thread thread = new Thread(task)
-      thread.setDaemon(false)
-      thread.start()
     }
-    actionBox.getChildren().addAll(toFile, exportButton)
+    actionBox.getChildren().addAll(toFile, openPdfButton, exportButton)
     primaryStage.setTitle("GmdTestGui")
     primaryStage.setScene(new Scene(root, 650, 400))
     primaryStage.show()

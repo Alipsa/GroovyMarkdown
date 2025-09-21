@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-./gradlew :GmdTestGui:run
+pushd GmdTestGui
+mvn javafx:run
+popd

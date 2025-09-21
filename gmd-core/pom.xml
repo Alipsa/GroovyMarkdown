@@ -6,7 +6,7 @@
   <parent>
     <groupId>se.alipsa.gmd</groupId>
     <artifactId>gmd-parent</artifactId>
-    <version>3.0.1-SNAPSHOT</version> <!-- GMD_version_mark -->
+    <version>3.0.1</version> <!-- GMD_version_mark -->
   </parent>
   <artifactId>gmd-core</artifactId>
   <name>Groovy Markdown (gmd-core)</name>
@@ -39,8 +39,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
-    <groovy.version>5.0.1</groovy.version>
-    <log4j.version>2.25.1</log4j.version>
     <openhtmltopdf.version>1.1.31</openhtmltopdf.version>
     <commonmark.version>0.26.0</commonmark.version>
     <junit.version>5.13.4</junit.version>
@@ -77,19 +75,16 @@
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-templates</artifactId>
-      <version>${groovy.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
-      <version>${groovy.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -97,7 +92,6 @@
     <dependency>
       <groupId>org.apache.ivy</groupId>
       <artifactId>ivy</artifactId>
-      <version>2.5.3</version>
       <scope>provided</scope>
     </dependency>
 
@@ -105,7 +99,6 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
-      <version>${log4j.version}</version>
     </dependency>
 
     <dependency>
@@ -234,7 +227,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
         <configuration>
           <release>${maven.compiler.release}</release>
         </configuration>
@@ -244,27 +236,6 @@
       <plugin>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
-        <version>4.2.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>addSources</goal>
-              <goal>addTestSources</goal>
-              <goal>compile</goal>
-              <goal>compileTests</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <targetBytecode>${maven.compiler.release}</targetBytecode>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.groovy</groupId>
-            <artifactId>groovy</artifactId>
-            <version>${groovy.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
@@ -327,13 +298,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.1</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals><goal>jar-no-fork</goal></goals>
-          </execution>
-        </executions>
       </plugin>
 
       <!-- Package GroovyDoc as javadoc.jar (like your Gradle javadocJar from groovydoc) -->
@@ -382,10 +346,16 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.1</version>
         <configuration>
           <useModulePath>false</useModulePath>
           <useSystemClassLoader>false</useSystemClassLoader>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <configuration>
+          <rulesUri>file://${project.parent.basedir}/version-plugin-rules.xml</rulesUri>
         </configuration>
       </plugin>
     </plugins>
@@ -400,14 +370,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.2.4</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals><goal>sign</goal></goals>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>

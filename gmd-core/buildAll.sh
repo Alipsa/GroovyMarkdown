@@ -10,11 +10,12 @@ fi
 echo "******************************************************"
 echo "* Building gmd-core and publishing it to maven local *"
 echo "******************************************************"
-./gradlew clean build publishToMavenLocal
-echo "***********************"
-echo "* creating the fatJar *"
-echo "***********************"
-./gradlew fatJar
+#./gradlew clean build publishToMavenLocal
+mvn clean install
+#echo "***********************"
+#echo "* creating the fatJar *"
+#echo "***********************"
+#./gradlew fatJar
 echo "************************************"
 echo "* Running the command line example *"
 echo "************************************"

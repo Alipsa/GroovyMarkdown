@@ -31,9 +31,9 @@ class GmdGradlePlugin implements Plugin<Project> {
         def sourceDir= project.file(extension.sourceDir.getOrElse("src/main/gmd"))
         def targetDir= project.file(extension.targetDir.getOrElse("build/gmd"))
         def outputType= extension.outputType.getOrElse('md')
-        def groovyVersion = extension.groovyVersion.getOrElse('4.0.26')
+        def groovyVersion = extension.groovyVersion.getOrElse('5.0.1')
         def log4jVersion = extension.log4jVersion.getOrElse('2.24.3')
-        def gmdVersion = extension.gmdVersion.getOrElse('3.0.0')
+        def gmdVersion = extension.gmdVersion.getOrElse('3.0.1')
         def ivyVersion = extension.ivyVersion.getOrElse('2.5.3')
 
         if (!sourceDir.exists()) {

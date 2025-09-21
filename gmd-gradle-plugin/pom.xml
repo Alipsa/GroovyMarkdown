@@ -6,7 +6,7 @@
   <parent>
     <groupId>se.alipsa.gmd</groupId>
     <artifactId>gmd-parent</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>3.0.1</version>
   </parent>
 
   <artifactId>gmd-gradle-plugin</artifactId>
@@ -26,7 +26,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.1</version>
         <executions>
           <!-- mvn clean  ->  ./gradlew clean -->
           <execution>
@@ -72,11 +72,6 @@
               <skip>${skipGradleDriver}</skip>
               <executable>bash</executable>
               <workingDirectory>${project.basedir}</workingDirectory>
-              <environmentVariables>
-                <!-- picks up your env vars for the Plugin Portal -->
-                <GRADLE_PUBLISH_KEY>${env.GRADLE_PUBLISH_KEY}</GRADLE_PUBLISH_KEY>
-                <GRADLE_PUBLISH_SECRET>${env.GRADLE_PUBLISH_SECRET}</GRADLE_PUBLISH_SECRET>
-              </environmentVariables>
               <arguments>
                 <argument>./gradlew</argument>
                 <argument>publishPlugins</argument>
@@ -85,6 +80,13 @@
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <configuration>
+          <rulesUri>file://${project.parent.basedir}/version-plugin-rules.xml</rulesUri>
+        </configuration>
       </plugin>
     </plugins>
   </build>
