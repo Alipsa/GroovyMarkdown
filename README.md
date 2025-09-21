@@ -187,7 +187,7 @@ Maven:
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
@@ -216,11 +216,11 @@ Maven:
 The release artifacts on github contains a fat jar (e.g. gmd-3.0.0.jar)
 that enables you to use Gmd from the command line.
 ```
-java -jar gmd-3.0.0.jar toHtml test.gmd test.html
+java -jar gmd-3.0.1.jar toHtml test.gmd test.html
 ```
 or for a pdf:
 ```
-java -jar gmd-3.0.0.jar toPdf test.gmd test.pdf
+java -jar gmd-3.0.1.jar toPdf test.gmd test.pdf
 ```
 Note: If you don't want the styled (highlight) PDF version you can use toPdfRaw instead.
 

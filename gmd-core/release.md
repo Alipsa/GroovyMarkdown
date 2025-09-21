@@ -1,6 +1,6 @@
 # Gmd Release History
 
-### v3.0.1, In progress
+### v3.0.1, 2025-09-21
 - commons-io:commons-io [2.18.0 -> 2.20.0]
 - io.github.openhtmltopdf:openhtmltopdf-core [1.1.26 -> 1.1.31]
 - io.github.openhtmltopdf:openhtmltopdf-mathml-support [1.1.26 -> 1.1.31]
@@ -21,6 +21,7 @@
 - se.alipsa.matrix:matrix-charts [0.3.0 -> 0.3.1]
 - se.alipsa.matrix:matrix-core [3.2.0 -> 3.5.0]
 - se.alipsa.matrix:matrix-xchart [0.2.0 -> 0.2.2]
+
 ### v3.0.0, 2025-04-28
 - change group name to se.alipsa.gmd
 - change artifact name to gmd-core

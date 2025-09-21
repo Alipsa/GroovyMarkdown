@@ -9,7 +9,7 @@ Usage is as follows:
       <plugin>
         <groupId>se.alipsa.gmd</groupId>
         <artifactId>gmd-maven-plugin</artifactId>
-        <version>1.0.0</version>
+        <version>3.0.1</version>
         <goals><goal>processGmd</goal></goals>
         <configuration>
           <sourceDir>src/test/gmd</sourceDir>
@@ -37,7 +37,7 @@ If you don't want to run the plugin explicitly, you can add it to an existing li
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>1.0.0</version>
+      <version>3.0.1</version>
       <executions>
         <execution>
           <phase>compile</phase>
