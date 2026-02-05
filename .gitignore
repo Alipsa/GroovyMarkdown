@@ -1,6 +1,7 @@
 .gradle
 build/
 target/
+.flattened-pom.xml
 !gmd-core/gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/

@@ -6,11 +6,10 @@
   <parent>
     <groupId>se.alipsa.gmd</groupId>
     <artifactId>gmd-parent</artifactId>
-    <version>3.0.2</version>
+    <version>${revision}</version>
   </parent>
 
   <artifactId>GmdTestGui</artifactId>
-  <version>1.0.1</version>
   <name>GmdTestGui</name>
   <packaging>jar</packaging>
 

@@ -5,7 +5,7 @@
 
   <groupId>se.alipsa.gmd</groupId>
   <artifactId>gmd-parent</artifactId>
-  <version>3.0.2</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -18,6 +18,18 @@
   <name>GMD Parent</name>
   <description>Parent pom for GMD</description>
   <url>https://github.com/Alipsa/gmd</url>
+
+  <properties>
+    <!-- CI-friendly version: change version in ONE place only -->
+    <revision>3.0.2-SNAPSHOT</revision>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+    <junit.jupiter.version>6.0.2</junit.jupiter.version>
+    <groovy.version>5.0.4</groovy.version>
+    <log4j.version>2.25.3</log4j.version>
+  </properties>
+
   <licenses>
     <license>
       <name>MIT License</name>
@@ -36,14 +48,6 @@
       <name>Per Nyfelt</name>
     </developer>
   </developers>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>21</maven.compiler.release>
-    <junit.jupiter.version>6.0.2</junit.jupiter.version>
-    <groovy.version>5.0.4</groovy.version>
-    <log4j.version>2.25.3</log4j.version>
-  </properties>
 
   <dependencyManagement>
     <dependencies>
@@ -221,6 +225,31 @@
           <artifactId>maven-assembly-plugin</artifactId>
           <version>3.8.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>1.6.0</version>
+          <configuration>
+            <updatePomFile>true</updatePomFile>
+            <flattenMode>resolveCiFriendliesOnly</flattenMode>
+          </configuration>
+          <executions>
+            <execution>
+              <id>flatten</id>
+              <phase>process-resources</phase>
+              <goals>
+                <goal>flatten</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>flatten.clean</id>
+              <phase>clean</phase>
+              <goals>
+                <goal>clean</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -241,6 +270,10 @@
         <configuration>
           <skip>true</skip>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
