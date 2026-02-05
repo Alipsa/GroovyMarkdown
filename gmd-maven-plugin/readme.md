@@ -9,7 +9,7 @@ Usage is as follows:
       <plugin>
         <groupId>se.alipsa.gmd</groupId>
         <artifactId>gmd-maven-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.0.2</version>
         <goals><goal>processGmd</goal></goals>
         <configuration>
           <sourceDir>src/test/gmd</sourceDir>
@@ -29,6 +29,11 @@ Possible configuration parameters are:
 - `sourceDir` - the directory where the GMD files are located. Default is `src/main/gmd`
 - `targetDir` - the directory where the output files will be created. Default is `target/gmd`
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
+- `groovyVersion` - the version of Groovy to use. Default is `5.0.4`
+- `log4jVersion` - the version of Log4j to use. Default is `2.25.3`
+- `gmdVersion` - the version of GMD core to use. Default is `3.0.2`
+- `ivyVersion` - the version of Ivy to use. Default is `2.5.3`
+- `javaFxVersion` - the version of JavaFX to use. Default is `23.0.2`
 
 If you don't want to run the plugin explicitly, you can add it to an existing lifecycle as follows:
 ```xml
@@ -37,7 +42,7 @@ If you don't want to run the plugin explicitly, you can add it to an existing li
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>3.0.1</version>
+      <version>3.0.2</version>
       <executions>
         <execution>
           <phase>compile</phase>
@@ -57,4 +62,30 @@ If you don't want to run the plugin explicitly, you can add it to an existing li
 ```
 
 By doing this, the gmd plugin will run every time you run `mvn compile` or any other lifecycle that includes the compile phase (test, package, verify, install, deploy). Of course `mvn gmd:processGmd` will also work.
+
+### Overriding Dependency Versions
+
+You can override the versions of dependencies used by the plugin by specifying them in the configuration:
+
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>se.alipsa.gmd</groupId>
+      <artifactId>gmd-maven-plugin</artifactId>
+      <version>3.0.2</version>
+      <configuration>
+        <sourceDir>src/test/gmd</sourceDir>
+        <targetDir>target/gmd</targetDir>
+        <outputType>html</outputType>
+        <groovyVersion>5.0.3</groovyVersion>
+        <log4jVersion>2.24.3</log4jVersion>
+        <gmdVersion>3.0.1</gmdVersion>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
+This allows you to use specific versions of dependencies without being locked to the versions bundled with the plugin.
 

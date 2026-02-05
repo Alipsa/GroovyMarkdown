@@ -28,13 +28,14 @@ class GmdGradlePlugin implements Plugin<Project> {
 
     TaskProvider<Task> processGmdTask = project.tasks.register('processGmd') {
       it.doLast {
-        def sourceDir= project.file(extension.sourceDir.getOrElse("src/main/gmd"))
-        def targetDir= project.file(extension.targetDir.getOrElse("build/gmd"))
-        def outputType= extension.outputType.getOrElse('md')
-        def groovyVersion = extension.groovyVersion.getOrElse('5.0.1')
-        def log4jVersion = extension.log4jVersion.getOrElse('2.24.3')
-        def gmdVersion = extension.gmdVersion.getOrElse('3.0.1')
-        def ivyVersion = extension.ivyVersion.getOrElse('2.5.3')
+        File sourceDir= project.file(extension.sourceDir.getOrElse("src/main/gmd"))
+        File targetDir= project.file(extension.targetDir.getOrElse("build/gmd"))
+        String outputType= extension.outputType.getOrElse('md')
+        String groovyVersion = extension.groovyVersion.getOrElse('5.0.4')
+        String log4jVersion = extension.log4jVersion.getOrElse('2.25.3')
+        String gmdVersion = extension.gmdVersion.getOrElse('3.0.2')
+        String ivyVersion = extension.ivyVersion.getOrElse('2.5.3')
+        String javaFxVersion = extension.javaFxVersion.getOrElse('23.0.2')
 
         if (!sourceDir.exists()) {
           project.logger.warn("Source directory ${sourceDir.canonicalPath} does not exist, nothing to do")
@@ -47,7 +48,7 @@ class GmdGradlePlugin implements Plugin<Project> {
 
         List<ArtifactRepository> addedRepositories = []
         Configuration configuration = addDependencies(project, addedRepositories,
-            groovyVersion, log4jVersion, gmdVersion, ivyVersion
+            groovyVersion, log4jVersion, gmdVersion, ivyVersion, javaFxVersion
         )
         // a configuration is a FileCollection, no need to call resolve()
         def result = execOperations.javaexec( a -> {
@@ -88,19 +89,40 @@ class GmdGradlePlugin implements Plugin<Project> {
     }
   }
 
-  static Configuration addDependencies(Project project, List<ArtifactRepository> addedRepositories, String groovyVersion, String log4jVersion, String gmdVersion, String ivyVersion) {
+  static Configuration addDependencies(Project project, List<ArtifactRepository> addedRepositories, String groovyVersion, String log4jVersion, String gmdVersion, String ivyVersion, String javaFxVersion) {
     def mavenCentral = project.repositories.mavenCentral()
     if (!hasRepository(project, mavenCentral)) {
       project.repositories.add(mavenCentral)
       addedRepositories.add(mavenCentral)
     }
+
+    // Determine platform classifier for JavaFX
+    String osName = System.getProperty("os.name").toLowerCase()
+    String osArch = System.getProperty("os.arch").toLowerCase()
+    String platform
+    if (osName.contains("mac") || osName.contains("darwin")) {
+      platform = osArch.contains("aarch64") || osArch.contains("arm") ? "mac-aarch64" : "mac"
+    } else if (osName.contains("linux")) {
+      platform = "linux"
+    } else if (osName.contains("win")) {
+      platform = "win"
+    } else {
+      throw new IllegalStateException("Unsupported OS: ${osName}")
+    }
+
     return project.configurations.detachedConfiguration(
         project.dependencies.create("org.apache.groovy:groovy:${groovyVersion}"),
         project.dependencies.create("org.apache.groovy:groovy-templates:${groovyVersion}"),
         project.dependencies.create("org.apache.groovy:groovy-jsr223:${groovyVersion}"),
         project.dependencies.create("org.apache.ivy:ivy:${ivyVersion}"), // needed for @Grab)
         project.dependencies.create( "org.apache.logging.log4j:log4j-core:${log4jVersion}"),
-        project.dependencies.create("se.alipsa.gmd:gmd-core:$gmdVersion")
+        project.dependencies.create("se.alipsa.gmd:gmd-core:$gmdVersion"),
+        // JavaFX modules - add all required modules with platform-specific classifiers
+        project.dependencies.create("org.openjfx:javafx-base:${javaFxVersion}:${platform}"),
+        project.dependencies.create("org.openjfx:javafx-graphics:${javaFxVersion}:${platform}"),
+        project.dependencies.create("org.openjfx:javafx-controls:${javaFxVersion}:${platform}"),
+        project.dependencies.create("org.openjfx:javafx-swing:${javaFxVersion}:${platform}"),
+        project.dependencies.create("org.openjfx:javafx-web:${javaFxVersion}:${platform}")
     )
   }
 

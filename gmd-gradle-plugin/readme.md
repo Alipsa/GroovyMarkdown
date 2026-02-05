@@ -40,7 +40,7 @@ plugins {
     id('se.alipsa.gmd.gmd-gradle-plugin')
 }
 group = 'my.group'
-version = '3.0.1'
+version = '3.0.2'
 
 gmdPlugin {
     sourceDir = 'src/test/gmd'

@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+
+# Script to check if default dependency versions in plugins are up to date
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo ""
+echo "==========================================="
+echo "  Checking Default Dependency Versions    "
+echo "==========================================="
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track if any versions are outdated
+OUTDATED=0
+
+# Function to extract version from Java file
+extract_java_version() {
+    local file=$1
+    local property=$2
+    grep "String ${property} = extension.${property}.getOrElse" "$file" | sed -E "s/.*getOrElse\('([^']+)'\).*/\1/"
+}
+
+# Function to extract version from Maven plugin Java file
+extract_maven_version() {
+    local file=$1
+    local property=$2
+    grep "defaultValue = " "$file" | grep "\"processGmd.${property}\"" | sed -E 's/.*defaultValue = "([^"]+)".*/\1/'
+}
+
+# Function to check version
+check_version() {
+    local name=$1
+    local artifact=$2
+    local gradle_version=$3
+    local maven_version=$4
+
+    echo "Checking $name..."
+    echo "  Gradle plugin default: $gradle_version"
+    echo "  Maven plugin default:  $maven_version"
+
+    # Check Gradle version (stable only)
+    local gradle_result=$(./checkVersion --stable-only "${artifact}:${gradle_version}" 2>/dev/null)
+    if echo "$gradle_result" | grep -q "Newer"; then
+        echo -e "  ${RED}✗ Gradle: $gradle_result${NC}"
+        OUTDATED=1
+    else
+        echo -e "  ${GREEN}✓ Gradle: $gradle_result${NC}"
+    fi
+
+    # Check Maven version (only if different from Gradle)
+    if [ "$gradle_version" != "$maven_version" ]; then
+        local maven_result=$(./checkVersion --stable-only "${artifact}:${maven_version}" 2>/dev/null)
+        if echo "$maven_result" | grep -q "Newer"; then
+            echo -e "  ${RED}✗ Maven:  $maven_result${NC}"
+            OUTDATED=1
+        else
+            echo -e "  ${GREEN}✓ Maven:  $maven_result${NC}"
+        fi
+    fi
+
+    echo ""
+}
+
+# Extract versions from Gradle plugin
+GRADLE_PLUGIN_FILE="gmd-gradle-plugin/src/main/groovy/se/alipsa/gmd/gradle/GmdGradlePlugin.groovy"
+GRADLE_GROOVY_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "groovyVersion")
+GRADLE_LOG4J_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "log4jVersion")
+GRADLE_GMD_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "gmdVersion")
+GRADLE_IVY_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "ivyVersion")
+GRADLE_JAVAFX_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "javaFxVersion")
+
+# Extract versions from Maven plugin
+MAVEN_PLUGIN_FILE="gmd-maven-plugin/src/main/java/se/alipsa/gmd/maven/GmdMavenPlugin.java"
+MAVEN_GROOVY_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "groovyVersion")
+MAVEN_LOG4J_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "log4jVersion")
+MAVEN_GMD_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "gmdVersion")
+MAVEN_IVY_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "ivyVersion")
+MAVEN_JAVAFX_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "javaFxVersion")
+
+# Check each dependency
+check_version "Groovy" "org.apache.groovy:groovy" "$GRADLE_GROOVY_VERSION" "$MAVEN_GROOVY_VERSION"
+check_version "Log4j" "org.apache.logging.log4j:log4j-core" "$GRADLE_LOG4J_VERSION" "$MAVEN_LOG4J_VERSION"
+echo "Checking GMD Core..."
+echo "  Gradle plugin default: $GRADLE_GMD_VERSION"
+echo "  Maven plugin default:  $MAVEN_GMD_VERSION"
+# Special case: GMD Core should use the parent pom version (removing -SNAPSHOT if present)
+PARENT_VERSION=$(grep -m 1 '<version>' pom.xml | sed -E 's/.*<version>([^<]+)<\/version>.*/\1/')
+EXPECTED_GMD_VERSION="${PARENT_VERSION%-SNAPSHOT}"
+echo "  Expected version (from parent pom): $EXPECTED_GMD_VERSION"
+
+if [ "$GRADLE_GMD_VERSION" != "$EXPECTED_GMD_VERSION" ]; then
+    echo -e "  ${RED}✗ Gradle plugin should use version: $EXPECTED_GMD_VERSION (current: $GRADLE_GMD_VERSION)${NC}"
+    OUTDATED=1
+else
+    echo -e "  ${GREEN}✓ Gradle plugin version matches project version${NC}"
+fi
+
+if [ "$MAVEN_GMD_VERSION" != "$EXPECTED_GMD_VERSION" ]; then
+    echo -e "  ${RED}✗ Maven plugin should use version: $EXPECTED_GMD_VERSION (current: $MAVEN_GMD_VERSION)${NC}"
+    OUTDATED=1
+else
+    echo -e "  ${GREEN}✓ Maven plugin version matches project version${NC}"
+fi
+echo ""
+check_version "Ivy" "org.apache.ivy:ivy" "$GRADLE_IVY_VERSION" "$MAVEN_IVY_VERSION"
+
+# JavaFX - special case: version 24+ requires Java 23+, we're on Java 21
+echo "Checking JavaFX..."
+echo "  Gradle plugin default: $GRADLE_JAVAFX_VERSION"
+echo "  Maven plugin default:  $MAVEN_JAVAFX_VERSION"
+echo -e "  ${GREEN}✓ JavaFX 23.x is the latest version compatible with Java 21${NC}"
+echo -e "  ${YELLOW}  (Note: JavaFX 24+ requires Java 23+)${NC}"
+echo ""
+
+echo "==========================================="
+if [ $OUTDATED -eq 0 ]; then
+    echo -e "${GREEN}All default dependency versions are up to date!${NC}"
+else
+    echo -e "${YELLOW}Some default dependency versions are outdated.${NC}"
+    echo -e "${YELLOW}Consider updating the defaults in:${NC}"
+    echo -e "  - ${GRADLE_PLUGIN_FILE}"
+    echo -e "  - ${MAVEN_PLUGIN_FILE}"
+fi
+echo "==========================================="
+echo ""
+
+exit $OUTDATED

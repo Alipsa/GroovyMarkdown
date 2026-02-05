@@ -6,7 +6,7 @@
   <parent>
     <groupId>se.alipsa.gmd</groupId>
     <artifactId>gmd-parent</artifactId>
-    <version>3.0.1</version> <!-- GMD_version_mark -->
+    <version>3.0.2</version> <!-- GMD_version_mark -->
   </parent>
   <artifactId>gmd-core</artifactId>
   <name>Groovy Markdown (gmd-core)</name>
@@ -39,9 +39,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
-    <openhtmltopdf.version>1.1.31</openhtmltopdf.version>
-    <commonmark.version>0.26.0</commonmark.version>
-    <junit.version>5.13.4</junit.version>
+    <openhtmltopdf.version>1.1.37</openhtmltopdf.version>
+    <commonmark.version>0.27.1</commonmark.version>
+    <junit.version>6.0.2</junit.version>
 
     <!-- paths for groovydoc -> javadoc jar -->
     <groovydoc.output>${project.build.directory}/site/groovydoc</groovydoc.output>
@@ -54,7 +54,7 @@
       <dependency>
         <groupId>se.alipsa.matrix</groupId>
         <artifactId>matrix-bom</artifactId>
-        <version>2.3.0</version>
+        <version>2.4.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -92,6 +92,26 @@
     <dependency>
       <groupId>org.apache.ivy</groupId>
       <artifactId>ivy</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- JavaFX compile-only dependencies -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>21.0.5</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-swing</artifactId>
+      <version>21.0.5</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-web</artifactId>
+      <version>21.0.5</version>
       <scope>provided</scope>
     </dependency>
 
@@ -242,7 +262,6 @@
         <!-- Gmaven plus does not handle groovydoc for 5.0.1, so use antrun -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
         <executions>
           <execution>
             <id>groovydoc</id>
@@ -304,7 +323,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.4.2</version>
         <executions>
           <execution>
             <id>groovydoc-jar</id>
@@ -321,13 +339,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.7.1</version>
         <executions>
           <execution>
             <id>fat-jar</id>
             <phase>package</phase>
             <goals><goal>single</goal></goals>
             <configuration>
+              <attach>false</attach>
               <descriptors>
                 <descriptor>src/main/assembly/fatjar.xml</descriptor>
               </descriptors>

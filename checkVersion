@@ -1,0 +1,188 @@
+#!/usr/bin/env groovy
+@Grab('org.apache.httpcomponents:httpclient:4.5.14')
+@Grab('com.fasterxml.jackson.core:jackson-databind:2.15.2')
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.util.EntityUtils
+import com.fasterxml.jackson.databind.ObjectMapper
+
+def parseArgs(args) {
+    if (args.length == 0) {
+        println "Usage: checkVersion [--stable-only] <groupId:artifactId> or checkVersion [--stable-only] <groupId:artifactId:version>"
+        System.exit(1)
+    }
+
+    def stableOnly = false
+    def depIndex = 0
+
+    // Check for --stable-only flag
+    if (args[0] == '--stable-only') {
+        stableOnly = true
+        depIndex = 1
+        if (args.length < 2) {
+            println "Usage: checkVersion [--stable-only] <groupId:artifactId> or checkVersion [--stable-only] <groupId:artifactId:version>"
+            System.exit(1)
+        }
+    }
+
+    def dep = args[depIndex]
+    def parts = dep.split(':')
+
+    if (parts.length < 2 || parts.length > 3) {
+        println "Invalid dependency format. Use: groupId:artifactId or groupId:artifactId:version"
+        System.exit(1)
+    }
+
+    def groupId = parts[0]
+    def artifactId = parts[1]
+    def version = parts.length == 3 ? parts[2] : null
+
+    return [groupId: groupId, artifactId: artifactId, version: version, stableOnly: stableOnly]
+}
+
+def isStableVersion(version) {
+    // Check if version contains pre-release indicators
+    def preReleasePatterns = ['alpha', 'beta', 'rc', 'cr', 'milestone', 'm', 'ea', 'snapshot']
+    def lowerVersion = version.toLowerCase()
+
+    for (pattern in preReleasePatterns) {
+        if (lowerVersion.contains(pattern)) {
+            return false
+        }
+    }
+
+    // Also check for patterns like -ea+1, -M1, etc.
+    if (lowerVersion =~ /-[a-z]+\d+/ || lowerVersion =~ /-ea\+/) {
+        return false
+    }
+
+    return true
+}
+
+def getLatestVersion(groupId, artifactId, stableOnly = false) {
+    def client = HttpClients.createDefault()
+
+    // Try Maven metadata API first for more accurate results
+    def url = "https://repo1.maven.org/maven2/${groupId.replace('.', '/')}/${artifactId}/maven-metadata.xml"
+    def request = new HttpGet(url)
+
+    try {
+        def response = client.execute(request)
+        def entity = response.getEntity()
+        def content = EntityUtils.toString(entity)
+
+        // Parse XML to extract latest version
+        def matcher = (content =~ /<latest>([^<]+)<\/latest>/)
+        if (matcher.find()) {
+            def version = matcher.group(1)
+            if (!stableOnly || isStableVersion(version)) {
+                return version
+            }
+        }
+
+        // If no latest found, try release tag
+        matcher = (content =~ /<release>([^<]+)<\/release>/)
+        if (matcher.find()) {
+            def version = matcher.group(1)
+            if (!stableOnly || isStableVersion(version)) {
+                return version
+            }
+        }
+
+        // If stable only and no stable version found in tags, parse all versions
+        if (stableOnly) {
+            def versionsMatcher = (content =~ /<version>([^<]+)<\/version>/)
+            def versions = []
+            while (versionsMatcher.find()) {
+                def v = versionsMatcher.group(1)
+                if (isStableVersion(v)) {
+                    versions.add(v)
+                }
+            }
+            if (!versions.isEmpty()) {
+                // Return the last stable version (versions are typically in ascending order)
+                return versions.last()
+            }
+        }
+
+        // If still no version found, fall back to search API
+        println "Warning: Could not extract version from Maven metadata, falling back to search API"
+
+    } catch (Exception e) {
+        println "Warning: Failed to fetch from Maven metadata API: ${e.message}"
+        // Fall back to search API
+    } finally {
+        client.close()
+    }
+
+    // Fall back to search API if metadata approach fails
+    client = HttpClients.createDefault()
+    url = "https://search.maven.org/solrsearch/select?q=g:%22${groupId}%22+AND+a:%22${artifactId}%22&core=central&wt=json"
+    request = new HttpGet(url)
+
+    try {
+        def response = client.execute(request)
+        def entity = response.getEntity()
+        def content = EntityUtils.toString(entity)
+
+        def mapper = new ObjectMapper()
+        def json = mapper.readValue(content, Map)
+
+        if (json.response && json.response.numFound > 0) {
+            def docs = json.response.docs
+            // Get the latest version (the first one should be the latest due to sorting)
+            def version = docs[0].latestVersion
+            if (!stableOnly || isStableVersion(version)) {
+                return version
+            }
+
+            // If stable only, look through all docs for a stable version
+            if (stableOnly) {
+                for (doc in docs) {
+                    if (isStableVersion(doc.latestVersion)) {
+                        return doc.latestVersion
+                    }
+                }
+            }
+        }
+
+        return null
+    } catch (Exception e) {
+        println "Error fetching version information: ${e.message}"
+        return null
+    } finally {
+        client.close()
+    }
+}
+
+def main() {
+    def parsedArgs = parseArgs(args)
+    def groupId = parsedArgs.groupId
+    def artifactId = parsedArgs.artifactId
+    def version = parsedArgs.version
+    def stableOnly = parsedArgs.stableOnly
+
+    if (version) {
+        // Check if there's a newer version available
+        def latestVersion = getLatestVersion(groupId, artifactId, stableOnly)
+        if (latestVersion) {
+            if (version == latestVersion) {
+                println "${groupId}:${artifactId}:${version} is the latest ${stableOnly ? 'stable ' : ''}version"
+            } else {
+                println "Newer ${stableOnly ? 'stable ' : ''}version available: ${groupId}:${artifactId}:${latestVersion} (current: ${version})"
+            }
+        } else {
+            println "Could not determine latest ${stableOnly ? 'stable ' : ''}version for ${groupId}:${artifactId}"
+        }
+    } else {
+        // Just get the latest version
+        def latestVersion = getLatestVersion(groupId, artifactId, stableOnly)
+        if (latestVersion) {
+            println "${groupId}:${artifactId}:${latestVersion}"
+        } else {
+            println "Could not find ${stableOnly ? 'stable version of ' : ''}${groupId}:${artifactId} on Maven Central"
+        }
+    }
+}
+
+main()

@@ -40,7 +40,7 @@
       <plugin>
         <groupId>se.alipsa.gmd</groupId>
         <artifactId>gmd-maven-plugin</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>3.0.2</version>
         <executions>
           <execution>
             <phase>compile</phase>
@@ -53,6 +53,8 @@
           <sourceDir>src/test/gmd</sourceDir>
           <targetDir>target/gmd</targetDir>
           <outputType>html</outputType>
+          <!-- Test custom version override -->
+          <groovyVersion>5.0.3</groovyVersion>
         </configuration>
       </plugin>
     </plugins>
