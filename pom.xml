@@ -21,7 +21,7 @@
 
   <properties>
     <!-- CI-friendly version: change version in ONE place only -->
-    <revision>3.0.2-SNAPSHOT</revision>
+    <revision>3.0.2</revision>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>

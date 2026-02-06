@@ -172,7 +172,7 @@ The library, which requires Java 21 or later, is available from maven central:
 
 Gradle: 
 ```groovy
-def groovyVersion = '5.0.1' // any 4.x version should work
+def groovyVersion = '5.0.4' // any 4.x version should work
 implementation "se.alipsa.gmd:gmd-core:3.0.2"
 implementation "org.apache.groovy:groovy:${groovyVersion}"
 implementation "org.apache.groovy:groovy-templates:${groovyVersion}"

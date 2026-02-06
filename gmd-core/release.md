@@ -1,5 +1,14 @@
 # Gmd Release History
 
+### v3.0.2, 2026-02-06
+- use CI-friendly parent version (`${revision}`) instead of a fixed parent version
+- openhtmltopdf [1.1.31 -> 1.1.37]
+- commonmark [0.26.0 -> 0.27.1]
+- junit [5.13.4 -> 6.0.2]
+- se.alipsa.matrix:matrix-bom [2.3.0 -> 2.4.0]
+- add compile-time JavaFX dependencies (`javafx-controls`, `javafx-swing`, `javafx-web`) for Java 21 compatibility
+- do not attach the fat jar assembly by default during package
+
 ### v3.0.1, 2025-09-21
 - commons-io:commons-io [2.18.0 -> 2.20.0]
 - io.github.openhtmltopdf:openhtmltopdf-core [1.1.26 -> 1.1.31]
