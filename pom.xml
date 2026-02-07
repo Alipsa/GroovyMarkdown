@@ -293,9 +293,10 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
+              <deploymentName>${project.groupId}:gmd-bundle:${project.version}</deploymentName>
               <excludeArtifacts>
                 <excludeArtifact>GmdTestGui</excludeArtifact> <!-- dont publish this -->
-                <excludeArtifact>gmd-gradle-plugin</excludeArtifact> <!-- should not be published by this plugin -->
+                <excludeArtifact>gmd-gradle-plugin</excludeArtifact> <!-- should not be published by this plugin, it's using a different mechanism -->
               </excludeArtifacts>
               <skipPublishing>false</skipPublishing>
               <autoPublish>false</autoPublish>
