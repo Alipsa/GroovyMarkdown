@@ -299,7 +299,7 @@
                 <excludeArtifact>gmd-gradle-plugin</excludeArtifact> <!-- should not be published by this plugin, it's using a different mechanism -->
               </excludeArtifacts>
               <skipPublishing>false</skipPublishing>
-              <autoPublish>false</autoPublish>
+              <autoPublish>true</autoPublish>
             </configuration>
           </plugin>
         </plugins>
