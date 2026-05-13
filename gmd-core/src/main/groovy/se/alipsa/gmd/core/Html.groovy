@@ -1,8 +1,9 @@
 package se.alipsa.gmd.core
 
-
-import se.alipsa.matrix.charts.Chart
-import se.alipsa.matrix.charts.Plot
+import se.alipsa.groovy.svg.Svg
+import se.alipsa.matrix.chartexport.ChartToImage
+import se.alipsa.matrix.pict.CharmBridge
+import se.alipsa.matrix.pict.Chart
 import se.alipsa.matrix.core.Matrix
 import se.alipsa.matrix.xchart.abstractions.MatrixXChart
 
@@ -44,7 +45,8 @@ class Html {
   }
 
   private static String chartToHtml(Chart x, double width, double height, String alt, Map<String, String> attributes) {
-    imgToHtml(Plot.base64(x, width, height), alt, attributes )
+    Svg svg = CharmBridge.renderSvg(x, width as int, height as int)
+    imgToHtml(ChartToImage.base64(svg), alt, attributes )
   }
 
   private static String imgToHtml(String base64String, String alt, Map<String, String> attributes) {

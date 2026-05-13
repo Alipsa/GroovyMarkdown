@@ -21,13 +21,13 @@
 
   <properties>
     <!-- CI-friendly version: change version in ONE place only -->
-    <revision>3.0.2</revision>
+    <revision>3.0.3-SNAPSHOT</revision>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
-    <junit.jupiter.version>6.0.2</junit.jupiter.version>
-    <groovy.version>5.0.4</groovy.version>
-    <log4j.version>2.25.3</log4j.version>
+    <junit.jupiter.version>6.0.3</junit.jupiter.version>
+    <groovy.version>5.0.6</groovy.version>
+    <log4j.version>2.26.0</log4j.version>
   </properties>
 
   <licenses>
@@ -186,7 +186,7 @@
             <dependency>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>extra-enforcer-rules</artifactId>
-              <version>1.11.0</version>
+              <version>1.12.0</version>
             </dependency>
           </dependencies>
         </plugin>

@@ -1,7 +1,9 @@
-package se.alipsa.gmd.core;
+package se.alipsa.gmd.core
 
-import se.alipsa.matrix.charts.Chart;
-import se.alipsa.matrix.charts.Plot;
+import se.alipsa.groovy.svg.Svg
+import se.alipsa.matrix.chartexport.ChartToImage
+import se.alipsa.matrix.pict.CharmBridge;
+import se.alipsa.matrix.pict.Chart;
 import se.alipsa.matrix.core.Matrix
 import se.alipsa.matrix.xchart.abstractions.MatrixXChart;
 
@@ -55,7 +57,8 @@ class Printer extends PrintWriter {
             }
             attr.append('}')
         }
-        return "!['${alt}'](${Plot.base64(x, width, height)})${attr.toString()}"
+        Svg svg = CharmBridge.renderSvg(x, width as int, height as int)
+        return "!['${alt}'](${ChartToImage.base64(svg)})${attr.toString()}"
     }
 
     private static String chartToMd(MatrixXChart x, String alt, Map<String, String> attributes) {

@@ -246,7 +246,7 @@ class GmdTest extends AbstractGmdTest {
             <td class='salary Number' style='text-align: right'>843.25</td>
             <td class='start_date LocalDate'>2015-03-27</td>
           </tr>
-        <tbody>
+        </tbody>
       </table>
         '''.stripIndent(), html)
 
@@ -255,7 +255,7 @@ class GmdTest extends AbstractGmdTest {
     import static se.alipsa.matrix.core.ListConverter.*
 
     import se.alipsa.matrix.core.*
-    import se.alipsa.matrix.charts.*
+    import se.alipsa.matrix.pict.*
     import java.time.LocalDate
 
     def empData = Matrix.builder().data(
@@ -390,7 +390,7 @@ class GmdTest extends AbstractGmdTest {
 import static se.alipsa.matrix.core.ListConverter.*
 
 import se.alipsa.matrix.core.*
-import se.alipsa.matrix.charts.*
+import se.alipsa.matrix.pict.*
 import java.time.LocalDate 
 
 def empData = Matrix.builder().data(
