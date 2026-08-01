@@ -105,7 +105,6 @@
         <configuration>
           <mainClass>${main.class}</mainClass>
           <launcher>GmdTestGui</launcher>
-          <addModules>javafx.controls,javafx.swing</addModules>
         </configuration>
       </plugin>
 
