@@ -92,9 +92,9 @@ check_version "Log4j" "org.apache.logging.log4j:log4j-core" "$GRADLE_LOG4J_VERSI
 echo "Checking GMD Core..."
 echo "  Gradle plugin default: $GRADLE_GMD_VERSION"
 echo "  Maven plugin default:  $MAVEN_GMD_VERSION"
-# Special case: GMD Core should use the parent pom version (removing -SNAPSHOT if present)
-PARENT_VERSION=$(grep -m 1 '<version>' pom.xml | sed -E 's/.*<version>([^<]+)<\/version>.*/\1/')
-EXPECTED_GMD_VERSION="${PARENT_VERSION%-SNAPSHOT}"
+# Special case: GMD Core should use the parent pom revision (removing -SNAPSHOT if present)
+REVISION=$(grep -m 1 '<revision>' pom.xml | sed -E 's/.*<revision>([^<]+)<\/revision>.*/\1/')
+EXPECTED_GMD_VERSION="${REVISION%-SNAPSHOT}"
 echo "  Expected version (from parent pom): $EXPECTED_GMD_VERSION"
 
 if [ "$GRADLE_GMD_VERSION" != "$EXPECTED_GMD_VERSION" ]; then

@@ -1,27 +1,23 @@
 package test.alipsa.gmd.maven;
 
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.plugin.testing.MojoRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.apache.maven.api.plugin.testing.InjectMojo;
+import org.apache.maven.api.plugin.testing.MojoTest;
+import org.junit.jupiter.api.Test;
 import se.alipsa.gmd.maven.GmdMavenPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@MojoTest
 public class GmdMavenPluginTest {
 
-  @Rule
-  public MojoRule rule = new MojoRule();
-
   @Test
-  public void testGmdMavenPlugin() throws Exception {
+  @InjectMojo(goal = "processGmd", pom = "src/test/projects/pom.xml")
+  public void testGmdMavenPlugin(GmdMavenPlugin plugin) throws Exception {
     File pomFile = new File("src/test/projects/");
     assertTrue(pomFile.exists());
-    MavenProject project = rule.readMavenProject(pomFile);
-    GmdMavenPlugin plugin = (GmdMavenPlugin) rule.lookupConfiguredMojo( project, "processGmd" );
 
     // Execute the plugin
     plugin.execute();

@@ -10,5 +10,5 @@ If you want to publish only some things (e.g. parent and core) do:
 # from the repo root
 mvn -Prelease -pl :gmd-parent,:gmd-core -am \
 clean verify \
-org.sonatype.central:central-publishing-maven-plugin:0.8.0:publish
+org.sonatype.central:central-publishing-maven-plugin:0.11.0:publish
 ```

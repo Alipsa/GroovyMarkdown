@@ -31,10 +31,10 @@ class GmdGradlePlugin implements Plugin<Project> {
         File sourceDir= project.file(extension.sourceDir.getOrElse("src/main/gmd"))
         File targetDir= project.file(extension.targetDir.getOrElse("build/gmd"))
         String outputType= extension.outputType.getOrElse('md')
-        String groovyVersion = extension.groovyVersion.getOrElse('5.0.4')
-        String log4jVersion = extension.log4jVersion.getOrElse('2.25.3')
+        String groovyVersion = extension.groovyVersion.getOrElse('5.0.8')
+        String log4jVersion = extension.log4jVersion.getOrElse('2.26.1')
         String gmdVersion = extension.gmdVersion.getOrElse('3.0.2')
-        String ivyVersion = extension.ivyVersion.getOrElse('2.5.3')
+        String ivyVersion = extension.ivyVersion.getOrElse('2.6.0')
         String javaFxVersion = extension.javaFxVersion.getOrElse('23.0.2')
 
         if (!sourceDir.exists()) {

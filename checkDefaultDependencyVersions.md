@@ -61,14 +61,14 @@ This script requires:
 ===========================================
 
 Checking Groovy...
-  Gradle plugin default: 5.0.4
-  Maven plugin default:  5.0.4
-  ✓ Gradle: org.apache.groovy:groovy:5.0.4 is the latest stable version
+  Gradle plugin default: 5.0.8
+  Maven plugin default:  5.0.8
+  ✓ Gradle: org.apache.groovy:groovy:5.0.8 is the latest stable version
 
 Checking Log4j...
-  Gradle plugin default: 2.25.3
-  Maven plugin default:  2.25.3
-  ✓ Gradle: org.apache.logging.log4j:log4j-core:2.25.3 is the latest stable version
+  Gradle plugin default: 2.26.1
+  Maven plugin default:  2.26.1
+  ✓ Gradle: org.apache.logging.log4j:log4j-core:2.26.1 is the latest stable version
 
 ...
 

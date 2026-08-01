@@ -23,7 +23,7 @@ Possible parameters are:
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.1`
 - `gmdVersion` - the version of GMD to use. Default is `3.0.0`
 - `log4jVersion` - the version of log4j to use. Default is `2.24.3`
-- `ivyVersion` - the version of ivy to use. Default is `2.5.3`
+- `ivyVersion` - the version of ivy to use. Default is `2.6.0`
 - `runTaskBefore` - the task that the gmd plugin should run before. Default is 'test'
 
 The target task is called `processGmd` so it can be invoked from the command line as follows:

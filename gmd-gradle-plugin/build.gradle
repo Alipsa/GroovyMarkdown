@@ -6,8 +6,8 @@ plugins {
   id 'java-gradle-plugin'
   id 'signing'
   id 'maven-publish'
-  id 'com.gradle.plugin-publish' version '2.0.0'
-  id "com.github.ben-manes.versions" version "0.54.0"
+  id 'com.gradle.plugin-publish' version '2.1.1'
+  id "io.github.ben-manes.versions" version "0.58.0"
 }
 
 group = 'se.alipsa.gmd'
@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-  testImplementation platform('org.junit:junit-bom:6.0.3')
+  testImplementation platform('org.junit:junit-bom:6.1.2')
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.junit.platform:junit-platform-launcher'
 }

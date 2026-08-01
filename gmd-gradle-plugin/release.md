@@ -6,5 +6,5 @@
 - upgrade test baseline to JUnit BOM [5.13.4 -> 6.0.2]
 - add configurable `javaFxVersion` parameter
 - include platform-specific JavaFX runtime dependencies (`javafx-base`, `javafx-graphics`, `javafx-controls`, `javafx-swing`, `javafx-web`)
-- update plugin defaults to current stack (`groovy 5.0.4`, `log4j 2.25.3`, `gmd 3.0.2`)
+- update plugin defaults to current stack (`groovy 5.0.8`, `log4j 2.26.1`, `gmd 3.0.2`)
 - upgrade Maven-side `exec-maven-plugin` [3.5.1 -> 3.6.3]

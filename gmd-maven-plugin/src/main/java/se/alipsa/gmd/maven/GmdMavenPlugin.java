@@ -34,16 +34,16 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "outputType", property = "processGmd.outputType", defaultValue = "md" )
   private String outputType;
 
-  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.0.4")
+  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.0.8")
   private String groovyVersion;
 
-  @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.25.3")
+  @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
   private String log4jVersion;
 
   @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.0.2")
   private String gmdVersion;
 
-  @Parameter(name = "ivyVersion", property = "processGmd.ivyVersion", defaultValue = "2.5.3")
+  @Parameter(name = "ivyVersion", property = "processGmd.ivyVersion", defaultValue = "2.6.0")
   private String ivyVersion;
 
   @Parameter(name = "javaFxVersion", property = "processGmd.javaFxVersion", defaultValue = "23.0.2")
@@ -96,7 +96,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of Groovy to use. Default is 5.0.4
+   * The version of Groovy to use. Default is 5.0.8
    *
    * @return The version of Groovy to use.
    */
@@ -105,7 +105,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of Log4j to use. Default is 2.25.3
+   * The version of Log4j to use. Default is 2.26.1
    *
    * @return The version of Log4j to use.
    */
@@ -123,7 +123,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of Ivy to use. Default is 2.5.3
+   * The version of Ivy to use. Default is 2.6.0
    *
    * @return The version of Ivy to use.
    */

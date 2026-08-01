@@ -41,7 +41,7 @@ interface GmdGradlePluginParams {
   Property<String> getGmdVersion()
 
   /**
-   * The version of Ivy to use. Default is 2.5.3
+   * The version of Ivy to use. Default is 2.6.0
    */
   Property<String> getIvyVersion()
 
