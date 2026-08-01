@@ -48,7 +48,7 @@ class GmdCommandLine {
       Gmd gmd = new Gmd()
       def html = gmdFileToHtml(from, gmd)
       File toFile = new File(to)
-      gmd.processHtmlAndSaveAsPdf(html, toFile, true)
+      gmd.processHtmlAndSaveAsPdf(html, toFile)
       println "Wrote $toFile.absolutePath"
     }
   }

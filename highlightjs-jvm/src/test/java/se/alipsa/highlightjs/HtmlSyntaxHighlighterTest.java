@@ -2,8 +2,10 @@ package se.alipsa.highlightjs;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.jsoup.Jsoup.parse;
 
 class HtmlSyntaxHighlighterTest {
 
@@ -30,5 +32,18 @@ class HtmlSyntaxHighlighterTest {
 
     assertTrue(result.contains("class=\"nohighlight\""));
     assertFalse(result.contains("hljs-keyword"));
+  }
+
+  @Test
+  void preservesHeadWhenHighlightingFullDocument() {
+    var highlighter = new HtmlSyntaxHighlighter();
+    String html = "<!doctype html><html><head><title>Example</title></head>"
+        + "<body><pre><code class='language-groovy'>def answer = 42</code></pre></body></html>";
+
+    String result = highlighter.highlightCodeBlocks(html);
+    var document = parse(result);
+
+    assertEquals("Example", document.head().select("title").text());
+    assertEquals(1, document.select("pre > code.hljs .hljs-number").size());
   }
 }

@@ -10,4 +10,4 @@ String html = highlighter.highlight("def answer = 42", "groovy");
 String detected = highlighter.highlightAuto(source);
 ```
 
-For HTML fragments, `HtmlSyntaxHighlighter` finds direct `pre > code` blocks, preserves `nohighlight`, and inserts the returned `hljs-*` spans. The default engine is initialized once and synchronized because Nashorn engines are not thread-safe.
+For HTML fragments or full documents, `HtmlSyntaxHighlighter` finds direct `pre > code` blocks, preserves `nohighlight`, and inserts the returned `hljs-*` spans while preserving the input document shape. The default engine is initialized once and synchronized because Nashorn engines are not thread-safe. This makes initialization inexpensive, but concurrent highlighting calls share one lock; applications needing separate contention domains can inject their own `SyntaxHighlighter` implementation.

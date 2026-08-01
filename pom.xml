@@ -29,6 +29,7 @@
     <junit.jupiter.version>6.1.2</junit.jupiter.version>
     <groovy.version>5.0.8</groovy.version>
     <log4j.version>2.26.1</log4j.version>
+    <jsoup.version>1.23.1</jsoup.version>
   </properties>
 
   <licenses>

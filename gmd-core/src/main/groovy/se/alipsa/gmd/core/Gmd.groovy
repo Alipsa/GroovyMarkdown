@@ -233,9 +233,12 @@ class Gmd {
    * Highlight HTML code blocks and save the result as a PDF.
    *
    * @deprecated Highlighting is synchronous now. Use {@link #htmlToPdf(String, File)}.
+   * @param html the HTML content to highlight and render
+   * @param target the PDF output file
+   * @param ignoredExitOnFinish retained for compatibility and ignored
    */
   @Deprecated
-  void processHtmlAndSaveAsPdf(String html, File target, boolean exitOnFinish = false) throws GmdException {
+  void processHtmlAndSaveAsPdf(String html, File target, boolean ignoredExitOnFinish = false) throws GmdException {
     if (html == null) {
       throw new IllegalArgumentException("Html content cannot be null")
     }

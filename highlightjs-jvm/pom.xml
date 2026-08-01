@@ -17,7 +17,6 @@
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <nashorn.version>15.7</nashorn.version>
-    <jsoup.version>1.23.1</jsoup.version>
   </properties>
 
   <dependencies>
