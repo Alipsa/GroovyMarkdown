@@ -24,7 +24,7 @@ class HtmlSyntaxHighlighterTest {
   }
 
   @Test
-  void skipsNoHighlightBlocksAndIsIdempotent() {
+  void skipsNoHighlightBlocks() {
     var highlighter = new HtmlSyntaxHighlighter();
     String html = "<pre><code class='nohighlight'>def answer = 42</code></pre>";
 
@@ -32,6 +32,17 @@ class HtmlSyntaxHighlighterTest {
 
     assertTrue(result.contains("class=\"nohighlight\""));
     assertFalse(result.contains("hljs-keyword"));
+  }
+
+  @Test
+  void isIdempotentForAlreadyHighlightedBlocks() {
+    var highlighter = new HtmlSyntaxHighlighter();
+    String html = "<pre><code class='language-groovy'>def answer = 42</code></pre>";
+
+    String once = highlighter.highlightCodeBlocks(html);
+    String twice = highlighter.highlightCodeBlocks(once);
+
+    assertEquals(once, twice);
   }
 
   @Test

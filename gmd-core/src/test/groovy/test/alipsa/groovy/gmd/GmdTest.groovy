@@ -2,12 +2,14 @@ package test.alipsa.groovy.gmd
 
 import org.apache.commons.io.IOUtils
 
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 import static org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.Gmd
+import se.alipsa.gmd.core.GmdException
 
 class GmdTest extends AbstractGmdTest {
 
@@ -40,6 +42,26 @@ class GmdTest extends AbstractGmdTest {
         Now, that's something to look forward to!
         
         """.stripIndent()
+
+  @Test
+  void wrapsUncheckedPdfRenderingFailures() {
+    def gmd = new Gmd() {
+      @Override
+      void htmlToPdf(String html, File file) throws IOException {
+        throw new IllegalStateException('rendering failed')
+      }
+    }
+
+    def exception = assertThrows(GmdException) {
+      gmd.gmdToPdf('# Test', new File(AbstractGmdTest.testOutputDir, 'failed.pdf'))
+    }
+    def processException = assertThrows(GmdException) {
+      gmd.processHtmlAndSaveAsPdf('<p>Test</p>', new File(AbstractGmdTest.testOutputDir, 'failed-process.pdf'))
+    }
+
+    assertInstanceOf(IllegalStateException, exception.cause)
+    assertInstanceOf(IllegalStateException, processException.cause)
+  }
 
   @Test
   void gmdToHtmlFile() {

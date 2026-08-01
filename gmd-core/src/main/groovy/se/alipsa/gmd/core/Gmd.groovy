@@ -80,9 +80,10 @@ class Gmd {
    * @param bindings the variables to resolve in the text (optional)
    */
   void gmdToPdf(String gmd, File file, Map bindings = [:]) throws GmdException {
+    String html = gmdToHtmlDoc(gmd, bindings)
     try {
-      htmlToPdf(gmdToHtmlDoc(gmd, bindings), file)
-    } catch (IOException e) {
+      htmlToPdf(html, file)
+    } catch (Exception e) {
       throw new GmdException('Failed to convert gmd to pdf', e)
     }
   }
@@ -247,7 +248,7 @@ class Gmd {
     }
     try {
       htmlToPdf(htmlSyntaxHighlighter.highlightCodeBlocks(html), target)
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new GmdException('Failed to convert HTML to PDF', e)
     }
   }
