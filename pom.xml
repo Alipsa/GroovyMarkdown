@@ -9,6 +9,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>highlightjs-jvm</module>
     <module>gmd-core</module>
     <module>gmd-maven-plugin</module>
     <module>gmd-gradle-plugin</module> <!-- see note below -->

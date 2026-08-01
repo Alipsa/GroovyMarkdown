@@ -74,6 +74,7 @@ All child modules automatically inherit this version via `${revision}`. The `fla
 ### Module Organization
 ```
 gmd-parent (root pom)
+├── highlightjs-jvm     - Nashorn-backed Highlight.js string API (Java)
 ├── gmd-core             - Core processing library (Groovy)
 ├── gmd-maven-plugin     - Maven plugin wrapper (Java)
 ├── gmd-gradle-plugin    - Gradle plugin (Groovy + Maven driver)
@@ -89,7 +90,7 @@ The core processing engine. Main classes:
   - `gmdToHtml(text, params)` - Convert GMD to HTML
   - `gmdToMd(text, params)` - Process GMD to Markdown
   - `gmdToPdf(text, params, file)` - Generate PDF from GMD
-  - `processHtmlAndSaveAsPdf(html, file)` - Styled PDF with JavaFX WebView
+  - `processHtmlAndSaveAsPdf(html, file)` - Deprecated synchronous highlighted PDF conversion
   - `mdToHtml(markdown)` - Standard Markdown to HTML
 
 - **GmdTemplateEngine** (`GmdTemplateEngine.groovy`): Groovy code block processor
@@ -114,8 +115,7 @@ The core processing engine. Main classes:
 Maven plugin implementation (`GmdMavenPlugin.java`):
 - **Mojo**: `processGmd` (default phase: PROCESS_RESOURCES)
 - **Smart execution**: Tries dynamic dependency resolution via Maven Resolver, falls back to bundled deps
-- **Configurable versions**: groovyVersion, log4jVersion, gmdVersion, ivyVersion, javaFxVersion
-- **Platform-aware**: Resolves OS-specific JavaFX classifiers (mac, mac-aarch64, linux, win)
+- **Configurable versions**: groovyVersion, log4jVersion, gmdVersion, ivyVersion
 
 #### gmd-gradle-plugin
 Gradle plugin with Maven wrapper:
@@ -138,8 +138,8 @@ Standard Markdown
 Commonmark Parser + GFM Tables Extension
     ↓
 HTML
-    ├─ Optional: HtmlDecorator adds CSS/JS/fonts
-    └─ Optional: JavaFX WebView for JavaScript execution
+    ├─ HtmlSyntaxHighlighter inserts Highlight.js spans through highlightjs-jvm
+    └─ HtmlDecorator adds CSS/fonts
     ↓
 OpenHtmlToPdf (with MathML/SVG support)
     ↓
@@ -151,7 +151,8 @@ PDF Output
 - **Groovy**: 5.0.8 (groovy, groovy-templates, groovy-jsr223)
 - **Markdown**: commonmark 0.29.0 + GFM tables extension
 - **PDF**: openhtmltopdf 1.1.37 (core, pdfbox, mathml, svg)
-- **JavaFX**: 21.0.5 (compile-only) / 23.0.2 (runtime via @Grab)
+- **Syntax highlighting**: Highlight.js 11.7.0, transpiled to ES5 and evaluated by Nashorn 15.7
+- **HTML fragments**: Jsoup 1.23.1
 - **Matrix**: se.alipsa.matrix BOM 2.4.0 (charts, core, xchart)
 - **Bootstrap**: 5.3.8 (webjar)
 - **Logging**: log4j 2.26.1
@@ -163,11 +164,11 @@ PDF Output
 - **Maven**: 3.9.9+ required
 - **Module System**: NOT used (useModulePath=false in surefire config)
 
-### JavaFX Versioning
-The project locks to JavaFX 23.x for JDK 21 compatibility. The `version-plugin-rules.xml` blocks JavaFX 24+ suggestions.
+### JavaFX Boundary
+JavaFX is only used by the optional `GmdTestGui` application. Core PDF generation and the build plugins do not require JavaFX.
 
 ### Dynamic Dependency Loading
-JavaFX is isolated from normal core processing. `StyledPdfRenderer` loads it lazily for styled PDF output, using the platform-specific runtime dependencies when they are not already available. Raw PDF, HTML, Markdown, and SVG chart processing do not initialize JavaFX.
+Syntax highlighting is provided by the independent `highlightjs-jvm` module. It loads an ES5-transpiled Highlight.js bundle into a synchronized Nashorn engine, so core PDF generation has no JavaFX or WebView dependency.
 
 ## Testing
 
@@ -250,13 +251,6 @@ X = &sum;(&radic;2&pi; + &#8731;3)
 
 ## Architecture Notes
 
-### Platform-Specific JavaFX Resolution
-The Maven plugin uses Maven Resolver to dynamically determine the OS platform and resolve the correct JavaFX classifier:
-- macOS Intel: `mac`
-- macOS ARM: `mac-aarch64`
-- Linux: `linux`
-- Windows: `win`
-
 ### Hybrid Gradle-Maven Build
 The gmd-gradle-plugin has dual build support:
 - **Native Gradle**: `build.gradle` for actual plugin implementation
@@ -268,6 +262,7 @@ gmd-core uses maven-antrun-plugin to generate GroovyDoc (since gmavenplus-plugin
 
 ## Resource Files
 
-- `/gmd-core/src/main/resources/highlightJs/` - HighlightJS library for code syntax highlighting
+- `/highlightjs-jvm/src/main/resources/highlightJs/` - ES5 Highlight.js runtime bundle
+- `/gmd-core/src/main/resources/highlightJs/styles/` - Highlight.js CSS for decorated HTML/PDF
 - `/gmd-core/src/main/resources/fonts/` - Unicode font files for PDF rendering
 - `/gmd-core/src/main/assembly/fatjar.xml` - Assembly descriptor for fat JAR

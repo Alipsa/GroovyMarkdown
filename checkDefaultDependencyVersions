@@ -76,16 +76,12 @@ GRADLE_GROOVY_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "groovyVersio
 GRADLE_LOG4J_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "log4jVersion")
 GRADLE_GMD_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "gmdVersion")
 GRADLE_IVY_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "ivyVersion")
-GRADLE_JAVAFX_VERSION=$(extract_java_version "$GRADLE_PLUGIN_FILE" "javaFxVersion")
-
 # Extract versions from Maven plugin
 MAVEN_PLUGIN_FILE="gmd-maven-plugin/src/main/java/se/alipsa/gmd/maven/GmdMavenPlugin.java"
 MAVEN_GROOVY_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "groovyVersion")
 MAVEN_LOG4J_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "log4jVersion")
 MAVEN_GMD_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "gmdVersion")
 MAVEN_IVY_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "ivyVersion")
-MAVEN_JAVAFX_VERSION=$(extract_maven_version "$MAVEN_PLUGIN_FILE" "javaFxVersion")
-
 # Check each dependency
 check_version "Groovy" "org.apache.groovy:groovy" "$GRADLE_GROOVY_VERSION" "$MAVEN_GROOVY_VERSION"
 check_version "Log4j" "org.apache.logging.log4j:log4j-core" "$GRADLE_LOG4J_VERSION" "$MAVEN_LOG4J_VERSION"
@@ -112,14 +108,6 @@ else
 fi
 echo ""
 check_version "Ivy" "org.apache.ivy:ivy" "$GRADLE_IVY_VERSION" "$MAVEN_IVY_VERSION"
-
-# JavaFX - special case: version 24+ requires Java 23+, we're on Java 21
-echo "Checking JavaFX..."
-echo "  Gradle plugin default: $GRADLE_JAVAFX_VERSION"
-echo "  Maven plugin default:  $MAVEN_JAVAFX_VERSION"
-echo -e "  ${GREEN}✓ JavaFX 23.x is the latest version compatible with Java 21${NC}"
-echo -e "  ${YELLOW}  (Note: JavaFX 24+ requires Java 23+)${NC}"
-echo ""
 
 echo "==========================================="
 if [ $OUTDATED -eq 0 ]; then

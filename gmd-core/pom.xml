@@ -94,27 +94,12 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- JavaFX compile-only dependencies -->
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>21.0.5</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-swing</artifactId>
-      <version>21.0.5</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-web</artifactId>
-      <version>21.0.5</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- Runtime / implementation deps -->
+    <dependency>
+      <groupId>se.alipsa.gmd</groupId>
+      <artifactId>highlightjs-jvm</artifactId>
+      <version>${revision}</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>

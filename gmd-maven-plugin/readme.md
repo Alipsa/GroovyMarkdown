@@ -33,7 +33,6 @@ Possible configuration parameters are:
 - `log4jVersion` - the version of Log4j to use. Default is `2.26.1`
 - `gmdVersion` - the version of GMD core to use. Default is `3.0.2`
 - `ivyVersion` - the version of Ivy to use. Default is `2.6.0`
-- `javaFxVersion` - the version of JavaFX to use. Default is `23.0.2`
 
 If you don't want to run the plugin explicitly, you can add it to an existing lifecycle as follows:
 ```xml
@@ -88,4 +87,3 @@ You can override the versions of dependencies used by the plugin by specifying t
 ```
 
 This allows you to use specific versions of dependencies without being locked to the versions bundled with the plugin.
-

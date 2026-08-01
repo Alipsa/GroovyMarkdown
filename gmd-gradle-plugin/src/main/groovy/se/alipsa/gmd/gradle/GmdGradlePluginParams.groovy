@@ -45,8 +45,6 @@ interface GmdGradlePluginParams {
    */
   Property<String> getIvyVersion()
 
-  Property<String> getJavaFxVersion()
-
   /**
    * The task that the gmd plugin should run before. Default is 'test'
    * @return

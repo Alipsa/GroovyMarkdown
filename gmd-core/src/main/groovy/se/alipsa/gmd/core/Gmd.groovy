@@ -4,6 +4,7 @@ import com.openhtmltopdf.mathmlsupport.MathMLDrawer
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer
 import com.openhtmltopdf.util.XRLog
+import se.alipsa.highlightjs.HtmlSyntaxHighlighter
 
 import org.codehaus.groovy.control.CompilationFailedException
 import org.commonmark.ext.gfm.tables.TablesExtension
@@ -11,7 +12,6 @@ import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
 import org.jsoup.Jsoup
 import org.jsoup.helper.W3CDom
-import org.jsoup.nodes.Entities
 import org.w3c.dom.Document
 
 import java.nio.charset.StandardCharsets
@@ -25,6 +25,7 @@ import static se.alipsa.gmd.core.HtmlDecorator.decorate
 class Gmd {
   final Parser parser
   final HtmlRenderer renderer
+  final HtmlSyntaxHighlighter htmlSyntaxHighlighter
 
   static void main(String[] args) {
     new GmdCommandLine(args).run()
@@ -37,6 +38,7 @@ class Gmd {
         .softbreak("<br />\n")
         .extensions([TablesExtension.create()])
         .build()
+    htmlSyntaxHighlighter = new HtmlSyntaxHighlighter()
   }
 
   /**
@@ -71,14 +73,18 @@ class Gmd {
 
   /**
    * Process the Groovy Markdown text and save it to the file.
-   * The markdown is processed in a Javafx WebView to enable javascript styling.
+   * The markdown is highlighted with Highlight.js and rendered directly to PDF.
    *
    * @param gmd Groovy Markdown text
    * @param file the File to write to
    * @param bindings the variables to resolve in the text (optional)
    */
   void gmdToPdf(String gmd, File file, Map bindings = [:]) throws GmdException {
-    processHtmlAndSaveAsPdf(gmdToHtmlDoc(gmd, bindings), file)
+    try {
+      htmlToPdf(gmdToHtmlDoc(gmd, bindings), file)
+    } catch (IOException e) {
+      throw new GmdException('Failed to convert gmd to pdf', e)
+    }
   }
 
   /**
@@ -158,7 +164,7 @@ class Gmd {
   }
 
   String mdToHtmlDoc(String markdown) throws GmdException {
-    return decorate(mdToHtml(markdown))
+    return decorate(htmlSyntaxHighlighter.highlightCodeBlocks(mdToHtml(markdown)))
   }
 
   void mdToHtml(String markdown, File target) {
@@ -224,13 +230,11 @@ class Gmd {
   }
 
   /**
-   * Load the html into a web view so that the highlight javascript properly add classes to code parts
-   * then we extract the DOM from the web view and use that to produce the PDF
+   * Highlight HTML code blocks and save the result as a PDF.
    *
-   * @param html a string containing the html to render
-   * @param target the pdf output stream to write to
-   * @param exitOnFinish execute Platform.exit() on completion
+   * @deprecated Highlighting is synchronous now. Use {@link #htmlToPdf(String, File)}.
    */
+  @Deprecated
   void processHtmlAndSaveAsPdf(String html, File target, boolean exitOnFinish = false) throws GmdException {
     if (html == null) {
       throw new IllegalArgumentException("Html content cannot be null")
@@ -238,7 +242,11 @@ class Gmd {
     if (target == null) {
       throw new IllegalArgumentException("Target file cannot be null")
     }
-    StyledPdfRenderer.render(html, target, exitOnFinish)
+    try {
+      htmlToPdf(htmlSyntaxHighlighter.highlightCodeBlocks(html), target)
+    } catch (IOException e) {
+      throw new GmdException('Failed to convert HTML to PDF', e)
+    }
   }
 
   private static void writeUtf8(File target, String content) throws IOException {
