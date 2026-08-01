@@ -1,7 +1,7 @@
 package se.alipsa.gmd.core
 
 import se.alipsa.groovy.svg.Svg
-import se.alipsa.matrix.chartexport.ChartToImage
+import se.alipsa.matrix.chartexport.ChartToSvg
 import se.alipsa.matrix.pict.CharmBridge;
 import se.alipsa.matrix.pict.Chart;
 import se.alipsa.matrix.core.Matrix
@@ -58,7 +58,11 @@ class Printer extends PrintWriter {
             attr.append('}')
         }
         Svg svg = CharmBridge.renderSvg(x, width as int, height as int)
-        return "!['${alt}'](${ChartToImage.base64(svg)})${attr.toString()}"
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            ChartToSvg.export(svg, os)
+            String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
+            return "!['${alt}'](data:image/svg+xml;base64,${imgContent})${attr.toString()}"
+        }
     }
 
     private static String chartToMd(MatrixXChart x, String alt, Map<String, String> attributes) {
@@ -71,9 +75,9 @@ class Printer extends PrintWriter {
             attr.append('}')
         }
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            x.exportPng(os)
+            x.exportSvg(os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return "!['${alt}'](data:image/png;base64,${imgContent})${attr.toString()}"
+            return "!['${alt}'](data:image/svg+xml;base64,${imgContent})${attr.toString()}"
         }
     }
 

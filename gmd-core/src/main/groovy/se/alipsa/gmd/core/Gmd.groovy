@@ -4,17 +4,7 @@ import com.openhtmltopdf.mathmlsupport.MathMLDrawer
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import com.openhtmltopdf.svgsupport.BatikSVGDrawer
 import com.openhtmltopdf.util.XRLog
-import groovy.grape.Grape
-import javafx.application.Platform
-import javafx.beans.value.ChangeListener
-import javafx.beans.value.ObservableValue
-import javafx.concurrent.Worker
-import javafx.embed.swing.JFXPanel
-import javafx.scene.web.WebEngine
-import javafx.scene.web.WebView
 
-import org.apache.logging.log4j.LogManager
-import org.apache.logging.log4j.Logger
 import org.codehaus.groovy.control.CompilationFailedException
 import org.commonmark.ext.gfm.tables.TablesExtension
 import org.commonmark.parser.Parser
@@ -24,56 +14,17 @@ import org.jsoup.helper.W3CDom
 import org.jsoup.nodes.Entities
 import org.w3c.dom.Document
 
-import javax.xml.transform.OutputKeys
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
-import static HtmlDecorator.BOOTSTRAP_CSS
-import static HtmlDecorator.decorate
+import static se.alipsa.gmd.core.HtmlDecorator.decorate
 
 /**
  * Key class for this Groovy Markdown implementation
  */
 class Gmd {
-
-  static {
-    GroovyClassLoader cl
-    if (Gmd.class.classLoader instanceof GroovyClassLoader) {
-      cl = Gmd.class.classLoader
-    } else if (Thread.currentThread().getContextClassLoader() instanceof GroovyClassLoader) {
-      cl = Thread.currentThread().getContextClassLoader()
-    } else {
-      // Build a Groovy-aware loader and make it the context loader
-      cl = new GroovyClassLoader(Gmd.class.classLoader)
-      Thread.currentThread().setContextClassLoader(cl)
-    }
-
-    // Use the single-map form so Groovy binds to grab(Map) and NEVER calls chooseClassLoader
-    Map<String, Object> common = [
-        classLoader     : cl,
-        transitive      : true,
-        autoDownload    : true,
-        initClassLoader : true
-    ]
-    // We fetch javafx using Grab as doing
-    // implementation "org.openjfx:javafx-base:${javaFxVersion}:${qualifier}"
-    // in in build script makes the fatJar os dependent
-    Grape.grab(common + [group:'org.openjfx', module:'javafx-controls', version:'23.0.2'])
-    Grape.grab(common + [group:'org.openjfx', module:'javafx-swing',    version:'23.0.2'])
-
-  }
-
-  private static final Logger LOG = LogManager.getLogger(Gmd.class)
   final Parser parser
   final HtmlRenderer renderer
-  WebView webView // We need to make the webView a member variable otherwise it is destroyed by GC
 
   static void main(String[] args) {
     new GmdCommandLine(args).run()
@@ -97,7 +48,7 @@ class Gmd {
    */
   void gmdToHtml(String gmd, File outFile, Map bindings = [:]) throws GmdException {
     try {
-      outFile.write(gmdToHtmlDoc(gmd, bindings))
+      writeUtf8(outFile, gmdToHtmlDoc(gmd, bindings))
     } catch (IOException e) {
       throw new GmdException("Failed to write to the file", e)
     }
@@ -127,7 +78,6 @@ class Gmd {
    * @param bindings the variables to resolve in the text (optional)
    */
   void gmdToPdf(String gmd, File file, Map bindings = [:]) throws GmdException {
-    //htmlToPdf(gmdToHtmlDoc(gmd, bindings), file)
     processHtmlAndSaveAsPdf(gmdToHtmlDoc(gmd, bindings), file)
   }
 
@@ -212,14 +162,22 @@ class Gmd {
   }
 
   void mdToHtml(String markdown, File target) {
-    target.write(renderer.render(parser.parse(markdown)))
+    try {
+      writeUtf8(target, renderer.render(parser.parse(markdown)))
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to write HTML", e)
+    }
   }
 
   void mdToHtmlDoc(String markdown, File target) {
     if (target == null) {
       throw new IllegalArgumentException("target file cannot be null")
     }
-    target.write(mdToHtmlDoc(markdown))
+    try {
+      writeUtf8(target, mdToHtmlDoc(markdown))
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to write HTML document", e)
+    }
   }
 
   void mdToPdf(String md, File target) throws GmdException {
@@ -244,18 +202,19 @@ class Gmd {
     if (file == null) {
       throw new IllegalArgumentException("File parameter cannot be null")
     }
-    if (file.getParentFile() != null && !file.getParentFile().exists()) {
-      file.getParentFile().mkdirs()
-    }
-    if (!file.exists()) {
-      file.createNewFile()
-    }
+    ensureParentDirectory(file)
     try (OutputStream out = Files.newOutputStream(file.toPath())) {
       htmlToPdf(html, out)
     }
   }
 
   void htmlToPdf(Document doc, OutputStream os) throws IOException {
+    if (doc == null) {
+      throw new IllegalArgumentException("Document parameter cannot be null")
+    }
+    if (os == null) {
+      throw new IllegalArgumentException("Output stream cannot be null")
+    }
     PdfRendererBuilder builder = new PdfRendererBuilder()
         .useSVGDrawer(new BatikSVGDrawer())
         .useMathMLDrawer(new MathMLDrawer())
@@ -279,68 +238,21 @@ class Gmd {
     if (target == null) {
       throw new IllegalArgumentException("Target file cannot be null")
     }
-    //noinspection GroovyResultOfObjectAllocationIgnored
-    new JFXPanel() // Initiate graphics
-    final CountDownLatch latchToWaitForJavaFx = new CountDownLatch(1)
-    final AtomicReference<Throwable> exc = new AtomicReference<>(null)
-    Platform.runLater {
-      webView = new WebView()
-      loadAndSavePdf(html, target, webView, exc, latchToWaitForJavaFx)
-    }
-    latchToWaitForJavaFx.await(15, TimeUnit.SECONDS)
-    if (exitOnFinish) {
-      Platform.exit()
-    }
-    if (exc.get() != null) {
-      throw new GmdException("Failed to process html in the WebView", exc.get())
-    }
+    StyledPdfRenderer.render(html, target, exitOnFinish)
   }
 
-  void loadAndSavePdf(String html, File target, WebView webView, AtomicReference<Throwable> exc, CountDownLatch latch) {
-    final WebEngine webEngine = webView.getEngine()
-    webEngine.setJavaScriptEnabled(true)
-    webEngine.setUserStyleSheetLocation(BOOTSTRAP_CSS)
-    webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-      @Override
-      void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
-        LOG.info("loading html document, state is {}", newState)
-        if (newState == Worker.State.SUCCEEDED) {
-          try {
-            Document doc = webEngine.getDocument()
-            Transformer transformer = TransformerFactory.newInstance().newTransformer()
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no")
-            transformer.setOutputProperty(OutputKeys.METHOD, "html")
-            transformer.setOutputProperty(OutputKeys.INDENT, "no")
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+  private static void writeUtf8(File target, String content) throws IOException {
+    if (target == null) {
+      throw new IllegalArgumentException("Target file cannot be null")
+    }
+    ensureParentDirectory(target)
+    Files.writeString(target.toPath(), content, StandardCharsets.UTF_8)
+  }
 
-            StringWriter sw = new StringWriter()
-            transformer.transform(new DOMSource(doc), new StreamResult(sw))
-            String viewContent = sw.toString()
-            // the raw DOM document will not work so we have to parse it again with jsoup to get
-            // something that the PdfRendererBuilder (used in gmd) understands
-            org.jsoup.nodes.Document doc2 = Jsoup.parse(viewContent)
-            doc2.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                .escapeMode(Entities.EscapeMode.extended)
-                .charset(StandardCharsets.UTF_8)
-                .prettyPrint(false)
-            Document doc3 = new W3CDom().fromJsoup(doc2)
-            try (FileOutputStream fos = new FileOutputStream(target)) {
-              PdfRendererBuilder builder = new PdfRendererBuilder()
-                  .useSVGDrawer(new BatikSVGDrawer())
-                  .useMathMLDrawer(new MathMLDrawer())
-                  .withW3cDocument(doc3, new File(".").toURI().toString())
-                  .toStream(fos)
-              builder.run()
-            }
-          } catch (Throwable t) {
-            LOG.warn(t)
-            exc.set(t)
-          } finally {
-            latch.countDown()
-          }
-        }
-      }
-    })
-    webEngine.loadContent(html)
+  private static void ensureParentDirectory(File target) throws IOException {
+    File parent = target.parentFile
+    if (parent != null && !parent.exists() && !parent.mkdirs() && !parent.isDirectory()) {
+      throw new IOException("Could not create parent directory " + parent.absolutePath)
+    }
   }
 }

@@ -102,4 +102,31 @@ Hello World
         """.stripIndent(), GmdTemplateEngine.processCodeBlocks(text))
 
     }
+
+    @Test
+    void echoIsResetForEachCodeBlock() {
+        String text = '''
+```{groovy echo=false}
+out.println('hidden source')
+```
+```{groovy}
+out.println('visible source')
+```
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertFalse(processed.contains("```groovy\nout.println('hidden source')"))
+        assertTrue(processed.contains("```groovy\nout.println('visible source')"))
+    }
+
+    @Test
+    void unterminatedCodeBlockIsRejected() {
+        assertThrows(Exception.class) {
+            GmdTemplateEngine.processCodeBlocks('''
+```{groovy echo=false}
+out.println('missing terminator')
+''')
+        }
+    }
 }

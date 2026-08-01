@@ -126,13 +126,6 @@
       <version>2.6.0</version>
       <scope>runtime</scope>
     </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-web</artifactId>
-      <version>23.0.2</version>
-      <scope>runtime</scope>
-    </dependency>
-
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>

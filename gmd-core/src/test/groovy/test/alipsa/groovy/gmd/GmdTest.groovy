@@ -3,6 +3,7 @@ package test.alipsa.groovy.gmd
 import org.apache.commons.io.IOUtils
 
 import java.nio.charset.StandardCharsets
+import java.util.Base64
 
 import static org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -271,7 +272,7 @@ class GmdTest extends AbstractGmdTest {
     '''
     html = gmd.gmdToHtml(text)
     assertTrue(html.contains('BarChart chart = BarChart.createVertical('), 'Should contain code content')
-    assertTrue(html.contains('<p><img src="data:image/png;base64,'), 'Should contain image content')
+    assertTrue(html.contains('<p><img src="data:image/svg+xml;base64,'), 'Should contain SVG image content')
   }
 
   @Test
@@ -407,7 +408,8 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    assertTrue(md.contains("![''](data:image/png;base64,"))
+    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split("\\)", 2)[0]
+    assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
   }
 
   @Test
@@ -440,14 +442,14 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    assertTrue(md.contains("![''](data:image/png;base64,"))
+    assertTrue(md.contains("![''](data:image/svg+xml;base64,"))
 
     def htmlFile = new File(AbstractGmdTest.testOutputDir, "testXChart.html")
     gmd.gmdToHtml(text, htmlFile)
     assertTrue(htmlFile.exists())
     assertTrue(htmlFile.length() > 100, "No html content")
     assertTrue(htmlFile.text.contains('<h1>Employees</h1>'))
-    assertTrue(htmlFile.text.contains('<img src="data:image/png;base64,'), "No image content")
+    assertTrue(htmlFile.text.contains('<img src="data:image/svg+xml;base64,'), "No SVG image content")
   }
 
   @Test

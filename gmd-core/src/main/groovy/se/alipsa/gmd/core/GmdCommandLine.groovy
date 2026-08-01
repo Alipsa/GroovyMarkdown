@@ -1,5 +1,8 @@
 package se.alipsa.gmd.core
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+
 class GmdCommandLine {
 
   Closure runner
@@ -25,7 +28,7 @@ class GmdCommandLine {
       Gmd gmd = new Gmd()
       def html = gmdFileToHtml(from, gmd)
       File toFile = new File(to)
-      toFile.write(html)
+      Files.writeString(toFile.toPath(), html, StandardCharsets.UTF_8)
       println "Wrote $toFile.absolutePath"
     }
   }
@@ -55,7 +58,7 @@ class GmdCommandLine {
     if (!fromFile.exists()) {
       throw new IllegalArgumentException("From file $fromFile does not exist")
     }
-    gmd.gmdToHtmlDoc(fromFile.text)
+    gmd.gmdToHtmlDoc(Files.readString(fromFile.toPath(), StandardCharsets.UTF_8))
   }
 
   void run() {

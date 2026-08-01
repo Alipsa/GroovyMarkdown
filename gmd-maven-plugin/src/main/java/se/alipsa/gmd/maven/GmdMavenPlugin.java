@@ -3,7 +3,7 @@ package se.alipsa.gmd.maven;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Locale;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -143,16 +143,22 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     try {
-      File srcDir = new File(sourceDir);
+      String normalizedOutputType = normalizeOutputType(outputType);
+      File srcDir = resolveProjectPath(sourceDir);
+      File outputDirectory = resolveProjectPath(targetDir);
       if (!srcDir.exists()) {
-        getLog().warn("Source directory " + sourceDir + " does not exist, nothing to do");
+        getLog().warn("Source directory " + srcDir.getCanonicalPath() + " does not exist, nothing to do");
         return;
       }
       if (srcDir.isFile()) {
-        throw new MojoFailureException(sourceDir + " is a file, not a directory");
+        throw new MojoFailureException(srcDir + " is a file, not a directory");
       }
-      if (Objects.requireNonNull(srcDir.list()).length == 0) {
-        getLog().warn("No gmd files found in " + sourceDir + ", nothing to do");
+      if (outputDirectory.exists() && outputDirectory.isFile()) {
+        throw new MojoFailureException(outputDirectory + " is a file, not a directory");
+      }
+      String[] gmdFiles = srcDir.list((directory, name) -> name.endsWith(".gmd"));
+      if (gmdFiles == null || gmdFiles.length == 0) {
+        getLog().warn("No gmd files found in " + srcDir + ", nothing to do");
         return;
       }
 
@@ -164,7 +170,7 @@ public class GmdMavenPlugin extends AbstractMojo {
 
       if (canResolveDependencies) {
         // Resolve dependencies with specified versions
-        List<File> classpathFiles = resolveDependencies();
+        List<File> classpathFiles = resolveDependencies(normalizedOutputType);
 
         // Build classpath string
         StringBuilder classpath = new StringBuilder();
@@ -182,8 +188,8 @@ public class GmdMavenPlugin extends AbstractMojo {
         command.add(classpath.toString());
         command.add("se.alipsa.gmd.core.GmdProcessor");
         command.add(srcDir.getCanonicalPath());
-        command.add(new File(targetDir).getCanonicalPath());
-        command.add(outputType);
+        command.add(outputDirectory.getCanonicalPath());
+        command.add(normalizedOutputType);
 
         ProcessBuilder processBuilder = new ProcessBuilder(command);
         processBuilder.inheritIO();
@@ -197,10 +203,10 @@ public class GmdMavenPlugin extends AbstractMojo {
         // Fall back to using GmdProcessor directly with bundled dependencies
         getLog().warn("Cannot resolve custom dependencies, using bundled versions");
         se.alipsa.gmd.core.GmdProcessor gmdProcessor = new se.alipsa.gmd.core.GmdProcessor();
-        gmdProcessor.process(sourceDir, targetDir, outputType);
+        gmdProcessor.process(srcDir.getCanonicalPath(), outputDirectory.getCanonicalPath(), normalizedOutputType);
       }
 
-      File td = new File(targetDir);
+      File td = outputDirectory;
       if (td.exists()) {
         getLog().info("Gmd files processed and written to " + td.getCanonicalPath());
       } else {
@@ -213,22 +219,8 @@ public class GmdMavenPlugin extends AbstractMojo {
     }
   }
 
-  private List<File> resolveDependencies() throws DependencyResolutionException {
+  private List<File> resolveDependencies(String normalizedOutputType) throws DependencyResolutionException {
     RepositorySystemSession repoSession = session.getRepositorySession();
-
-    // Determine platform classifier for JavaFX
-    String osName = System.getProperty("os.name").toLowerCase();
-    String osArch = System.getProperty("os.arch").toLowerCase();
-    String platform;
-    if (osName.contains("mac") || osName.contains("darwin")) {
-      platform = (osArch.contains("aarch64") || osArch.contains("arm")) ? "mac-aarch64" : "mac";
-    } else if (osName.contains("linux")) {
-      platform = "linux";
-    } else if (osName.contains("win")) {
-      platform = "win";
-    } else {
-      throw new IllegalStateException("Unsupported OS: " + osName);
-    }
 
     List<Dependency> dependencies = new ArrayList<>();
     dependencies.add(new Dependency(new DefaultArtifact("org.apache.groovy:groovy:" + groovyVersion), "runtime"));
@@ -238,12 +230,16 @@ public class GmdMavenPlugin extends AbstractMojo {
     dependencies.add(new Dependency(new DefaultArtifact("org.apache.logging.log4j:log4j-core:" + log4jVersion), "runtime"));
     dependencies.add(new Dependency(new DefaultArtifact("se.alipsa.gmd:gmd-core:" + gmdVersion), "runtime"));
 
-    // JavaFX modules with platform-specific classifiers
-    dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-base", platform, "jar", javaFxVersion), "runtime"));
-    dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-graphics", platform, "jar", javaFxVersion), "runtime"));
-    dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-controls", platform, "jar", javaFxVersion), "runtime"));
-    dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-swing", platform, "jar", javaFxVersion), "runtime"));
-    dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-web", platform, "jar", javaFxVersion), "runtime"));
+    // The plugin's pdf mode is the existing styled-PDF mode. JavaFX is not
+    // placed on Markdown, HTML, or chart-only forked classpaths.
+    if ("pdf".equals(normalizedOutputType)) {
+      String platform = platformClassifier();
+      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-base", platform, "jar", javaFxVersion), "runtime"));
+      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-graphics", platform, "jar", javaFxVersion), "runtime"));
+      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-controls", platform, "jar", javaFxVersion), "runtime"));
+      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-swing", platform, "jar", javaFxVersion), "runtime"));
+      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-web", platform, "jar", javaFxVersion), "runtime"));
+    }
 
     CollectRequest collectRequest = new CollectRequest();
     collectRequest.setDependencies(dependencies);
@@ -259,6 +255,37 @@ public class GmdMavenPlugin extends AbstractMojo {
     }
 
     return classpathFiles;
+  }
+
+  private String normalizeOutputType(String value) throws MojoFailureException {
+    String normalized = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    if (!List.of("md", "html", "pdf").contains(normalized)) {
+      throw new MojoFailureException("Unknown output type " + value + ", expected either md, html or pdf");
+    }
+    return normalized;
+  }
+
+  private File resolveProjectPath(String path) {
+    if (path == null || path.isBlank()) {
+      throw new IllegalArgumentException("Path cannot be null or blank");
+    }
+    File candidate = new File(path);
+    return candidate.isAbsolute() ? candidate : new File(project.getBasedir(), path);
+  }
+
+  private String platformClassifier() {
+    String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+    String osArch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+    if (osName.contains("mac") || osName.contains("darwin")) {
+      return (osArch.contains("aarch64") || osArch.contains("arm")) ? "mac-aarch64" : "mac";
+    }
+    if (osName.contains("linux")) {
+      return "linux";
+    }
+    if (osName.contains("win")) {
+      return "win";
+    }
+    throw new IllegalStateException("Unsupported OS: " + osName);
   }
 
   private String getJavaExecutable() {
