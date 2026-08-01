@@ -215,7 +215,11 @@ public class GmdMavenPlugin extends AbstractMojo {
     } catch (DependencyResolutionException e) {
       throw new MojoExecutionException("Failed to resolve dependencies", e);
     } catch (Exception e) {
-      throw new MojoFailureException("Failed to process gmd files in " + sourceDir, e);
+      String message = "Failed to process gmd files in " + sourceDir;
+      if (e.getMessage() != null && !e.getMessage().isBlank()) {
+        message += ": " + e.getMessage();
+      }
+      throw new MojoFailureException(message, e);
     }
   }
 
