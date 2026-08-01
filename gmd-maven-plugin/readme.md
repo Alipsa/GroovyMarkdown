@@ -9,7 +9,7 @@ Usage is as follows:
       <plugin>
         <groupId>se.alipsa.gmd</groupId>
         <artifactId>gmd-maven-plugin</artifactId>
-        <version>3.0.2</version>
+        <version>3.1.0</version>
         <goals><goal>processGmd</goal></goals>
         <configuration>
           <sourceDir>src/test/gmd</sourceDir>
@@ -31,7 +31,7 @@ Possible configuration parameters are:
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
 - `log4jVersion` - the version of Log4j to use. Default is `2.26.1`
-- `gmdVersion` - the version of GMD core to use. Default is `3.0.2`
+- `gmdVersion` - the version of GMD core to use. Default is `3.1.0`
 - `ivyVersion` - the version of Ivy to use. Default is `2.6.0`
 
 If you don't want to run the plugin explicitly, you can add it to an existing lifecycle as follows:
@@ -41,7 +41,7 @@ If you don't want to run the plugin explicitly, you can add it to an existing li
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>3.0.2</version>
+      <version>3.1.0</version>
       <executions>
         <execution>
           <phase>compile</phase>
@@ -72,7 +72,7 @@ You can override the versions of dependencies used by the plugin by specifying t
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>3.0.2</version>
+      <version>3.1.0</version>
       <configuration>
         <sourceDir>src/test/gmd</sourceDir>
         <targetDir>target/gmd</targetDir>

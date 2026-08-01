@@ -1,6 +1,6 @@
 # Gmd Release History
 
-## v3.0.3, unreleased
+## v3.1.0, unreleased
 - add the independent `highlightjs-jvm` module using Nashorn and a transpiled ES5 Highlight.js bundle
 - highlight code blocks synchronously before PDF rendering
 - remove JavaFX and WebView from core PDF processing
@@ -8,6 +8,9 @@
 - use explicit UTF-8 file I/O and validate source, target, and output paths
 - reset template `echo` state per block and reject unterminated Groovy blocks
 - update the test GUI to perform JavaFX UI updates on the application thread
+- wrap unchecked PDF rendering failures in `GmdException`
+- remove obsolete Highlight.js JavaScript and language resources from gmd-core
+- add idempotency coverage for already-highlighted HTML blocks
 
 ### v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version

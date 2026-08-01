@@ -40,7 +40,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
   private String log4jVersion;
 
-  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.0.2")
+  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.1.0")
   private String gmdVersion;
 
   @Parameter(name = "ivyVersion", property = "processGmd.ivyVersion", defaultValue = "2.6.0")
@@ -111,7 +111,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of GMD core to use. Default is 3.0.2
+   * The version of GMD core to use. Default is 3.1.0
    *
    * @return The version of GMD core to use.
    */

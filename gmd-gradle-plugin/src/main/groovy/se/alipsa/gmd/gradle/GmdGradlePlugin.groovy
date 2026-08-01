@@ -43,7 +43,7 @@ class GmdGradlePlugin implements Plugin<Project> {
         String outputType= extension.outputType.getOrElse('md').trim().toLowerCase(Locale.ROOT)
         String groovyVersion = extension.groovyVersion.getOrElse('5.0.8')
         String log4jVersion = extension.log4jVersion.getOrElse('2.26.1')
-        String gmdVersion = extension.gmdVersion.getOrElse('3.0.2')
+        String gmdVersion = extension.gmdVersion.getOrElse('3.1.0')
         String ivyVersion = extension.ivyVersion.getOrElse('2.6.0')
         if (!['md', 'html', 'pdf'].contains(outputType)) {
           throw new IllegalArgumentException("Unknown output type ${outputType}, expected either md, html or pdf")
