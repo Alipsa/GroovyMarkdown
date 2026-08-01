@@ -51,6 +51,8 @@ class GmdTemplateEngine {
                     shouldBeProcessed = true
                     codeBlockStart = true
                     codeBlockEnd = false
+                    // echo is a property of one block, not of the entire document.
+                    echo = true
                     if (noSpaceLine.toLowerCase().contains("echo=false")) {
                         echo = false;
                     }
@@ -97,13 +99,15 @@ class GmdTemplateEngine {
                 }
                 count++
             }
+            if (codeBlockStart) {
+                throw new GmdException('Unterminated Groovy code block')
+            }
             if (shouldBeProcessed) {
                 return result.toString()
             } else {
                 return text
             }
         } catch(all) {
-            all.printStackTrace()
             throw new GmdException("Failed to process code block: $codeBlock", all)
         }
     }

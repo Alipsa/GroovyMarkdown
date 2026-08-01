@@ -2,6 +2,10 @@ package se.alipsa.gmd.core
 
 import groovy.transform.CompileStatic
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.Locale
+
 @CompileStatic
 class GmdProcessor {
 
@@ -12,7 +16,7 @@ class GmdProcessor {
     }
     def sourceDir = args[0]
     def targetDir = args[1]
-    def outputType = args[2].toLowerCase()
+    def outputType = args[2].toLowerCase(Locale.ROOT)
     if (!['md', 'html', 'pdf'].contains(outputType)) {
       throw new IllegalArgumentException("Unknown output type $outputType, expected either md, html or pdf")
     }
@@ -20,18 +24,42 @@ class GmdProcessor {
   }
 
   void process(String sourceDir, String targetDir, String outputType) {
+    if (sourceDir == null || targetDir == null) {
+      throw new IllegalArgumentException('Source and target directories cannot be null')
+    }
+    String normalizedOutputType = outputType?.toLowerCase(Locale.ROOT)
+    if (!['md', 'html', 'pdf'].contains(normalizedOutputType)) {
+      throw new IllegalArgumentException("Unknown output type $outputType, expected either md, html or pdf")
+    }
+    File sourceDirectory = new File(sourceDir)
+    if (!sourceDirectory.exists()) {
+      throw new IllegalArgumentException("Source directory ${sourceDirectory.absolutePath} does not exist")
+    }
+    if (!sourceDirectory.isDirectory()) {
+      throw new IllegalArgumentException("Source path ${sourceDirectory.absolutePath} is not a directory")
+    }
+    File targetDirectory = new File(targetDir)
+    if (targetDirectory.exists() && !targetDirectory.isDirectory()) {
+      throw new IllegalArgumentException("Target path ${targetDirectory.absolutePath} is not a directory")
+    }
+    if (!targetDirectory.exists() && !targetDirectory.mkdirs() && !targetDirectory.isDirectory()) {
+      throw new IllegalArgumentException("Could not create target directory ${targetDirectory.absolutePath}")
+    }
+
+    File[] sourceFiles = sourceDirectory.listFiles({ File f -> f.isFile() && f.name.endsWith('.gmd') } as FileFilter)
+    if (sourceFiles == null) {
+      throw new IllegalArgumentException("Could not read source directory ${sourceDirectory.absolutePath}")
+    }
+
     Gmd gmd = new Gmd()
-    for (file in new File(sourceDir).listFiles()) {
+    for (file in sourceFiles) {
       if (file.name.endsWith('.gmd')) {
-        File targetDirectory = new File(targetDir)
-        if (!targetDirectory.exists()) {
-          targetDirectory.mkdirs()
-        }
-        def outputFile = new File(targetDirectory, file.name.replace('.gmd', ".$outputType"))
-        switch (outputType) {
-          case 'md': outputFile.write(gmd.gmdToMd(file.text)); break
-          case 'html': outputFile.write(gmd.gmdToHtml(file.text)); break
-          case 'pdf': gmd.gmdToPdf(file.text, outputFile); break
+        def outputFile = new File(targetDirectory, file.name.substring(0, file.name.length() - 4) + ".${normalizedOutputType}")
+        String content = Files.readString(file.toPath(), StandardCharsets.UTF_8)
+        switch (normalizedOutputType) {
+          case 'md': Files.writeString(outputFile.toPath(), gmd.gmdToMd(content), StandardCharsets.UTF_8); break
+          case 'html': Files.writeString(outputFile.toPath(), gmd.gmdToHtml(content), StandardCharsets.UTF_8); break
+          case 'pdf': gmd.gmdToPdf(content, outputFile); break
         }
       }
     }

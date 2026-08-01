@@ -167,7 +167,7 @@ PDF Output
 The project locks to JavaFX 23.x for JDK 21 compatibility. The `version-plugin-rules.xml` blocks JavaFX 24+ suggestions.
 
 ### Dynamic Dependency Loading
-gmd-core uses Groovy `@Grab` to dynamically download JavaFX at runtime, avoiding OS-specific fat JARs. This happens in the `processHtmlAndSaveAsPdf` method.
+JavaFX is isolated from normal core processing. `StyledPdfRenderer` loads it lazily for styled PDF output, using the platform-specific runtime dependencies when they are not already available. Raw PDF, HTML, Markdown, and SVG chart processing do not initialize JavaFX.
 
 ## Testing
 

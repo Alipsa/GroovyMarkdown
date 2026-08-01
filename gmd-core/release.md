@@ -1,5 +1,14 @@
 # Gmd Release History
 
+## v3.0.3, unreleased
+- isolate JavaFX and WebView-based styled PDF rendering in a lazy renderer
+- keep Markdown, HTML, raw PDF, and chart processing usable without JavaFX initialization
+- render Matrix `Chart` and `MatrixXChart` output as SVG data URIs instead of PNGs
+- improve styled PDF error and timeout reporting
+- use explicit UTF-8 file I/O and validate source, target, and output paths
+- reset template `echo` state per block and reject unterminated Groovy blocks
+- update the test GUI to perform JavaFX UI updates on the application thread
+
 ### v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version
 - openhtmltopdf [1.1.31 -> 1.1.37]

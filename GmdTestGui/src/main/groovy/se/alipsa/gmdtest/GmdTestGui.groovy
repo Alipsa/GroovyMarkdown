@@ -2,7 +2,6 @@ package se.alipsa.gmdtest
 
 import javafx.application.Application
 import javafx.application.Platform
-import javafx.concurrent.Task
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.control.TextArea
@@ -20,6 +19,14 @@ class GmdTestGui extends Application {
 
   TextField tf = new TextField()
   TextArea ta
+
+  private void updateStatus(String message) {
+    if (Platform.isFxApplicationThread()) {
+      tf.setText(message)
+    } else {
+      Platform.runLater { tf.setText(message) }
+    }
+  }
 
   static void main(String[] args) {
     launch(GmdTestGui.class, args)
@@ -71,15 +78,16 @@ class GmdTestGui extends Application {
     HBox.setHgrow(toFile, Priority.ALWAYS)
     Button openPdfButton = new Button("Open PDF")
     openPdfButton.setOnAction {
+      String text = ta.getText()
       Thread.start {
         try {
-          tf.setText("Creating pdf file...")
+          updateStatus("Creating pdf file...")
           Gmd gmd = new Gmd()
-          gmd.gmdToPdf(ta.getText(), file)
-          tf.setText("Opening pdf file...")
+          gmd.gmdToPdf(text, file)
+          updateStatus("Opening pdf file...")
           Desktop.desktop.open(file)
         } catch (Exception e) {
-          tf.setText(e.getMessage() + "; " + e.getCause())
+          updateStatus(e.getMessage() + "; " + e.getCause())
         }
       }
     }
@@ -87,16 +95,16 @@ class GmdTestGui extends Application {
 
     exportButton.setOnAction {
       final String filePath = toFile.getText()
-      tf.setText("Exporting to pdf file...")
+      updateStatus("Exporting to pdf file...")
+      final String text = ta.getText()
       Thread.start {
         try {
-          String txt = ta.getText()
           File f = new File(filePath)
           Gmd gmd = new Gmd()
-          gmd.gmdToPdf(txt, f)
-          tf.setText("Exported file to " + filePath + ", size = " + new File(filePath).length() + " bytes")
+          gmd.gmdToPdf(text, f)
+          updateStatus("Exported file to " + filePath + ", size = " + new File(filePath).length() + " bytes")
         } catch (Exception e) {
-          tf.setText(e.getMessage() + "; " + e.getCause())
+          updateStatus(e.getMessage() + "; " + e.getCause())
         }
       }
     }
