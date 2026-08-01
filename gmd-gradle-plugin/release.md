@@ -1,5 +1,11 @@
 # GMD Gradle Plugin release history
 
+## v3.0.3, unreleased
+- resolve platform-specific JavaFX dependencies only for styled `pdf` output
+- keep `md`, `html`, and SVG chart processing JavaFX-free
+- declare `processGmd` inputs and outputs and remove stale generated files
+- validate output types and source/target directories before processing
+
 ## v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version
 - upgrade Gradle wrapper [8.13 -> 9.3.1]

@@ -1,5 +1,12 @@
 # GMD Maven Plugin release history
 
+## v3.0.3, unreleased
+- resolve platform-specific JavaFX dependencies only for styled `pdf` output
+- keep `md`, `html`, and SVG chart processing JavaFX-free
+- resolve relative source and target paths from the Maven project base directory
+- validate output types and source/target directories before processing
+- remove the unconditional JavaFX runtime dependency from the plugin
+
 ## v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version
 - add configurable dependency versions: `groovyVersion`, `log4jVersion`, `gmdVersion`, `ivyVersion`, `javaFxVersion`
