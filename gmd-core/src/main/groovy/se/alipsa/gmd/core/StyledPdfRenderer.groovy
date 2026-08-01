@@ -172,8 +172,13 @@ class StyledPdfRenderer {
       @Override
       void changed(ObservableValue observable, Worker.State oldState, Worker.State newState) {
         // Referencing view here keeps this render's WebView strongly reachable
-        // until the asynchronous load has completed.
-        LOG.debug('WebView {} loading HTML document, state is {}', view, newState)
+        // until the asynchronous load has completed. Keep terminal failures
+        // visible at the default log level for slow or failed PDF diagnostics.
+        if (newState == Worker.State.FAILED || newState == Worker.State.CANCELLED) {
+          LOG.warn('WebView {} loading HTML document ended in state {}', view, newState)
+        } else {
+          LOG.debug('WebView {} loading HTML document, state is {}', view, newState)
+        }
         if (newState == Worker.State.SUCCEEDED) {
           try {
             Document document = engine.document
