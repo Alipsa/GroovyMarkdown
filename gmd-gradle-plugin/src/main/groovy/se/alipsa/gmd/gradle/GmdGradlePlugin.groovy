@@ -43,10 +43,8 @@ class GmdGradlePlugin implements Plugin<Project> {
         String outputType= extension.outputType.getOrElse('md').trim().toLowerCase(Locale.ROOT)
         String groovyVersion = extension.groovyVersion.getOrElse('5.0.8')
         String log4jVersion = extension.log4jVersion.getOrElse('2.26.1')
-        String gmdVersion = extension.gmdVersion.getOrElse('3.0.2')
+        String gmdVersion = extension.gmdVersion.getOrElse('3.1.0')
         String ivyVersion = extension.ivyVersion.getOrElse('2.6.0')
-        String javaFxVersion = extension.javaFxVersion.getOrElse('23.0.2')
-
         if (!['md', 'html', 'pdf'].contains(outputType)) {
           throw new IllegalArgumentException("Unknown output type ${outputType}, expected either md, html or pdf")
         }
@@ -67,7 +65,7 @@ class GmdGradlePlugin implements Plugin<Project> {
 
         List<ArtifactRepository> addedRepositories = []
         Configuration configuration = addDependencies(project, addedRepositories,
-            groovyVersion, log4jVersion, gmdVersion, ivyVersion, javaFxVersion, outputType
+            groovyVersion, log4jVersion, gmdVersion, ivyVersion
         )
         // a configuration is a FileCollection, no need to call resolve()
         def result = execOperations.javaexec( a -> {
@@ -111,14 +109,7 @@ class GmdGradlePlugin implements Plugin<Project> {
 
   static Configuration addDependencies(Project project, List<ArtifactRepository> addedRepositories,
                                        String groovyVersion, String log4jVersion, String gmdVersion,
-                                       String ivyVersion, String javaFxVersion) {
-    return addDependencies(project, addedRepositories, groovyVersion, log4jVersion, gmdVersion,
-        ivyVersion, javaFxVersion, 'md')
-  }
-
-  static Configuration addDependencies(Project project, List<ArtifactRepository> addedRepositories,
-                                       String groovyVersion, String log4jVersion, String gmdVersion,
-                                       String ivyVersion, String javaFxVersion, String outputType) {
+                                       String ivyVersion) {
     def mavenCentral = project.repositories.mavenCentral()
     if (!hasRepository(project, mavenCentral)) {
       project.repositories.add(mavenCentral)
@@ -134,34 +125,7 @@ class GmdGradlePlugin implements Plugin<Project> {
         project.dependencies.create("se.alipsa.gmd:gmd-core:${gmdVersion}")
     ]
 
-    // Only the styled PDF mode needs JavaFX. In particular, chart rendering
-    // uses SVG and must not pull JavaFX into this detached configuration.
-    if ('pdf'.equalsIgnoreCase(outputType)) {
-      String platform = platformClassifier()
-      dependencies.addAll([
-          project.dependencies.create("org.openjfx:javafx-base:${javaFxVersion}:${platform}"),
-          project.dependencies.create("org.openjfx:javafx-graphics:${javaFxVersion}:${platform}"),
-          project.dependencies.create("org.openjfx:javafx-controls:${javaFxVersion}:${platform}"),
-          project.dependencies.create("org.openjfx:javafx-swing:${javaFxVersion}:${platform}"),
-          project.dependencies.create("org.openjfx:javafx-web:${javaFxVersion}:${platform}")
-      ])
-    }
     return project.configurations.detachedConfiguration(dependencies.toArray(new Dependency[0]))
-  }
-
-  private static String platformClassifier() {
-    String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT)
-    String osArch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
-    if (osName.contains("mac") || osName.contains("darwin")) {
-      return osArch.contains("aarch64") || osArch.contains("arm") ? "mac-aarch64" : "mac"
-    }
-    if (osName.contains("linux")) {
-      return "linux"
-    }
-    if (osName.contains("win")) {
-      return "win"
-    }
-    throw new IllegalStateException("Unsupported OS: ${osName}")
   }
 
   private static void cleanStaleGeneratedFiles(Project project, File sourceDir, File targetDir, String outputType) {

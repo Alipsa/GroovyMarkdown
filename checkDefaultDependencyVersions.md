@@ -17,7 +17,6 @@ The script extracts and verifies the default versions for:
 - **Log4j** (`org.apache.logging.log4j:log4j-core`)
 - **GMD Core** (`se.alipsa.gmd:gmd-core`)
 - **Ivy** (`org.apache.ivy:ivy`)
-- **JavaFX** (`org.openjfx:javafx-web`)
 
 For each dependency, it:
 1. Extracts the default version from both plugin source files
@@ -25,9 +24,6 @@ For each dependency, it:
 3. Reports if an update is available
 
 ## Special cases
-
-### JavaFX
-JavaFX 24+ requires Java 23+. Since this project targets Java 21, the script treats JavaFX 23.x as the latest compatible version and doesn't report newer versions as updates.
 
 ### GMD Core
 GMD Core is part of this project, so its version is checked differently. The script:

@@ -9,6 +9,7 @@
   <packaging>pom</packaging>
 
   <modules>
+    <module>highlightjs-jvm</module>
     <module>gmd-core</module>
     <module>gmd-maven-plugin</module>
     <module>gmd-gradle-plugin</module> <!-- see note below -->
@@ -21,13 +22,14 @@
 
   <properties>
     <!-- CI-friendly version: change version in ONE place only -->
-    <revision>3.0.3-SNAPSHOT</revision>
+    <revision>3.1.0-SNAPSHOT</revision>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
     <junit.jupiter.version>6.1.2</junit.jupiter.version>
     <groovy.version>5.0.8</groovy.version>
     <log4j.version>2.26.1</log4j.version>
+    <jsoup.version>1.23.1</jsoup.version>
   </properties>
 
   <licenses>

@@ -21,7 +21,7 @@ Possible parameters are:
 - `targetDir` - the directory where the output files will be created. Default is `build/gmd`
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.1`
-- `gmdVersion` - the version of GMD to use. Default is `3.0.0`
+- `gmdVersion` - the version of GMD to use. Default is `3.1.0`
 - `log4jVersion` - the version of log4j to use. Default is `2.24.3`
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`
 - `runTaskBefore` - the task that the gmd plugin should run before. Default is 'test'
@@ -40,7 +40,7 @@ plugins {
     id('se.alipsa.gmd.gmd-gradle-plugin')
 }
 group = 'my.group'
-version = '3.0.2'
+version = '3.1.0'
 
 gmdPlugin {
     sourceDir = 'src/test/gmd'

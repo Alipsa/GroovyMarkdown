@@ -40,14 +40,11 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
   private String log4jVersion;
 
-  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.0.2")
+  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.1.0")
   private String gmdVersion;
 
   @Parameter(name = "ivyVersion", property = "processGmd.ivyVersion", defaultValue = "2.6.0")
   private String ivyVersion;
-
-  @Parameter(name = "javaFxVersion", property = "processGmd.javaFxVersion", defaultValue = "23.0.2")
-  private String javaFxVersion;
 
   @Parameter(defaultValue = "${project}", readonly = true, required = true)
   private MavenProject project;
@@ -114,7 +111,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of GMD core to use. Default is 3.0.2
+   * The version of GMD core to use. Default is 3.1.0
    *
    * @return The version of GMD core to use.
    */
@@ -129,15 +126,6 @@ public class GmdMavenPlugin extends AbstractMojo {
    */
   public String getIvyVersion() {
     return ivyVersion;
-  }
-
-  /**
-   * The version of JavaFX to use. Default is 23.0.2
-   *
-   * @return The version of JavaFX to use.
-   */
-  public String getJavaFxVersion() {
-    return javaFxVersion;
   }
 
   @Override
@@ -170,7 +158,7 @@ public class GmdMavenPlugin extends AbstractMojo {
 
       if (canResolveDependencies) {
         // Resolve dependencies with specified versions
-        List<File> classpathFiles = resolveDependencies(normalizedOutputType);
+        List<File> classpathFiles = resolveDependencies();
 
         // Build classpath string
         StringBuilder classpath = new StringBuilder();
@@ -223,7 +211,7 @@ public class GmdMavenPlugin extends AbstractMojo {
     }
   }
 
-  private List<File> resolveDependencies(String normalizedOutputType) throws DependencyResolutionException {
+  private List<File> resolveDependencies() throws DependencyResolutionException {
     RepositorySystemSession repoSession = session.getRepositorySession();
 
     List<Dependency> dependencies = new ArrayList<>();
@@ -233,17 +221,6 @@ public class GmdMavenPlugin extends AbstractMojo {
     dependencies.add(new Dependency(new DefaultArtifact("org.apache.ivy:ivy:" + ivyVersion), "runtime"));
     dependencies.add(new Dependency(new DefaultArtifact("org.apache.logging.log4j:log4j-core:" + log4jVersion), "runtime"));
     dependencies.add(new Dependency(new DefaultArtifact("se.alipsa.gmd:gmd-core:" + gmdVersion), "runtime"));
-
-    // The plugin's pdf mode is the existing styled-PDF mode. JavaFX is not
-    // placed on Markdown, HTML, or chart-only forked classpaths.
-    if ("pdf".equals(normalizedOutputType)) {
-      String platform = platformClassifier();
-      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-base", platform, "jar", javaFxVersion), "runtime"));
-      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-graphics", platform, "jar", javaFxVersion), "runtime"));
-      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-controls", platform, "jar", javaFxVersion), "runtime"));
-      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-swing", platform, "jar", javaFxVersion), "runtime"));
-      dependencies.add(new Dependency(new DefaultArtifact("org.openjfx", "javafx-web", platform, "jar", javaFxVersion), "runtime"));
-    }
 
     CollectRequest collectRequest = new CollectRequest();
     collectRequest.setDependencies(dependencies);
@@ -275,21 +252,6 @@ public class GmdMavenPlugin extends AbstractMojo {
     }
     File candidate = new File(path);
     return candidate.isAbsolute() ? candidate : new File(project.getBasedir(), path);
-  }
-
-  private String platformClassifier() {
-    String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-    String osArch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
-    if (osName.contains("mac") || osName.contains("darwin")) {
-      return (osArch.contains("aarch64") || osArch.contains("arm")) ? "mac-aarch64" : "mac";
-    }
-    if (osName.contains("linux")) {
-      return "linux";
-    }
-    if (osName.contains("win")) {
-      return "win";
-    }
-    throw new IllegalStateException("Unsupported OS: " + osName);
   }
 
   private String getJavaExecutable() {

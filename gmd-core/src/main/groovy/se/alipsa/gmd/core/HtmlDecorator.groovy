@@ -8,21 +8,9 @@ class HtmlDecorator {
   private static final Logger log = LogManager.getLogger(HtmlDecorator.class)
 
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
-  public static final String HIGHLIGHT_JS_SCRIPT_PATH = "/highlightJs/highlight.min.js"
   // "/META-INF/resources/webjars/bootstrap/5.2.3/css/bootstrap.min.css"
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
-  public static final String HIGHLIGHT_JS_INIT = "\n<script>hljs.highlightAll();</script>\n"
   public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
-  public static final String HIGHLIGHT_JS_SCRIPT = script(HIGHLIGHT_JS_SCRIPT_PATH) +
-          script("/highlightJs/languages/groovy.min.js") +
-          script("/highlightJs/languages/r.min.js") +
-          script("/highlightJs/languages/java.min.js") +
-          script("/highlightJs/languages/sas.min.js") +
-          script("/highlightJs/languages/java.min.js") +
-          script("/highlightJs/languages/json.min.js") +
-          script("/highlightJs/languages/markdown.min.js") +
-          script("/highlightJs/languages/python.min.js") +
-          script("/highlightJs/languages/sql.min.js")
 
   public static final String BOOTSTRAP_CSS = resourceUrlExternalForm(BOOTSTRAP_CSS_PATH)
 
@@ -96,14 +84,9 @@ class HtmlDecorator {
         .hljs-literal { color: MidnightBlue }
       </style>
       """.stripIndent()
-  private static final String HIGHLIGHT_JS = getHighlightJs(true)
   private static final String BOOTSTRAP_STYLE = getBootstrapStyle(true)
 
   private static String HIGHLIGHT_STYLE = getHighlightStyle(true)
-
-  private static String script(String path) {
-    return  "<script src='" + resourceUrlExternalForm(path) + "'></script>\n"
-  }
 
   private static String resourceUrlExternalForm(String resource) {
     URL url = HtmlDecorator.class.getResource(resource)
@@ -151,10 +134,6 @@ class HtmlDecorator {
           sb.append("\n</head>\n<body>\n")
         }
         sb.append(html).append("\n</body>\n")
-        if (withHighlight) {
-          sb.append(HIGHLIGHT_JS)
-              .append(HIGHLIGHT_JS_INIT)
-        }
         sb.append("\n</html>")
         return sb.toString()
   }
@@ -168,17 +147,6 @@ class HtmlDecorator {
       }
     }
     return HIGHLIGHT_JS_CSS
-  }
-
-  private static String getHighlightJs(boolean embed) {
-    if (embed) {
-      try {
-        return "\n<script>" + resourceContent(HIGHLIGHT_JS_SCRIPT_PATH) + "</script>\n"
-      } catch (IOException e) {
-        log.warn("Failed to get content of highlight js, falling back to external link.", e)
-      }
-    }
-    return HIGHLIGHT_JS_SCRIPT
   }
 
   private static String getBootstrapStyle(boolean embed) {

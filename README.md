@@ -126,13 +126,11 @@ to write `X = ∑(√2π + ∛3)`, you could do `X = &amp;sum;(&amp;radic;2&amp;
 expression with parenthesis as appropriate. Otherwise, it will show up as `X = ?(?2? + ?3)` when you turn it into html or pdf.
 See [HTML Math Symbols](https://www.toptal.com/designers/htmlarrows/math/) for an extensive list.
 An alternative is to generate a whole html doc encoded in UTF-8 that includes unicode fonts. 
-The gmdToHtmlDoc() and mdToHtmlDoc() does just that. Those methods also includes highlightJs and Bootstrap in the html.
+The gmdToHtmlDoc() and mdToHtmlDoc() methods do just that. They include Highlight.js CSS and Bootstrap in the HTML, and insert Highlight.js markup into code blocks before returning.
 
-HighlightJS requires the execution of the highligtJs init script for the code sections to be properly formatted. 
-In order for this to happen, the html code need to be rendered in a browser with javascript support. 
+Gmd highlights fenced code blocks before PDF rendering using the Highlight.js string API. The resulting HTML contains the `hljs-*` spans directly, so no browser, JavaScript-enabled WebView, or JavaFX runtime is required.
 
-Gmd supports processing the javascript by running it in the JavaFx WebView as in the following 
-example usage:
+The regular PDF API can be used directly:
 
 ```groovy
 def text = """
@@ -156,14 +154,11 @@ println('q is ' + q)
 X = ∑(√2π + ∛3) = `=Math.sqrt(2* Math.PI) + Math.cbrt(3)`
 """
 def gmd = new Gmd()
-def html = gmd.gmdToHtmlDoc(text)
 
-// create a pdf file from the html
+// create a pdf file directly
 def pdfFile = File.createTempFile("test", ".pdf")
-gmd.processHtmlAndSaveAsPdf(html, pdfFile)
+gmd.gmdToPdf(text, pdfFile)
 ```
-Alternatives to using JavaFx WebView might be [Web-K](https://github.com/Earnix/Web-K) or [J2V8](https://github.com/eclipsesource/J2V8)
-, but I have not tested any of those.
 
 To use it from within a JavaFx application see the [GmdTestGui](https://github.com/Alipsa/gmd/tree/main/GmdTestGui/src/main/groovy/se/alipsa/gmdtest/GmdTestGui.groovy) 
 for an approach that I found to provide the best performance and usability.
@@ -173,7 +168,7 @@ The library, which requires Java 21 or later, is available from maven central:
 Gradle: 
 ```groovy
 def groovyVersion = '5.0.8' // any 4.x version should work
-implementation "se.alipsa.gmd:gmd-core:3.0.2"
+implementation "se.alipsa.gmd:gmd-core:3.1.0"
 implementation "org.apache.groovy:groovy:${groovyVersion}"
 implementation "org.apache.groovy:groovy-templates:${groovyVersion}"
 implementation "org.apache.groovy:groovy-jsr223:${groovyVersion}"
@@ -187,7 +182,7 @@ Maven:
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.0.2</version>
+      <version>3.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
@@ -213,14 +208,14 @@ Maven:
 </build>
 ```
 ## Using Gmd from the command line
-The release artifacts on github contains a fat jar (e.g. gmd-3.0.0.jar)
+The release artifacts on github contains a fat jar (e.g. gmd-3.1.0.jar)
 that enables you to use Gmd from the command line.
 ```
-java -jar gmd-3.0.2.jar toHtml test.gmd test.html
+java -jar gmd-3.1.0.jar toHtml test.gmd test.html
 ```
 or for a pdf:
 ```
-java -jar gmd-3.0.2.jar toPdf test.gmd test.pdf
+java -jar gmd-3.1.0.jar toPdf test.gmd test.pdf
 ```
 Note: If you don't want the styled (highlight) PDF version you can use toPdfRaw instead.
 

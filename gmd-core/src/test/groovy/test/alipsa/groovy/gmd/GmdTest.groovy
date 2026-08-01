@@ -2,12 +2,14 @@ package test.alipsa.groovy.gmd
 
 import org.apache.commons.io.IOUtils
 
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 import static org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.Gmd
+import se.alipsa.gmd.core.GmdException
 
 class GmdTest extends AbstractGmdTest {
 
@@ -40,6 +42,26 @@ class GmdTest extends AbstractGmdTest {
         Now, that's something to look forward to!
         
         """.stripIndent()
+
+  @Test
+  void wrapsUncheckedPdfRenderingFailures() {
+    def gmd = new Gmd() {
+      @Override
+      void htmlToPdf(String html, File file) throws IOException {
+        throw new IllegalStateException('rendering failed')
+      }
+    }
+
+    def exception = assertThrows(GmdException) {
+      gmd.gmdToPdf('# Test', new File(AbstractGmdTest.testOutputDir, 'failed.pdf'))
+    }
+    def processException = assertThrows(GmdException) {
+      gmd.processHtmlAndSaveAsPdf('<p>Test</p>', new File(AbstractGmdTest.testOutputDir, 'failed-process.pdf'))
+    }
+
+    assertInstanceOf(IllegalStateException, exception.cause)
+    assertInstanceOf(IllegalStateException, processException.cause)
+  }
 
   @Test
   void gmdToHtmlFile() {
@@ -299,29 +321,13 @@ class GmdTest extends AbstractGmdTest {
     def gmd = new Gmd()
 
     def html = gmd.gmdToHtmlDoc(text)
-    assertTrue (html.contains("""\
-      <h1>Test</h1>
-      <p>Hello 1<br />
-      Hello 2<br />
-      Hello 3</p>
-      <ul>
-      <li>first</li>
-      <li>second</li>
-      </ul>
-      <pre><code class="language-groovy">def q = 213
-      println('q is ' + q)
-      </code></pre>
-      <p>X = ∑(√2π + ∛3)<br />
-      X = ∑(√2π + ∛3)</p>
-      
-      </body>""".stripIndent()), html)
-    assertTrue(html.startsWith("""\
-      <!DOCTYPE html PUBLIC
-      "-//OPENHTMLTOPDF//MATH XHTML Character Entities With MathML 1.0//EN" "">
-      <html>""".stripIndent()), "Doctype declaration is missing\n" + html)
+    assertTrue(html.contains('<h1>Test</h1>'), html)
+    assertTrue(html.contains('<pre><code class="language-groovy hljs">'), html)
+    assertTrue(html.contains('hljs-keyword'), html)
+    assertTrue(html.startsWith("<!DOCTYPE html PUBLIC"), "Doctype declaration is missing\n" + html)
     assertTrue(html.contains("code.hljs{"), "Highligtjs style missing:\n" + html)
     assertTrue(html.contains("bs-blue:"), "Bootrap style missing:\n" + html)
-    assertTrue(html.contains("hljs=function()"), "highlighJs init script missing")
+    assertFalse(html.contains("highlightAll"), "Highlight.js should not be executed in the decorated HTML")
   }
 
   @Test

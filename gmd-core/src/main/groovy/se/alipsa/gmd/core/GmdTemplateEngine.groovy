@@ -143,6 +143,6 @@ class GmdTemplateEngine {
 
     @Override
     String toString() {
-        return "Groovy Markdown Processor, ver 3.0.0"
+        return "Groovy Markdown Processor, ver 3.1.0"
     }
 }

@@ -1,8 +1,7 @@
 # GMD Gradle Plugin release history
 
-## v3.0.3, unreleased
-- resolve platform-specific JavaFX dependencies only for styled `pdf` output
-- keep `md`, `html`, and SVG chart processing JavaFX-free
+## v3.1.0, unreleased
+- resolve all output types without JavaFX dependencies
 - declare `processGmd` inputs and outputs and remove stale generated files
 - validate output types and source/target directories before processing
 
@@ -10,7 +9,5 @@
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version
 - upgrade Gradle wrapper [8.13 -> 9.3.1]
 - upgrade test baseline to JUnit BOM [5.13.4 -> 6.0.2]
-- add configurable `javaFxVersion` parameter
-- include platform-specific JavaFX runtime dependencies (`javafx-base`, `javafx-graphics`, `javafx-controls`, `javafx-swing`, `javafx-web`)
 - update plugin defaults to current stack (`groovy 5.0.8`, `log4j 2.26.1`, `gmd 3.0.2`)
 - upgrade Maven-side `exec-maven-plugin` [3.5.1 -> 3.6.3]

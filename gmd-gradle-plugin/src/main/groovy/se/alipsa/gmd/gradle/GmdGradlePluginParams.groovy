@@ -36,7 +36,7 @@ interface GmdGradlePluginParams {
   Property<String> getLog4jVersion()
 
   /**
-   * The version of GMD to use. Default is 3.0.0
+   * The version of GMD to use. Default is 3.1.0
    */
   Property<String> getGmdVersion()
 
@@ -44,8 +44,6 @@ interface GmdGradlePluginParams {
    * The version of Ivy to use. Default is 2.6.0
    */
   Property<String> getIvyVersion()
-
-  Property<String> getJavaFxVersion()
 
   /**
    * The task that the gmd plugin should run before. Default is 'test'
