@@ -42,9 +42,6 @@ class StyledPdfRenderer {
   private static final String JAVAFX_VERSION = '23.0.2'
   private static final int TIMEOUT_SECONDS = 15
 
-  // Keep the WebView alive until the asynchronous load has completed.
-  private static WebView webView
-
   static void render(String html, File target, boolean exitOnFinish = false) throws GmdException {
     ensureJavaFxAvailable()
     if (html == null) {
@@ -61,8 +58,10 @@ class StyledPdfRenderer {
       AtomicReference<Throwable> failure = new AtomicReference<>()
       Platform.runLater {
         try {
-          webView = new WebView()
-          loadAndSavePdf(html, target, webView, failure, completed)
+          // Keep this render's WebView alive through the listener closure;
+          // concurrent renders must never share mutable WebView state.
+          WebView view = new WebView()
+          loadAndSavePdf(html, target, view, failure, completed)
         } catch (Throwable t) {
           failure.set(t)
           completed.countDown()
@@ -172,7 +171,9 @@ class StyledPdfRenderer {
     engine.loadWorker.stateProperty().addListener(new ChangeListener<Worker.State>() {
       @Override
       void changed(ObservableValue observable, Worker.State oldState, Worker.State newState) {
-        LOG.info('Loading HTML document in WebView, state is {}', newState)
+        // Referencing view here keeps this render's WebView strongly reachable
+        // until the asynchronous load has completed.
+        LOG.debug('WebView {} loading HTML document, state is {}', view, newState)
         if (newState == Worker.State.SUCCEEDED) {
           try {
             Document document = engine.document

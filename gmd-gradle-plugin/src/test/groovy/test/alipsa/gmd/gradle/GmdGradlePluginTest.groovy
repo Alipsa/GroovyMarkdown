@@ -20,6 +20,8 @@ class GmdGradlePluginTest {
       srcDir.mkdirs()
       targetDir = new File(testProjectDir, 'build/target')
       targetDir.mkdirs()
+      File staleOutput = new File(targetDir, 'stale.html')
+      staleOutput.text = 'stale generated output'
 
       def gmdFile = new File(srcDir, 'test.gmd')
       gmdFile.text = """
@@ -99,6 +101,7 @@ class GmdGradlePluginTest {
       assert testInlineHtml.text.contains("<h1>Inline</h1>")
       assert testInlineHtml.text.contains("Today is ")
       assert testInlineHtml.text.contains(" and the time is ")
+      Assertions.assertFalse(staleOutput.exists(), 'Stale generated output should be removed')
       // cleanup
       AntBuilder ant = new AntBuilder()
       ant.delete(dir: testProjectDir, failonerror: false)

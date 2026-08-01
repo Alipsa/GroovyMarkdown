@@ -63,7 +63,7 @@ class GmdGradlePlugin implements Plugin<Project> {
           throw new IllegalArgumentException("Target path ${targetDir.canonicalPath} is a file, not a directory")
         }
         project.logger.info("Processing GMD in ${sourceDir} -> ${targetDir}, type: ${outputType}")
-        cleanStaleGeneratedFiles(sourceDir, targetDir, outputType)
+        cleanStaleGeneratedFiles(project, sourceDir, targetDir, outputType)
 
         List<ArtifactRepository> addedRepositories = []
         Configuration configuration = addDependencies(project, addedRepositories,
@@ -164,7 +164,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     throw new IllegalStateException("Unsupported OS: ${osName}")
   }
 
-  private static void cleanStaleGeneratedFiles(File sourceDir, File targetDir, String outputType) {
+  private static void cleanStaleGeneratedFiles(Project project, File sourceDir, File targetDir, String outputType) {
     Set<String> expected = [] as Set
     File[] sources = sourceDir.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
     if (sources != null) {
@@ -177,7 +177,13 @@ class GmdGradlePlugin implements Plugin<Project> {
       file.isFile() && (file.name.endsWith('.md') || file.name.endsWith('.html') || file.name.endsWith('.pdf'))
     } as FileFilter)
     if (generated != null) {
-      generated.findAll { !expected.contains(it.name) }.each { it.delete() }
+      generated.findAll { !expected.contains(it.name) }.each { File file ->
+        if (file.delete()) {
+          project.logger.lifecycle("Removed stale generated GMD output ${file.absolutePath}")
+        } else {
+          project.logger.warn("Could not remove stale generated GMD output ${file.absolutePath}")
+        }
+      }
     }
   }
 
