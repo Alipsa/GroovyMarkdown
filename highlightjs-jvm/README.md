@@ -32,9 +32,10 @@ chaining, so **no polyfills are injected and nothing is hand-edited**. Rhino can
 which is the entire reason the transpile exists.
 
 The toolchain is pinned by `package.json` and `package-lock.json` and installed with
-`npm ci`, so the output is byte-reproducible. `./buildBundle.sh --verify` regenerates to a
-temp file and diffs against the committed bundle, exiting non-zero if it is stale. Maven
-never runs any of this, so a normal build needs no Node.
+`npm ci`, so the output is byte-reproducible. Bundle generation requires Node.js 22.18.0 or
+newer. `./buildBundle.sh --verify` regenerates to a temp file and diffs against the committed
+bundle, exiting non-zero if it is stale. Maven never runs any of this, so a normal build needs
+no Node.
 
 To upgrade Highlight.js, replace `source/highlightJs` with a newer `@highlightjs/cdn-assets`
 release, run `./buildBundle.sh`, and commit the result.
