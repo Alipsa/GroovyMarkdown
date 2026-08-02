@@ -26,12 +26,12 @@ interface GmdGradlePluginParams {
   Property<String> getOutputType()
 
   /**
-   * The version of Groovy to use. Default is 5.0.1
+   * The version of Groovy to use. Default is 5.0.8
    */
   Property<String> getGroovyVersion()
 
   /**
-   * The version of Log4j to use. Default is 2.24.3
+   * The version of Log4j to use. Default is 2.26.1
    */
   Property<String> getLog4jVersion()
 

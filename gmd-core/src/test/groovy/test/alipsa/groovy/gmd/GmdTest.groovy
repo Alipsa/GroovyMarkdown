@@ -97,6 +97,47 @@ class GmdTest extends AbstractGmdTest {
   }
 
   @Test
+  void toPdfRawIsUndecorated() {
+    File source = new File(AbstractGmdTest.testOutputDir, 'rawVsStyled.gmd')
+    source.text = "# Test\n\n```groovy\ndef a = 1\n```\n"
+
+    File styled = new File(AbstractGmdTest.testOutputDir, 'styled.pdf')
+    File raw = new File(AbstractGmdTest.testOutputDir, 'raw.pdf')
+    if (styled.exists()) styled.delete()
+    if (raw.exists()) raw.delete()
+
+    Gmd.main('toPdf', source.absolutePath, styled.absolutePath)
+    Gmd.main('toPdfRaw', source.absolutePath, raw.absolutePath)
+
+    assertTrue(styled.exists(), 'styled pdf was not written')
+    assertTrue(raw.exists(), 'raw pdf was not written')
+    assertTrue(embedsCustomFont(styled),
+        "The styled pdf should embed the decorated fonts, found: ${fontNames(styled)}")
+    assertFalse(embedsCustomFont(raw),
+        "The raw pdf should not embed decorated fonts, found: ${fontNames(raw)}")
+  }
+
+  private static Set<String> fontNames(File pdf) {
+    Set<String> names = []
+    def doc = org.apache.pdfbox.Loader.loadPDF(pdf)
+    try {
+      doc.pages.each { page ->
+        page.resources?.fontNames?.each { name ->
+          def font = page.resources.getFont(name)
+          if (font?.name != null) names << font.name
+        }
+      }
+    } finally {
+      doc.close()
+    }
+    return names
+  }
+
+  private static boolean embedsCustomFont(File pdf) {
+    fontNames(pdf).any { it =~ /(?i)roboto|dejavu|courier ?prime/ }
+  }
+
+  @Test
   void gmdToMd() {
     def gmd = new Gmd()
     def md = gmd.gmdToMd(text)
@@ -151,6 +192,71 @@ class GmdTest extends AbstractGmdTest {
     def gmd = new Gmd()
     def md = gmd.gmdToMd(text, [name: "Per"])
     assertEquals("## Hello Per!", md)
+  }
+
+  @Test
+  void missingStyleResourceIsOmittedRatherThanLinkedToNothing() {
+    def method = se.alipsa.gmd.core.HtmlDecorator.class.getDeclaredMethod('getHighlightStyle', boolean, String)
+    method.setAccessible(true)
+
+    String missing = method.invoke(null, true, '/highlightJs/styles/no-such-file.css')
+    assertEquals('', missing,
+        "A missing stylesheet must return exactly an empty string, not link with an empty href: [$missing]")
+
+    String present = method.invoke(null, false, se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS_PATH)
+    assertTrue(present.contains('<link'), present)
+    assertFalse(present.contains("href=''"), "The fallback link needs a real href: $present")
+    assertTrue(present.contains('default.min.css'), present)
+  }
+
+  @Test
+  void missingBootstrapResourceIsAlsoOmittedRatherThanLinkedToNothing() {
+    def method = se.alipsa.gmd.core.HtmlDecorator.class.getDeclaredMethod('getBootstrapStyle', boolean, String)
+    method.setAccessible(true)
+
+    String missing = method.invoke(null, true,
+        '/META-INF/resources/webjars/bootstrap/0.0.0/css/bootstrap.css')
+    assertEquals('', missing,
+        "A missing bootstrap stylesheet must return exactly an empty string, not link with an empty href: [$missing]")
+
+    String present = method.invoke(null, false, se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH)
+    assertTrue(present.contains('<link'), present)
+    assertFalse(present.contains("href=''"), "The fallback link needs a real href: $present")
+    assertTrue(present.contains('bootstrap'), present)
+  }
+
+  @Test
+  void nullInputIsRejectedClearly() {
+    def gmd = new Gmd()
+
+    def mdError = assertThrows(IllegalArgumentException) { gmd.mdToHtml((String) null) }
+    def gmdError = assertThrows(IllegalArgumentException) { gmd.gmdToMd((String) null) }
+
+    assertTrue(mdError.message.toLowerCase().contains('markdown'), mdError.message)
+    assertTrue(gmdError.message.toLowerCase().contains('gmd'), gmdError.message)
+  }
+
+  @Test
+  void codeBlockFailuresAreStillWrappedAndNameTheBlock() {
+    def gmd = new Gmd()
+
+    def error = assertThrows(GmdException) {
+      gmd.gmdToMd("```{groovy}\nthrow new RuntimeException('boom')\n```")
+    }
+
+    assertTrue(error.message.contains('boom') || error.cause.toString().contains('boom'),
+        "The cause should be discoverable: ${error.message} / ${error.cause}")
+  }
+
+  @Test
+  void illegalArgumentFromUserCodeIsStillWrapped() {
+    def gmd = new Gmd()
+
+    def error = assertThrows(GmdException) {
+      gmd.gmdToMd("```{groovy}\nthrow new IllegalArgumentException('from user code')\n```")
+    }
+
+    assertTrue(error.message.contains('code block'), error.message)
   }
 
   @Test

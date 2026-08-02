@@ -56,7 +56,7 @@ class Html {
     StringBuilder attr = new StringBuilder()
     if (attributes.size() > 0) {
       attributes.each {
-        attr.append(it.key).append('=').append(it.value).append(' ')
+        attr.append(it.key).append('="').append(it.value).append('" ')
       }
     }
     return "<img alt='${alt}' src='${base64String}' ${attr.toString()} />"
@@ -67,12 +67,12 @@ class Html {
     StringBuilder attr = new StringBuilder()
     if (htmlattr.size() > 0) {
       htmlattr.each {
-        attr.append(it.key).append('=').append(it.value).append(' ')
+        attr.append(it.key).append('="').append(it.value).append('" ')
       }
     }
     sb.append('<table ').append(attr).append('><thead><tr>')
-    table.columnNames().each {
-      sb.append('<th>').append(it).append('<th>')
+      table.columnNames().each {
+      sb.append('<th>').append(it).append('</th>')
     }
     sb.append('</tr></thead><tbody>')
     table.rows().each { row ->

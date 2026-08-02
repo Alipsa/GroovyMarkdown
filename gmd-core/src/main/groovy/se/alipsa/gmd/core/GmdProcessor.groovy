@@ -58,7 +58,7 @@ class GmdProcessor {
         String content = Files.readString(file.toPath(), StandardCharsets.UTF_8)
         switch (normalizedOutputType) {
           case 'md': Files.writeString(outputFile.toPath(), gmd.gmdToMd(content), StandardCharsets.UTF_8); break
-          case 'html': Files.writeString(outputFile.toPath(), gmd.gmdToHtml(content), StandardCharsets.UTF_8); break
+          case 'html': Files.writeString(outputFile.toPath(), gmd.gmdToHtmlDoc(content), StandardCharsets.UTF_8); break
           case 'pdf': gmd.gmdToPdf(content, outputFile); break
         }
       }

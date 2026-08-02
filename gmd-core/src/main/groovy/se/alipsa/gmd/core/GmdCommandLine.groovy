@@ -36,7 +36,11 @@ class GmdCommandLine {
   static Closure toPdfRaw(String from, String to) {
     return {
       Gmd gmd = new Gmd()
-      def html = gmdFileToHtml(from, gmd)
+      File fromFile = new File(from)
+      if (!fromFile.exists()) {
+        throw new IllegalArgumentException("From file $fromFile does not exist")
+      }
+      def html = gmd.gmdToHtml(Files.readString(fromFile.toPath(), StandardCharsets.UTF_8))
       File toFile = new File(to)
       gmd.htmlToPdf(html, toFile)
       println "Wrote $toFile.absolutePath"
@@ -48,7 +52,7 @@ class GmdCommandLine {
       Gmd gmd = new Gmd()
       def html = gmdFileToHtml(from, gmd)
       File toFile = new File(to)
-      gmd.processHtmlAndSaveAsPdf(html, toFile)
+      gmd.htmlToPdf(html, toFile)
       println "Wrote $toFile.absolutePath"
     }
   }

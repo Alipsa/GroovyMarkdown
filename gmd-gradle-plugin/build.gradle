@@ -38,14 +38,6 @@ dependencies {
   testImplementation 'org.junit.platform:junit-platform-launcher'
 }
 
-sourceSets {
-  test {
-    java {
-      srcDirs = ['src/test/gmd']
-    }
-  }
-}
-
 test {
   useJUnitPlatform()
   testLogging {

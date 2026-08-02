@@ -1,7 +1,7 @@
 # Gmd Release History
 
 ## v3.1.0, unreleased
-- add the independent `highlightjs-jvm` module using Nashorn and a transpiled ES5 Highlight.js bundle
+- add the independent `highlightjs-jvm` module using Rhino and a syntax-transpiled Highlight.js bundle
 - highlight code blocks synchronously before PDF rendering
 - remove JavaFX and WebView from core PDF processing
 - render Matrix `Chart` and `MatrixXChart` output as SVG data URIs instead of PNGs
@@ -11,6 +11,13 @@
 - wrap unchecked PDF rendering failures in `GmdException`
 - remove obsolete Highlight.js JavaScript and language resources from gmd-core
 - add idempotency coverage for already-highlighted HTML blocks
+- leave untagged and unknown-language code blocks unhighlighted
+- write complete html documents from GmdProcessor (affects the Maven and Gradle plugins)
+- make toPdfRaw produce an undecorated pdf, distinct from toPdf
+- stop expanding inline expressions inside plain (backtick and tilde) code fences
+- close th tags and quote attribute values in Html
+- omit missing stylesheets instead of emitting a link with an empty href
+- restore the Highlight.js stylesheet lost in the source tree move; the jar now ships exactly one theme
 
 ### v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version

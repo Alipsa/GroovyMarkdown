@@ -106,6 +106,10 @@ class Gmd {
    * Process the gmd into markdown and then into the html snippet.
    * This is useful e.g. for embedding that html in a larger html document.
    *
+   * Note: this returns a *fragment*. The File and Writer overloads of gmdToHtml
+   * write a complete decorated document instead - use gmdToHtmlDoc if you want
+   * a standalone page as a String.
+   *
    * @param gmd the Groovy Markdown to process
    * @return the html equivalent of the gmd
    * @throws GmdException
@@ -160,6 +164,9 @@ class Gmd {
   }
 
   String mdToHtml(String markdown) throws GmdException {
+    if (markdown == null) {
+      throw new IllegalArgumentException("The markdown text cannot be null")
+    }
     org.commonmark.node.Node document = parser.parse(markdown)
     return renderer.render(document)
   }

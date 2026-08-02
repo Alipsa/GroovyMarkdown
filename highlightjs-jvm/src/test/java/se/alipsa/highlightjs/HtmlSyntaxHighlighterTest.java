@@ -10,17 +10,38 @@ import static org.jsoup.Jsoup.parse;
 class HtmlSyntaxHighlighterTest {
 
   @Test
-  void highlightsNamedAndAutoDetectedBlocks() {
+  void highlightsBlocksWithAKnownLanguage() {
     var highlighter = new HtmlSyntaxHighlighter();
 
     String html = highlighter.highlightCodeBlocks(
-        "<pre><code class='language-groovy'>def answer = 42</code></pre>"
-            + "<pre><code>select * from users</code></pre>");
+        "<pre><code class='language-groovy'>def answer = 42</code></pre>");
 
     assertTrue(html.contains("class=\"language-groovy hljs\""));
     assertTrue(html.contains("hljs-keyword"));
     assertTrue(html.contains("hljs-number"));
-    assertTrue(html.contains("hljs-built_in") || html.contains("hljs-keyword"));
+  }
+
+  @Test
+  void leavesUntaggedBlocksUnhighlighted() {
+    var highlighter = new HtmlSyntaxHighlighter();
+
+    String html = highlighter.highlightCodeBlocks(
+        "<pre><code>select the option and continue</code></pre>");
+
+    assertFalse(html.contains("hljs-keyword"), "prose must not be auto-detected as code");
+    assertTrue(html.contains("select the option and continue"));
+    assertTrue(html.contains("class=\"hljs\""), "styling class should still be applied");
+  }
+
+  @Test
+  void leavesUnknownLanguageBlocksUnhighlighted() {
+    var highlighter = new HtmlSyntaxHighlighter();
+
+    String html = highlighter.highlightCodeBlocks(
+        "<pre><code class='language-no-such-language'>select the option</code></pre>");
+
+    assertFalse(html.contains("hljs-keyword"));
+    assertTrue(html.contains("select the option"));
   }
 
   @Test

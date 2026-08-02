@@ -138,27 +138,41 @@ class HtmlDecorator {
         return sb.toString()
   }
 
-  private static String getHighlightStyle(boolean embed) {
+  private static String getHighlightStyle(boolean embed, String path = HIGHLIGHT_JS_CSS_PATH) {
     if (embed) {
       try {
-        return "\n<style>\n" + resourceContent(HIGHLIGHT_JS_CSS_PATH) + "\n</style>\n"
-      } catch (IOException e) {
-        log.warn("Failed to get content of highlight css, falling back to external link.", e)
+        return "\n<style>\n" + resourceContent(path) + "\n</style>\n"
+      } catch (IOException | RuntimeException e) {
+        log.debug("Failed to embed ${path}; trying a stylesheet link.", e)
       }
     }
-    return HIGHLIGHT_JS_CSS
+    return styleLink(path, "\n", "\n")
   }
 
-  private static String getBootstrapStyle(boolean embed) {
+  private static String getBootstrapStyle(boolean embed, String path = BOOTSTRAP_CSS_PATH) {
     if (embed) {
       try {
         // @charset directive is not allowed when embedding the stylesheet
-        String css = resourceContent(BOOTSTRAP_CSS_PATH).replace("@charset \"UTF-8\";", "\n")
+        String css = resourceContent(path).replace("@charset \"UTF-8\";", "\n")
         return "\n<style>\n" + css + "\n</style>\n"
-      } catch (IOException e) {
-        log.warn("Failed to read content to embed, resort to external ref instead", e)
+      } catch (IOException | RuntimeException e) {
+        log.debug("Failed to embed ${path}; trying a stylesheet link.", e)
       }
     }
-    return "<link rel='stylesheet' href='" + BOOTSTRAP_CSS + "'>"
+    return styleLink(path, "", "")
+  }
+
+  /**
+   * A stylesheet link, or nothing at all when the resource is not on the
+   * classpath. Linking a resource that does not exist would produce href=''
+   * which is worse than leaving the document unstyled.
+   */
+  private static String styleLink(String path, String prefix, String suffix) {
+    String url = resourceUrlExternalForm(path)
+    if (url.isEmpty()) {
+      log.warn("Stylesheet ${path} is not on the classpath; the document will be unstyled")
+      return ""
+    }
+    return "${prefix}<link rel='stylesheet' href='${url}'>${suffix}"
   }
 }

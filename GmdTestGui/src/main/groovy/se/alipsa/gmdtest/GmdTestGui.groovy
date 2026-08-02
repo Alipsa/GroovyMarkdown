@@ -79,13 +79,15 @@ class GmdTestGui extends Application {
     Button openPdfButton = new Button("Open PDF")
     openPdfButton.setOnAction {
       String text = ta.getText()
+      final String filePath = toFile.getText()
       Thread.start {
         try {
           updateStatus("Creating pdf file...")
+          File target = new File(filePath)
           Gmd gmd = new Gmd()
-          gmd.gmdToPdf(text, file)
+          gmd.gmdToPdf(text, target)
           updateStatus("Opening pdf file...")
-          Desktop.desktop.open(file)
+          Desktop.desktop.open(target)
         } catch (Exception e) {
           updateStatus(e.getMessage() + "; " + e.getCause())
         }

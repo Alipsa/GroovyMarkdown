@@ -12,18 +12,18 @@
 
   <artifactId>highlightjs-jvm</artifactId>
   <name>Highlight.js JVM</name>
-  <description>Thread-safe JVM access to an ES5 Highlight.js bundle and HTML code-block helper</description>
+  <description>Thread-safe JVM access to a Highlight.js bundle and HTML code-block helper</description>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
-    <nashorn.version>15.7</nashorn.version>
+    <rhino.version>1.9.1</rhino.version>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>org.openjdk.nashorn</groupId>
-      <artifactId>nashorn-core</artifactId>
-      <version>${nashorn.version}</version>
+      <groupId>org.mozilla</groupId>
+      <artifactId>rhino</artifactId>
+      <version>${rhino.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jsoup</groupId>
