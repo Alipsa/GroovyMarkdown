@@ -2,7 +2,7 @@
 #
 # Regenerates src/main/resources/highlightJs/highlight.js for Rhino.
 #
-# Requires Node 18+. NOT part of the Maven build - run it by hand when the
+# Requires Node 22.18.0+. NOT part of the Maven build - run it by hand when the
 # Highlight.js distribution changes, then commit the regenerated bundle.
 #
 #   ./buildBundle.sh            regenerate the bundle
@@ -23,13 +23,20 @@ if [ ! -d "$SRC/languages" ]; then
   echo "Missing $SRC - the Highlight.js cdn-assets tree must be present" >&2
   exit 1
 fi
+MIN_NODE_MAJOR=22
+MIN_NODE_MINOR=18
+
 if ! command -v node >/dev/null 2>&1; then
-  echo "Node 18+ is required to regenerate the bundle; none found on PATH" >&2
+  echo "Node 22.18.0+ is required to regenerate the bundle; none found on PATH" >&2
   exit 1
 fi
-NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
-if [ "$NODE_MAJOR" -lt 18 ]; then
-  echo "Node 18+ is required to regenerate the bundle; found $(node --version)" >&2
+NODE_VERSION="$(node -p 'process.versions.node')"
+NODE_MAJOR="${NODE_VERSION%%.*}"
+NODE_MINOR="${NODE_VERSION#*.}"
+NODE_MINOR="${NODE_MINOR%%.*}"
+if [ "$NODE_MAJOR" -lt "$MIN_NODE_MAJOR" ] || \
+   { [ "$NODE_MAJOR" -eq "$MIN_NODE_MAJOR" ] && [ "$NODE_MINOR" -lt "$MIN_NODE_MINOR" ]; }; then
+  echo "Node 22.18.0+ is required to regenerate the bundle; found v$NODE_VERSION" >&2
   exit 1
 fi
 
