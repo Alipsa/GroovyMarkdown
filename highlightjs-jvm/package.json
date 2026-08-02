@@ -1,0 +1,10 @@
+{
+  "name": "highlightjs-jvm-bundle",
+  "private": true,
+  "description": "Build-time only. Transpiles the Highlight.js distribution for Rhino.",
+  "devDependencies": {
+    "@babel/cli": "7.28.3",
+    "@babel/core": "7.28.4",
+    "@babel/preset-env": "7.28.3"
+  }
+}

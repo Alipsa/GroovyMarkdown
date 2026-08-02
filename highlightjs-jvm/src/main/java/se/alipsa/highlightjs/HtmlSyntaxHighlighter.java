@@ -44,12 +44,10 @@ public final class HtmlSyntaxHighlighter {
           .map(name -> name.substring("language-".length()))
           .findFirst()
           .orElse(null);
-      String source = codeElement.wholeText();
-      String highlighted = language == null
-          ? highlighter.highlightAuto(source)
-          : highlighter.highlight(source, language);
-
-      codeElement.html(highlighted);
+      String highlighted = highlighter.highlight(codeElement.wholeText(), language);
+      if (highlighted != null) {
+        codeElement.html(highlighted);
+      }
       codeElement.addClass("hljs");
     }
     return fullDocument ? document.outerHtml() : document.body().html();

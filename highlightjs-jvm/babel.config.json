@@ -1,0 +1,6 @@
+{
+  "comments": true,
+  "presets": [
+    ["@babel/preset-env", { "targets": { "ie": "11" } }]
+  ]
+}

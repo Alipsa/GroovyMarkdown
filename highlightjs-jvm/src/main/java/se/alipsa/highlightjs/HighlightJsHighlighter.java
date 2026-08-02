@@ -1,10 +1,10 @@
 package se.alipsa.highlightjs;
 
-import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.Undefined;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -12,53 +12,74 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Highlight.js implementation backed by a single initialized Nashorn engine.
- * Nashorn is not thread-safe, therefore invocations are synchronized.
+ * Highlight.js running on Rhino.
+ *
+ * The bundle is a syntax-only transpile of the upstream distribution; Rhino
+ * supplies Symbol, Map, Set and Object.assign natively so nothing is polyfilled.
+ * One scope is shared, and Highlight.js keeps mutable state in it, so calls are
+ * synchronized - concurrent use corrupts that state.
  */
 public final class HighlightJsHighlighter implements SyntaxHighlighter {
 
-  private static final String RESOURCE = "/highlightJs/highlight-es5.js";
+  private static final String RESOURCE = "/highlightJs/highlight.js";
   private static final String FUNCTION_NAME = "javaHighlight";
 
-  private final Invocable invocable;
+  private final Scriptable scope;
 
   public HighlightJsHighlighter() {
-    try {
-      ScriptEngine engine = new NashornScriptEngineFactory().getScriptEngine();
-      try (InputStream input = HighlightJsHighlighter.class.getResourceAsStream(RESOURCE)) {
-        if (input == null) {
-          throw new IllegalStateException("Missing Highlight.js resource " + RESOURCE);
-        }
-        try (Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
-          engine.eval(reader);
-        }
+    Context cx = enterContext();
+    try (InputStream input = HighlightJsHighlighter.class.getResourceAsStream(RESOURCE)) {
+      if (input == null) {
+        throw new IllegalStateException("Missing Highlight.js resource " + RESOURCE);
       }
-      invocable = (Invocable) engine;
-    } catch (IOException | ScriptException | RuntimeException e) {
-      throw new IllegalStateException("Could not initialize the Highlight.js Nashorn engine", e);
+      Scriptable created = cx.initStandardObjects();
+      try (Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+        cx.evaluateReader(created, reader, "highlight.js", 1, null);
+      }
+      if (!(created.get(FUNCTION_NAME, created) instanceof Function)) {
+        throw new IllegalStateException("The Highlight.js bundle does not define " + FUNCTION_NAME);
+      }
+      scope = created;
+    } catch (IOException | RuntimeException e) {
+      throw new IllegalStateException("Could not initialize the Highlight.js Rhino engine", e);
+    } finally {
+      Context.exit();
     }
   }
 
   @Override
   public synchronized String highlight(String source, String language) {
-    return invoke(source, language);
-  }
-
-  @Override
-  public synchronized String highlightAuto(String source) {
-    return invoke(source, null);
-  }
-
-  private String invoke(String source, String language) {
     if (source == null) {
       throw new IllegalArgumentException("Source code cannot be null");
     }
+    if (language == null || language.isBlank()) {
+      return null;
+    }
+    Context cx = enterContext();
     try {
-      Object result = invocable.invokeFunction(FUNCTION_NAME, source, language);
-      return result == null ? "" : result.toString();
-    } catch (ScriptException | NoSuchMethodException e) {
-      throw new IllegalArgumentException(
-          "Could not highlight " + (language == null ? "source" : language) + " code", e);
+      Function function = (Function) scope.get(FUNCTION_NAME, scope);
+      Object result = function.call(cx, scope, scope, new Object[]{source, language});
+      if (result == null || Undefined.isUndefined(result)) {
+        return null;
+      }
+      return Context.toString(result);
+    } finally {
+      Context.exit();
+    }
+  }
+
+  private static Context enterContext() {
+    Context cx = Context.enter();
+    try {
+      // Must be set before initStandardObjects for Symbol/Map/Set to be present.
+      cx.setLanguageVersion(Context.VERSION_ES6);
+      // Interpreted mode avoids Rhino's 64K per-method bytecode limit on this
+      // ~1.2 MB script.
+      cx.setInterpretedMode(true);
+      return cx;
+    } catch (RuntimeException e) {
+      Context.exit();
+      throw e;
     }
   }
 }

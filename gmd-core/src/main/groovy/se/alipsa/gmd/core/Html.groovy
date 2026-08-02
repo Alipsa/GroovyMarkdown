@@ -1,5 +1,6 @@
 package se.alipsa.gmd.core
 
+import org.jsoup.nodes.Entities
 import se.alipsa.groovy.svg.Svg
 import se.alipsa.matrix.chartexport.ChartToSvg
 import se.alipsa.matrix.pict.CharmBridge
@@ -56,10 +57,10 @@ class Html {
     StringBuilder attr = new StringBuilder()
     if (attributes.size() > 0) {
       attributes.each {
-        attr.append(it.key).append('=').append(it.value).append(' ')
+        attr.append(it.key).append('="').append(escape(it.value)).append('" ')
       }
     }
-    return "<img alt='${alt}' src='${base64String}' ${attr.toString()} />"
+    return "<img alt=\"${escape(alt)}\" src=\"${escape(base64String)}\" ${attr.toString()} />"
   }
 
   private static String tableToHtml(Matrix table, Map<String, String> htmlattr) {
@@ -67,22 +68,26 @@ class Html {
     StringBuilder attr = new StringBuilder()
     if (htmlattr.size() > 0) {
       htmlattr.each {
-        attr.append(it.key).append('=').append(it.value).append(' ')
+        attr.append(it.key).append('="').append(escape(it.value)).append('" ')
       }
     }
     sb.append('<table ').append(attr).append('><thead><tr>')
     table.columnNames().each {
-      sb.append('<th>').append(it).append('<th>')
+      sb.append('<th>').append(escape(it)).append('</th>')
     }
     sb.append('</tr></thead><tbody>')
     table.rows().each { row ->
       sb.append('<tr>')
       row.each { col ->
-        sb.append('<td>').append(col).append('</td>')
+        sb.append('<td>').append(escape(col)).append('</td>')
       }
       sb.append('</tr>')
     }
     sb.append('</tbody></table>')
     return sb.toString()
+  }
+
+  private static String escape(Object value) {
+    return value == null ? '' : Entities.escape(value.toString())
   }
 }

@@ -8,11 +8,7 @@ class HtmlDecorator {
   private static final Logger log = LogManager.getLogger(HtmlDecorator.class)
 
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
-  // "/META-INF/resources/webjars/bootstrap/5.2.3/css/bootstrap.min.css"
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
-  public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
-
-  public static final String BOOTSTRAP_CSS = resourceUrlExternalForm(BOOTSTRAP_CSS_PATH)
 
   public static final String HTML5_DECLARATION = "<!DOCTYPE html>\n"
   static final XHTML_MATHML_DOCTYPE = "<!DOCTYPE html PUBLIC\n \"-//OPENHTMLTOPDF//MATH XHTML Character Entities With MathML 1.0//EN\" \"\">\n"
@@ -138,27 +134,41 @@ class HtmlDecorator {
         return sb.toString()
   }
 
-  private static String getHighlightStyle(boolean embed) {
+  private static String getHighlightStyle(boolean embed, String path = HIGHLIGHT_JS_CSS_PATH) {
     if (embed) {
       try {
-        return "\n<style>\n" + resourceContent(HIGHLIGHT_JS_CSS_PATH) + "\n</style>\n"
-      } catch (IOException e) {
-        log.warn("Failed to get content of highlight css, falling back to external link.", e)
+        return "\n<style>\n" + resourceContent(path) + "\n</style>\n"
+      } catch (IOException | RuntimeException e) {
+        log.debug("Failed to embed ${path}; trying a stylesheet link.", e)
       }
     }
-    return HIGHLIGHT_JS_CSS
+    return styleLink(path, "\n", "\n")
   }
 
-  private static String getBootstrapStyle(boolean embed) {
+  private static String getBootstrapStyle(boolean embed, String path = BOOTSTRAP_CSS_PATH) {
     if (embed) {
       try {
         // @charset directive is not allowed when embedding the stylesheet
-        String css = resourceContent(BOOTSTRAP_CSS_PATH).replace("@charset \"UTF-8\";", "\n")
+        String css = resourceContent(path).replace("@charset \"UTF-8\";", "\n")
         return "\n<style>\n" + css + "\n</style>\n"
-      } catch (IOException e) {
-        log.warn("Failed to read content to embed, resort to external ref instead", e)
+      } catch (IOException | RuntimeException e) {
+        log.debug("Failed to embed ${path}; trying a stylesheet link.", e)
       }
     }
-    return "<link rel='stylesheet' href='" + BOOTSTRAP_CSS + "'>"
+    return styleLink(path, "", "")
+  }
+
+  /**
+   * A stylesheet link, or nothing at all when the resource is not on the
+   * classpath. Linking a resource that does not exist would produce href=''
+   * which is worse than leaving the document unstyled.
+   */
+  private static String styleLink(String path, String prefix, String suffix) {
+    String url = resourceUrlExternalForm(path)
+    if (url.isEmpty()) {
+      log.warn("Stylesheet ${path} is not on the classpath; the document will be unstyled")
+      return ""
+    }
+    return "${prefix}<link rel='stylesheet' href='${url}'>${suffix}"
   }
 }

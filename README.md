@@ -83,7 +83,7 @@ def md = gmd.gmdToMd(text, [name: "Per"])
 def html = gmd.gmdToHtml(text, [name: "Per"])
 
 // the html can then be used to create a pdf
-gmd.htmlToPdf(html, [name: "Per"], new File("pdfFile.pdf"))
+gmd.htmlToPdf(html, new File("pdfFile.pdf"))
 ```
 
 GMD supports the [Matrix](https://github.com/Alipsa/matrix) library directly, i.e. Matrix, Chart and MatrixXChart 
@@ -217,7 +217,8 @@ or for a pdf:
 ```
 java -jar gmd-3.1.0.jar toPdf test.gmd test.pdf
 ```
-Note: If you don't want the styled (highlight) PDF version you can use toPdfRaw instead.
+Note: `toPdf` produces a styled document with Bootstrap, unicode fonts and syntax
+highlighted code blocks. Use `toPdfRaw` for an undecorated PDF with none of those.
 
 ## Using Gmd in Gradle
 

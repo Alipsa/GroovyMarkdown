@@ -74,7 +74,7 @@ All child modules automatically inherit this version via `${revision}`. The `fla
 ### Module Organization
 ```
 gmd-parent (root pom)
-├── highlightjs-jvm     - Nashorn-backed Highlight.js string API (Java)
+├── highlightjs-jvm     - Rhino-backed Highlight.js string API (Java)
 ├── gmd-core             - Core processing library (Groovy)
 ├── gmd-maven-plugin     - Maven plugin wrapper (Java)
 ├── gmd-gradle-plugin    - Gradle plugin (Groovy + Maven driver)
@@ -89,7 +89,7 @@ The core processing engine. Main classes:
 - **Gmd** (`Gmd.groovy`): Main API orchestrator
   - `gmdToHtml(text, params)` - Convert GMD to HTML
   - `gmdToMd(text, params)` - Process GMD to Markdown
-  - `gmdToPdf(text, params, file)` - Generate PDF from GMD
+  - `gmdToPdf(text, file, bindings)` - Generate PDF from GMD
   - `processHtmlAndSaveAsPdf(html, file)` - Deprecated synchronous highlighted PDF conversion
   - `mdToHtml(markdown)` - Standard Markdown to HTML
 
@@ -150,10 +150,10 @@ PDF Output
 
 - **Groovy**: 5.0.8 (groovy, groovy-templates, groovy-jsr223)
 - **Markdown**: commonmark 0.29.0 + GFM tables extension
-- **PDF**: openhtmltopdf 1.1.37 (core, pdfbox, mathml, svg)
-- **Syntax highlighting**: Highlight.js 11.7.0, transpiled to ES5 and evaluated by Nashorn 15.7
+- **PDF**: openhtmltopdf 1.1.65 (core, pdfbox, mathml, svg)
+- **Syntax highlighting**: Highlight.js 11.7.0, syntax-transpiled and evaluated by Rhino 1.9.1
 - **HTML fragments**: Jsoup 1.23.1
-- **Matrix**: se.alipsa.matrix BOM 2.4.0 (charts, core, xchart)
+- **Matrix**: se.alipsa.matrix BOM 2.5.1 (charts, core, xchart)
 - **Bootstrap**: 5.3.8 (webjar)
 - **Logging**: log4j 2.26.1
 
@@ -167,12 +167,17 @@ PDF Output
 ### JavaFX Boundary
 JavaFX is only used by the optional `GmdTestGui` application. Core PDF generation and the build plugins do not require JavaFX.
 
-### Dynamic Dependency Loading
-Syntax highlighting is provided by the independent `highlightjs-jvm` module. It loads an ES5-transpiled Highlight.js bundle into a synchronized Nashorn engine, so core PDF generation has no JavaFX or WebView dependency.
+### Syntax highlighting
+Highlighting is provided by the `highlightjs-jvm` module, which runs Highlight.js on
+Rhino 1.9.1. Rhino supplies Symbol, Map, Set and Object.assign natively, so the bundle
+is a syntax-only Babel transpile of the upstream distribution with no polyfills and no
+hand-editing. Regenerate it with `highlightjs-jvm/buildBundle.sh` (needs Node); a normal
+Maven build does not. `./buildBundle.sh --verify` proves the committed bundle is current.
+Rhino keeps mutable Highlight.js state in a shared scope, so calls are synchronized.
 
 ## Testing
 
-Tests use JUnit 5 (Jupiter 6.0.2):
+Tests use JUnit 5 (Jupiter 6.1.2):
 - `gmd-core/src/test/groovy/test/alipsa/groovy/gmd/`
   - GmdTest.groovy
   - GmdTemplateEngineTest.groovy
@@ -262,7 +267,9 @@ gmd-core uses maven-antrun-plugin to generate GroovyDoc (since gmavenplus-plugin
 
 ## Resource Files
 
-- `/highlightjs-jvm/src/main/resources/highlightJs/` - ES5 Highlight.js runtime bundle
-- `/gmd-core/src/main/resources/highlightJs/styles/` - Highlight.js CSS for decorated HTML/PDF
+- `/highlightjs-jvm/source/highlightJs/` - the Highlight.js 11.7.0 distribution, used verbatim as build input
+- `/highlightjs-jvm/src/main/js/` - prelude.js and wrapper.js, the only JavaScript this project authors
+- `/highlightjs-jvm/src/main/resources/highlightJs/highlight.js` - the generated bundle (regenerate, never hand-edit)
+- `/highlightjs-jvm/src/main/resources/highlightJs/styles/default.min.css` - the one shipped theme, embedded by HtmlDecorator; gmd-core resolves it transitively from the highlightjs-jvm jar
 - `/gmd-core/src/main/resources/fonts/` - Unicode font files for PDF rendering
 - `/gmd-core/src/main/assembly/fatjar.xml` - Assembly descriptor for fat JAR

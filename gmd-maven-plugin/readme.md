@@ -29,6 +29,9 @@ Possible configuration parameters are:
 - `sourceDir` - the directory where the GMD files are located. Default is `src/main/gmd`
 - `targetDir` - the directory where the output files will be created. Default is `target/gmd`
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
+
+`outputType=html` writes a complete decorated HTML document, including the doctype,
+embedded styles, and syntax-highlighted code blocks.
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
 - `log4jVersion` - the version of Log4j to use. Default is `2.26.1`
 - `gmdVersion` - the version of GMD core to use. Default is `3.1.0`
@@ -78,7 +81,7 @@ You can override the versions of dependencies used by the plugin by specifying t
         <targetDir>target/gmd</targetDir>
         <outputType>html</outputType>
         <groovyVersion>5.0.3</groovyVersion>
-        <log4jVersion>2.24.3</log4jVersion>
+        <log4jVersion>2.26.1</log4jVersion>
         <gmdVersion>3.0.1</gmdVersion>
       </configuration>
     </plugin>

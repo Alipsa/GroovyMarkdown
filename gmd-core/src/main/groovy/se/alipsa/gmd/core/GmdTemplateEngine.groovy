@@ -27,6 +27,9 @@ class GmdTemplateEngine {
      * @return the gmd text with code blocks "expanded"
      */
     static String processCodeBlocks(String text, Map bindings = [:]) throws GmdException {
+        if (text == null) {
+            throw new IllegalArgumentException("The gmd text cannot be null")
+        }
         def classLoader = new GroovyClassLoader()
         def engine = new GroovyScriptEngineImpl(classLoader)
         String codeBlock = ''
@@ -39,15 +42,25 @@ class GmdTemplateEngine {
             boolean codeBlockStart = false
             boolean codeBlockEnd = false
             boolean echo = true
+            Character plainFenceChar = null
+            int plainFenceLength = 0
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
             StringBuilder result = new StringBuilder()
             List<String> lines = text.readLines()
             int count = 0
             lines.each { line ->
-                noSpaceLine = line.replace(' ', '').trim()
+                noSpaceLine = fenceCandidate(line)
+                String legacyGroovyFence = line.trim()
+                String infoString = legacyGroovyFence.replace(' ', '')
+                if (infoString.startsWith('```{groovy')) {
+                    noSpaceLine = infoString
+                } else if (codeBlockStart && isClosingFence(legacyGroovyFence, '`', 3)) {
+                    noSpaceLine = legacyGroovyFence
+                }
+                boolean startsPlainFence = noSpaceLine.startsWith('```') || noSpaceLine.startsWith('~~~')
 
-                if (noSpaceLine.startsWith('```{groovy')) {
+                if (plainFenceChar == null && noSpaceLine.startsWith('```{groovy')) {
                     shouldBeProcessed = true
                     codeBlockStart = true
                     codeBlockEnd = false
@@ -56,9 +69,20 @@ class GmdTemplateEngine {
                     if (noSpaceLine.toLowerCase().contains("echo=false")) {
                         echo = false;
                     }
-                } else if (codeBlockStart && noSpaceLine.startsWith('```')) {
+                } else if (codeBlockStart && isClosingFence(noSpaceLine, '`', 3)) {
                     codeBlockStart = false
                     codeBlockEnd = true
+                } else if (!codeBlockStart && startsPlainFence) {
+                    String marker = noSpaceLine.substring(0, 1)
+                    int width = fenceRunLength(noSpaceLine, marker)
+                    if (plainFenceChar == null) {
+                        plainFenceChar = marker
+                        plainFenceLength = width
+                    } else if (plainFenceChar == marker && width >= plainFenceLength
+                            && isClosingFence(noSpaceLine, marker, plainFenceLength)) {
+                        plainFenceChar = null
+                        plainFenceLength = 0
+                    }
                 }
 
                 if (codeBlockStart) {
@@ -77,18 +101,16 @@ class GmdTemplateEngine {
                     //result.append("<%\n").append(codeBlock).append('\n%>\n')
                     // add an empty string to the end of the code block to not have the return value added to the result
                     //println("evaluating code block: $codeBlock")
-                    def tmp = engine.eval(codeBlock + '\n""')
+                    engine.eval(codeBlock + '\n""')
                     def output = out.toString()
                     if (output.length() > 0) {
                         result.append(output)
-                    } else if (echo) {
-                        result.append(tmp)
                     }
                     out.clear()
                     codeBlockText.setLength(0)
                     codeBlockEnd = false
                 } else if (!codeBlockStart) {
-                    if (line.contains('`=')) {
+                    if (plainFenceChar == null && line.contains('`=')) {
                         shouldBeProcessed = true
                         result.append(expandInlineVars(line, engine))
                     } else {
@@ -102,13 +124,17 @@ class GmdTemplateEngine {
             if (codeBlockStart) {
                 throw new GmdException('Unterminated Groovy code block')
             }
+            if (plainFenceChar != null) {
+                throw new GmdException('Unterminated plain code fence')
+            }
             if (shouldBeProcessed) {
                 return result.toString()
             } else {
                 return text
             }
         } catch(all) {
-            throw new GmdException("Failed to process code block: $codeBlock", all)
+            String where = codeBlock.isEmpty() ? 'the gmd text' : "code block: $codeBlock"
+            throw new GmdException("Failed to process $where", all)
         }
     }
 
@@ -141,8 +167,37 @@ class GmdTemplateEngine {
         }
     }
 
+    /** Remove at most the three spaces CommonMark permits before a fence. */
+    private static String fenceCandidate(String line) {
+        int indent = 0
+        while (indent < line.length() && indent < 3 && line.charAt(indent) == ' ') {
+            indent++
+        }
+        return line.substring(indent)
+    }
+
+    /** Length of the leading run of marker characters, i.e. the fence width. */
+    private static int fenceRunLength(String line, String marker) {
+        int i = 0
+        while (i < line.length() && line.charAt(i) == marker.charAt(0)) {
+            i++
+        }
+        return i
+    }
+
+    /** A closing fence has no info string or other non-whitespace suffix. */
+    private static boolean isClosingFence(String line, String marker, int minimumWidth) {
+        if (line.isEmpty() || line.charAt(0) != marker.charAt(0)) {
+            return false
+        }
+        int width = fenceRunLength(line, marker)
+        return width >= minimumWidth && line.substring(width).trim().isEmpty()
+    }
+
     @Override
     String toString() {
-        return "Groovy Markdown Processor, ver 3.1.0"
+        Package pkg = GmdTemplateEngine.package
+        String version = pkg?.implementationVersion ?: 'unknown version'
+        return "Groovy Markdown Processor, $version"
     }
 }
