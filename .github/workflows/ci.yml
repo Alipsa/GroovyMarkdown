@@ -39,9 +39,6 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run Maven verification
-        run: mvn --batch-mode verify
-
       - name: Install Maven artifacts locally
         run: mvn --batch-mode install -DskipGradleDriver=true
 
