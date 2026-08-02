@@ -10,10 +10,17 @@ public final class HtmlSyntaxHighlighter {
 
   private final SyntaxHighlighter highlighter;
 
+  /** Creates an HTML highlighter using the bundled Highlight.js runtime. */
   public HtmlSyntaxHighlighter() {
     this(DefaultHolder.INSTANCE);
   }
 
+  /**
+   * Creates an HTML highlighter using the supplied source highlighter.
+   *
+   * @param highlighter source highlighter to use, never null
+   * @throws IllegalArgumentException if {@code highlighter} is null
+   */
   public HtmlSyntaxHighlighter(SyntaxHighlighter highlighter) {
     if (highlighter == null) {
       throw new IllegalArgumentException("Highlighter cannot be null");
@@ -24,6 +31,10 @@ public final class HtmlSyntaxHighlighter {
   /**
    * Highlights code blocks while preserving whether the input is an HTML fragment or full document.
    * Fragments are returned as body content; full documents are returned with their head and body.
+   *
+   * @param html HTML fragment or document containing {@code <pre><code>} blocks
+   * @return the HTML with supported code blocks highlighted
+   * @throws IllegalArgumentException if {@code html} is null
    */
   public String highlightCodeBlocks(String html) {
     if (html == null) {

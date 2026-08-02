@@ -26,6 +26,11 @@ public final class HighlightJsHighlighter implements SyntaxHighlighter {
 
   private final Scriptable scope;
 
+  /**
+   * Creates a highlighter backed by the bundled Highlight.js Rhino runtime.
+   *
+   * @throws IllegalStateException if the bundled runtime cannot be initialized
+   */
   public HighlightJsHighlighter() {
     Context cx = enterContext();
     try (InputStream input = HighlightJsHighlighter.class.getResourceAsStream(RESOURCE)) {
