@@ -42,6 +42,9 @@ jobs:
       - name: Run Maven verification
         run: mvn --batch-mode verify
 
+      - name: Install Maven artifacts locally
+        run: mvn --batch-mode install -DskipGradleDriver=true
+
       - name: Build Gradle plugin and run tests
         working-directory: gmd-gradle-plugin
         run: ./gradlew --no-daemon build
