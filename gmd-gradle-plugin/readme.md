@@ -20,6 +20,9 @@ Possible parameters are:
 - `sourceDir` - the directory where the GMD files are located. Default is `src/main/gmd`
 - `targetDir` - the directory where the output files will be created. Default is `build/gmd`
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
+
+`outputType=html` writes a complete decorated HTML document, including the doctype,
+embedded styles, and syntax-highlighted code blocks.
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
 - `gmdVersion` - the version of GMD to use. Default is `3.1.0`
 - `log4jVersion` - the version of log4j to use. Default is `2.26.1`

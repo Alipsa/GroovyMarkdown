@@ -23,6 +23,7 @@ document shape.
 untouched Highlight.js distribution in `source/highlightJs`. The script concatenates, in
 order: `src/main/js/prelude.js`, the upstream core, all 192 upstream grammars, and
 `src/main/js/wrapper.js` - then runs a single stock `@babel/preset-env` pass over the result.
+The jar also ships the upstream BSD-3-Clause `LICENSE` and the default stylesheet.
 
 That pass transpiles **syntax only**. Rhino already provides `Symbol`, `Map`, `Set`,
 `Object.assign`, arrow functions, template literals, destructuring, generators and optional

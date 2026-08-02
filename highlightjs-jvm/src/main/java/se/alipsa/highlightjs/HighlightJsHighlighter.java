@@ -70,11 +70,16 @@ public final class HighlightJsHighlighter implements SyntaxHighlighter {
 
   private static Context enterContext() {
     Context cx = Context.enter();
-    // Must be set before initStandardObjects for Symbol/Map/Set to be present.
-    cx.setLanguageVersion(Context.VERSION_ES6);
-    // Interpreted mode avoids Rhino's 64K per-method bytecode limit on this
-    // ~1.2 MB script.
-    cx.setInterpretedMode(true);
-    return cx;
+    try {
+      // Must be set before initStandardObjects for Symbol/Map/Set to be present.
+      cx.setLanguageVersion(Context.VERSION_ES6);
+      // Interpreted mode avoids Rhino's 64K per-method bytecode limit on this
+      // ~1.2 MB script.
+      cx.setInterpretedMode(true);
+      return cx;
+    } catch (RuntimeException e) {
+      Context.exit();
+      throw e;
+    }
   }
 }

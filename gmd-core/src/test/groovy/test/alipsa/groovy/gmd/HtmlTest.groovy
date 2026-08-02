@@ -32,6 +32,16 @@ class HtmlTest {
   }
 
   @Test
+  void escapesTableAndAttributeContent() {
+    Matrix table = Matrix.builder().data(a: ['<b>']).types(String).build()
+
+    String html = new Html().add(table, ['title': 'a "quoted" value']).toString()
+
+    assertTrue(html.contains('title="a &quot;quoted&quot; value"'), html)
+    assertTrue(html.contains('<td>&lt;b&gt;</td>'), html)
+  }
+
+  @Test
   void rendersRows() {
     String html = new Html().add(sample()).toString()
 

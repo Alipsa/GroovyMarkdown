@@ -8,11 +8,7 @@ class HtmlDecorator {
   private static final Logger log = LogManager.getLogger(HtmlDecorator.class)
 
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
-  // "/META-INF/resources/webjars/bootstrap/5.2.3/css/bootstrap.min.css"
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
-  public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
-
-  public static final String BOOTSTRAP_CSS = resourceUrlExternalForm(BOOTSTRAP_CSS_PATH)
 
   public static final String HTML5_DECLARATION = "<!DOCTYPE html>\n"
   static final XHTML_MATHML_DOCTYPE = "<!DOCTYPE html PUBLIC\n \"-//OPENHTMLTOPDF//MATH XHTML Character Entities With MathML 1.0//EN\" \"\">\n"

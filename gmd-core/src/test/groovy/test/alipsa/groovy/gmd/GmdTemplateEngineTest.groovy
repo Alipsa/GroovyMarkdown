@@ -262,4 +262,44 @@ x = 5
         assertTrue(processed.contains('literal 5 is expanded here'),
             "Known gap: indented code blocks are not protected:\n$processed")
     }
+
+    @Test
+    void echoFalseWithSpacesIsHonoured() {
+        String text = '''
+``` {groovy echo = false}
+x = 5
+```
+Value `= x`
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertFalse(processed.contains('```groovy'), processed)
+        assertTrue(processed.contains('Value 5'), processed)
+    }
+
+    @Test
+    void groovyFenceWithSpaceBeforeBraceIsExecuted() {
+        String text = '''
+``` {groovy}
+x = 5
+```
+Value `= x`
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('```groovy'), processed)
+        assertTrue(processed.contains('Value 5'), processed)
+    }
+
+    @Test
+    void unterminatedPlainFenceIsRejected() {
+        assertThrows(Exception.class) {
+            GmdTemplateEngine.processCodeBlocks('''
+```text
+unclosed
+''')
+        }
+    }
 }

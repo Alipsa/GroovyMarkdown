@@ -3,9 +3,12 @@ package se.alipsa.highlightjs;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -90,6 +93,19 @@ class HighlightJsHighlighterTest {
     assertTrue(result.contains("&lt;"), result);
     assertTrue(result.contains("&gt;"), result);
     assertTrue(result.contains("&amp;&amp;"), result);
+  }
+
+  @Test
+  void shipsHighlightJsLicenseAndBanner() throws IOException {
+    try (InputStream license = getClass().getResourceAsStream("/highlightJs/LICENSE");
+         InputStream bundle = getClass().getResourceAsStream("/highlightJs/highlight.js")) {
+      assertNotNull(license, "The Highlight.js license must be shipped in the jar");
+      assertNotNull(bundle, "The generated Highlight.js bundle must be shipped in the jar");
+      assertTrue(new String(license.readAllBytes(), StandardCharsets.UTF_8)
+          .contains("BSD 3-Clause License"));
+      String banner = new String(bundle.readAllBytes(), StandardCharsets.UTF_8);
+      assertTrue(banner.contains("Highlight.js v11.7.0"), banner);
+    }
   }
 
   @Test

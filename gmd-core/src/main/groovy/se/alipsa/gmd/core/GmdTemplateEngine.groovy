@@ -25,7 +25,7 @@ class GmdTemplateEngine {
      *
      * @param text the gmd text to process
      * @return the gmd text with code blocks "expanded"
-    */
+     */
     static String processCodeBlocks(String text, Map bindings = [:]) throws GmdException {
         if (text == null) {
             throw new IllegalArgumentException("The gmd text cannot be null")
@@ -52,8 +52,10 @@ class GmdTemplateEngine {
             lines.each { line ->
                 noSpaceLine = fenceCandidate(line)
                 String legacyGroovyFence = line.trim()
-                if (legacyGroovyFence.startsWith('```{groovy')
-                        || (codeBlockStart && isClosingFence(legacyGroovyFence, '`', 3))) {
+                String infoString = legacyGroovyFence.replace(' ', '')
+                if (infoString.startsWith('```{groovy')) {
+                    noSpaceLine = infoString
+                } else if (codeBlockStart && isClosingFence(legacyGroovyFence, '`', 3)) {
                     noSpaceLine = legacyGroovyFence
                 }
                 boolean startsPlainFence = noSpaceLine.startsWith('```') || noSpaceLine.startsWith('~~~')
@@ -121,6 +123,9 @@ class GmdTemplateEngine {
             }
             if (codeBlockStart) {
                 throw new GmdException('Unterminated Groovy code block')
+            }
+            if (plainFenceChar != null) {
+                throw new GmdException('Unterminated plain code fence')
             }
             if (shouldBeProcessed) {
                 return result.toString()

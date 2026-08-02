@@ -8,4 +8,3 @@ now = LocalDateTime.now()
 f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 ```
 Today is `= f.format(now)` and the time is `= now.getMinute()` past `= now.getHour()`.
-```

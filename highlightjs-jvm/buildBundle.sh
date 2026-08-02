@@ -56,7 +56,7 @@ trap 'rm -rf "$WORK"' EXIT
 } > "$WORK/raw.js"
 
 ./node_modules/.bin/babel --config-file ./babel.config.json \
-  --compact true --no-comments "$WORK/raw.js" --out-file "$WORK/bundle.js"
+  --compact true "$WORK/raw.js" --out-file "$WORK/bundle.js"
 
 if [ "${1:-}" = "--verify" ]; then
   if cmp -s "$WORK/bundle.js" "$BUNDLE"; then
