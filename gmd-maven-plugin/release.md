@@ -1,6 +1,6 @@
 # GMD Maven Plugin release history
 
-## v3.1.0, unreleased
+## v3.1.0, 2026-08-02
 - resolve all output types without JavaFX dependencies
 - resolve relative source and target paths from the Maven project base directory
 - validate output types and source/target directories before processing

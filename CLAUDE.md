@@ -51,9 +51,9 @@ mvn versions:display-dependency-updates    # Maven dependency updates only
 mvn -pl gmd-core clean package
 
 # Use the fat JAR
-java -jar gmd-core/target/gmd-3.1.0-SNAPSHOT.jar toHtml input.gmd output.html
-java -jar gmd-core/target/gmd-3.1.0-SNAPSHOT.jar toPdf input.gmd output.pdf
-java -jar gmd-core/target/gmd-3.1.0-SNAPSHOT.jar toPdfRaw input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.1.0.jar toHtml input.gmd output.html
+java -jar gmd-core/target/gmd-3.1.0.jar toPdf input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.1.0.jar toPdfRaw input.gmd output.pdf
 ```
 
 ## Version Management
@@ -63,7 +63,7 @@ java -jar gmd-core/target/gmd-3.1.0-SNAPSHOT.jar toPdfRaw input.gmd output.pdf
 ```xml
 <!-- In /pom.xml -->
 <properties>
-  <revision>3.1.0-SNAPSHOT</revision>
+  <revision>3.1.0</revision>
 </properties>
 ```
 

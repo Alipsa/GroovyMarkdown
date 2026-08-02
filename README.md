@@ -160,7 +160,7 @@ def pdfFile = File.createTempFile("test", ".pdf")
 gmd.gmdToPdf(text, pdfFile)
 ```
 
-To use it from within a JavaFx application see the [GmdTestGui](https://github.com/Alipsa/gmd/tree/main/GmdTestGui/src/main/groovy/se/alipsa/gmdtest/GmdTestGui.groovy) 
+To use it from within a JavaFx application see the [GmdTestGui](https://github.com/Alipsa/GroovyMarkdown/tree/main/GmdTestGui/src/main/groovy/se/alipsa/gmdtest/GmdTestGui.groovy)
 for an approach that I found to provide the best performance and usability.
 
 The library, which requires Java 21 or later, is available from maven central:

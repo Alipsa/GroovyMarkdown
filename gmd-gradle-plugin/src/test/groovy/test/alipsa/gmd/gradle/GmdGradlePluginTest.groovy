@@ -44,7 +44,6 @@ class GmdGradlePluginTest {
       f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
       ```
       Today is `= f.format(now)` and the time is `= now.getMinute()` past `= now.getHour()`.
-      ```
       """.stripIndent()
 
       def buildFile = new File(testProjectDir, 'build.gradle')

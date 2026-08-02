@@ -18,11 +18,11 @@
 
   <name>GMD Parent</name>
   <description>Parent pom for GMD</description>
-  <url>https://github.com/Alipsa/gmd</url>
+  <url>https://github.com/Alipsa/GroovyMarkdown</url>
 
   <properties>
     <!-- CI-friendly version: change version in ONE place only -->
-    <revision>3.1.0-SNAPSHOT</revision>
+    <revision>3.1.0</revision>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
@@ -35,14 +35,14 @@
   <licenses>
     <license>
       <name>MIT License</name>
-      <url>https://github.com/Alipsa/gmd/blob/main/LICENSE</url>
+      <url>https://github.com/Alipsa/GroovyMarkdown/blob/main/LICENSE</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
   <scm>
-    <url>https://github.com/Alipsa/gmd</url>
-    <connection>scm:git:https://github.com/ALipsa/gmd.git</connection>
-    <developerConnection>scm:git:git@github.com:Alipsa/gmd.git</developerConnection>
+    <url>https://github.com/Alipsa/GroovyMarkdown</url>
+    <connection>scm:git:https://github.com/Alipsa/GroovyMarkdown.git</connection>
+    <developerConnection>scm:git:git@github.com:Alipsa/GroovyMarkdown.git</developerConnection>
   </scm>
   <developers>
     <developer>

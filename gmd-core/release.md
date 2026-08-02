@@ -1,6 +1,6 @@
 # Gmd Release History
 
-## v3.1.0, unreleased
+## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module using Rhino and a syntax-transpiled Highlight.js bundle
 - highlight code blocks synchronously before PDF rendering
 - remove JavaFX and WebView from core PDF processing
