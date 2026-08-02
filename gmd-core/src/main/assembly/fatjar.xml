@@ -31,17 +31,11 @@
       <outputDirectory>/</outputDirectory>
       <unpack>true</unpack>
       <scope>compile</scope>
-      <excludes>
-        <exclude>org.openjfx:*:*</exclude>
-      </excludes>
     </dependencySet>
     <dependencySet>
       <outputDirectory>/</outputDirectory>
       <unpack>true</unpack>
       <scope>runtime</scope>
-      <excludes>
-        <exclude>org.openjfx:*:*</exclude>
-      </excludes>
     </dependencySet>
 
     <!-- explicitly include selected provided deps -->
