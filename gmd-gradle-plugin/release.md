@@ -1,5 +1,10 @@
 # GMD Gradle Plugin release history
 
+## v3.1.1, in progress
+- replace the deprecated `Project.getProperties()` calls used by signing configuration with `findProperty`, keeping the plugin compatible with Gradle 10
+- make `processGmd` compatible with the Gradle configuration cache and parallel execution
+- declare configuration-cache support in the Plugin Portal metadata and disable build caching for potentially non-deterministic PDF output
+
 ## v3.1.0, 2026-08-02
 - resolve all output types without JavaFX dependencies
 - declare `processGmd` inputs and outputs and remove stale generated files

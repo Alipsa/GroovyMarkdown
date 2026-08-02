@@ -24,6 +24,11 @@ gradlePlugin {
       displayName = "Gmd Plugin"
       description = project.description
       tags.set(["markdown", "Groovy", "pdf", "html", "gmd"])
+      compatibility(it) {
+        features {
+          configurationCache = true
+        }
+      }
     }
   }
 }
@@ -58,9 +63,9 @@ test {
 
 project.afterEvaluate {
   tasks.named('signPluginMavenPublication') {
-    enabled = project.properties['signing.keyId'] != null
+    enabled = project.findProperty('signing.keyId') != null
   }
   tasks.named("signSimplePluginPluginMarkerMavenPublication") {
-    enabled = project.properties['signing.keyId'] != null
+    enabled = project.findProperty('signing.keyId') != null
   }
 }

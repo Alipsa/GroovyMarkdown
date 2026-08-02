@@ -9,95 +9,47 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.process.ExecOperations
-
-import javax.inject.Inject
 
 @CompileStatic
 class GmdGradlePlugin implements Plugin<Project> {
 
-  ExecOperations execOperations
-
-  @Inject
-  GmdGradlePlugin(ExecOperations execOperations) {
-    this.execOperations = execOperations
-  }
-
   @Override
   void apply(Project project) {
-    def extension = project.extensions.create('gmdPlugin', GmdGradlePluginParams)
+    GmdGradlePluginParams extension = project.extensions.create('gmdPlugin', GmdGradlePluginParams)
+    extension.sourceDir.convention('src/main/gmd')
+    extension.targetDir.convention('build/gmd')
+    extension.outputType.convention('md')
+    extension.groovyVersion.convention('5.0.8')
+    extension.log4jVersion.convention('2.26.1')
+    extension.gmdVersion.convention('3.1.0')
+    extension.ivyVersion.convention('2.6.0')
+    extension.runTaskBefore.convention('test')
 
-    TaskProvider<Task> processGmdTask = project.tasks.register('processGmd') {
-      it.inputs.dir(project.provider {
-        project.file(extension.sourceDir.getOrElse('src/main/gmd'))
-      })
-      it.outputs.dir(project.provider {
-        project.file(extension.targetDir.getOrElse('build/gmd'))
-      })
-      it.inputs.property('outputType', project.provider {
-        extension.outputType.getOrElse('md')
-      })
-      it.doLast {
-        File sourceDir= project.file(extension.sourceDir.getOrElse("src/main/gmd"))
-        File targetDir= project.file(extension.targetDir.getOrElse("build/gmd"))
-        String outputType= extension.outputType.getOrElse('md').trim().toLowerCase(Locale.ROOT)
-        String groovyVersion = extension.groovyVersion.getOrElse('5.0.8')
-        String log4jVersion = extension.log4jVersion.getOrElse('2.26.1')
-        String gmdVersion = extension.gmdVersion.getOrElse('3.1.0')
-        String ivyVersion = extension.ivyVersion.getOrElse('2.6.0')
-        if (!['md', 'html', 'pdf'].contains(outputType)) {
-          throw new IllegalArgumentException("Unknown output type ${outputType}, expected either md, html or pdf")
-        }
+    TaskProvider<ProcessGmdTask> processGmdTask = project.tasks.register('processGmd', ProcessGmdTask)
 
-        if (!sourceDir.exists()) {
-          project.logger.warn("Source directory ${sourceDir.canonicalPath} does not exist, nothing to do")
-          return
-        }
-        if (!targetDir.exists()) {
-          if (!targetDir.mkdirs() && !targetDir.isDirectory()) {
-            throw new IllegalArgumentException("Could not create target directory ${targetDir.canonicalPath}")
-          }
-        } else if (!targetDir.isDirectory()) {
-          throw new IllegalArgumentException("Target path ${targetDir.canonicalPath} is a file, not a directory")
-        }
-        project.logger.info("Processing GMD in ${sourceDir} -> ${targetDir}, type: ${outputType}")
-        cleanStaleGeneratedFiles(project, sourceDir, targetDir, outputType)
-
-        List<ArtifactRepository> addedRepositories = []
-        Configuration configuration = addDependencies(project, addedRepositories,
-            groovyVersion, log4jVersion, gmdVersion, ivyVersion
-        )
-        // a configuration is a FileCollection, no need to call resolve()
-        def result = execOperations.javaexec( a -> {
-          a.classpath = configuration
-          a.mainClass.set('se.alipsa.gmd.core.GmdProcessor')
-          a.args = [
-            sourceDir.canonicalPath,
-            targetDir.canonicalPath,
-            outputType
-          ]
-        })
-        // cleanup the added repositories
-        addedRepositories.each { repo ->
-          project.repositories.remove(repo)
-        }
-        result.assertNormalExitValue()
-        File[] sourceFiles = sourceDir.listFiles()
-        if (sourceFiles != null && sourceFiles.size() > 0) {
-          if (targetDir.exists()) {
-            project.logger.quiet("Gmd files processed and written to ${targetDir.canonicalPath}")
-          } else {
-            project.logger.warn("${targetDir.canonicalPath} should exists but does not, something is probably wrong")
-          }
-        } else {
-          project.logger.quiet("No gmd files found in ${sourceDir.canonicalPath}, nothing to do")
-        }
-      }
-    }
     project.afterEvaluate {
+      String sourceDir = extension.sourceDir.get()
+      String targetDir = extension.targetDir.get()
+      String outputType = extension.outputType.get()
+      Configuration configuration = addDependencies(project,
+          extension.groovyVersion.get(),
+          extension.log4jVersion.get(),
+          extension.gmdVersion.get(),
+          extension.ivyVersion.get()
+      )
+
+      processGmdTask.configure { ProcessGmdTask task ->
+        // Resolve all project values during configuration. The task action only
+        // uses task properties and injected services, which enables the
+        // configuration cache and parallel task execution.
+        task.sourceDir.set(project.file(sourceDir))
+        task.targetDir.set(project.file(targetDir))
+        task.outputType.set(outputType)
+        task.classpath.from(configuration)
+      }
+
       try {
-        def runTaskBefore = extension.runTaskBefore.getOrElse('test')
-        TaskProvider<Task> buildTask = it.tasks.named(runTaskBefore)
+        TaskProvider<Task> buildTask = project.tasks.named(extension.runTaskBefore.get())
         buildTask.configure { Task task ->
           task.dependsOn(processGmdTask)
         }
@@ -107,13 +59,12 @@ class GmdGradlePlugin implements Plugin<Project> {
     }
   }
 
-  static Configuration addDependencies(Project project, List<ArtifactRepository> addedRepositories,
+  static Configuration addDependencies(Project project,
                                        String groovyVersion, String log4jVersion, String gmdVersion,
                                        String ivyVersion) {
-    def mavenCentral = project.repositories.mavenCentral()
+    MavenArtifactRepository mavenCentral = project.repositories.mavenCentral()
     if (!hasRepository(project, mavenCentral)) {
       project.repositories.add(mavenCentral)
-      addedRepositories.add(mavenCentral)
     }
 
     List<Dependency> dependencies = [
@@ -126,29 +77,6 @@ class GmdGradlePlugin implements Plugin<Project> {
     ]
 
     return project.configurations.detachedConfiguration(dependencies.toArray(new Dependency[0]))
-  }
-
-  private static void cleanStaleGeneratedFiles(Project project, File sourceDir, File targetDir, String outputType) {
-    Set<String> expected = [] as Set
-    File[] sources = sourceDir.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
-    if (sources != null) {
-      sources.each { file ->
-        String base = file.name.substring(0, file.name.length() - 4)
-        expected.add("${base}.${outputType}".toString())
-      }
-    }
-    File[] generated = targetDir.listFiles({ File file ->
-      file.isFile() && (file.name.endsWith('.md') || file.name.endsWith('.html') || file.name.endsWith('.pdf'))
-    } as FileFilter)
-    if (generated != null) {
-      generated.findAll { !expected.contains(it.name) }.each { File file ->
-        if (file.delete()) {
-          project.logger.lifecycle("Removed stale generated GMD output ${file.absolutePath}")
-        } else {
-          project.logger.warn("Could not remove stale generated GMD output ${file.absolutePath}")
-        }
-      }
-    }
   }
 
   static boolean hasRepository(Project project, MavenArtifactRepository repo) {

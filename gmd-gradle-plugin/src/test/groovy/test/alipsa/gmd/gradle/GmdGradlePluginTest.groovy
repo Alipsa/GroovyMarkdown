@@ -80,11 +80,19 @@ class GmdGradlePluginTest {
 
       def result = GradleRunner.create()
           .withProjectDir(testProjectDir)
-          .withArguments('processGmd')
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
           .withPluginClasspath()
           .forwardOutput()
           .build()
       assert result.task(":processGmd").outcome == SUCCESS
+
+      def cachedResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      assert cachedResult.task(":processGmd").outcome in [SUCCESS, org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE]
 
       // the directory differs on a mac even though they point to the same place so cannot include
       def expected = "Gmd files processed and written to $targetDir.canonicalPath".toString()
