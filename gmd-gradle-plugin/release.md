@@ -1,6 +1,6 @@
 # GMD Gradle Plugin release history
 
-## v3.1.0, unreleased
+## v3.1.0, 2026-08-02
 - resolve all output types without JavaFX dependencies
 - declare `processGmd` inputs and outputs and remove stale generated files
 - validate output types and source/target directories before processing
