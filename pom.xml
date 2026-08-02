@@ -26,10 +26,13 @@
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
-    <junit.jupiter.version>6.1.2</junit.jupiter.version>
+    <central.skipPublishing>false</central.skipPublishing>
+    <central.waitUntil>validated</central.waitUntil>
+    <!-- Dependency versions -->
     <groovy.version>5.0.8</groovy.version>
-    <log4j.version>2.26.1</log4j.version>
     <jsoup.version>1.23.1</jsoup.version>
+    <junit.jupiter.version>6.1.2</junit.jupiter.version>
+    <log4j.version>2.26.1</log4j.version>
   </properties>
 
   <licenses>
@@ -300,8 +303,9 @@
                 <excludeArtifact>GmdTestGui</excludeArtifact> <!-- dont publish this -->
                 <excludeArtifact>gmd-gradle-plugin</excludeArtifact> <!-- should not be published by this plugin, it's using a different mechanism -->
               </excludeArtifacts>
-              <skipPublishing>false</skipPublishing>
+              <skipPublishing>${central.skipPublishing}</skipPublishing>
               <autoPublish>true</autoPublish>
+              <waitUntil>${central.waitUntil}</waitUntil>
             </configuration>
           </plugin>
         </plugins>

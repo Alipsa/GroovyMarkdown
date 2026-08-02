@@ -13,6 +13,31 @@
   <artifactId>highlightjs-jvm</artifactId>
   <name>Highlight.js JVM</name>
   <description>Thread-safe JVM access to a Highlight.js bundle and HTML code-block helper</description>
+  <url>https://github.com/Alipsa/GroovyMarkdown/tree/main/highlightjs-jvm</url>
+
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://github.com/Alipsa/GroovyMarkdown/blob/main/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>perNyfelt</id>
+      <name>Per Nyfelt</name>
+      <email>per.nyfelt@alipsa.se</email>
+      <organization>Alipsa HB</organization>
+      <organizationUrl>http://www.alipsa.se</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>https://github.com/Alipsa/GroovyMarkdown</url>
+    <connection>scm:git:https://github.com/Alipsa/GroovyMarkdown.git</connection>
+    <developerConnection>scm:git:git@github.com:Alipsa/GroovyMarkdown.git</developerConnection>
+  </scm>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
@@ -52,6 +77,26 @@
         <configuration>
           <useModulePath>false</useModulePath>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.12.0</version>
+        <configuration>
+          <sourcepath>src/main/java</sourcepath>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
