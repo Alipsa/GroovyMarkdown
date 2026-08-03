@@ -226,6 +226,15 @@ class GmdTest extends AbstractGmdTest {
   }
 
   @Test
+  void retainsDeprecatedBootstrapCssCompatibilityConstant() {
+    def resourceUrl = se.alipsa.gmd.core.HtmlDecorator.class
+        .getResource(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH)
+        .toExternalForm()
+
+    assertEquals(resourceUrl, se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS)
+  }
+
+  @Test
   void nullInputIsRejectedClearly() {
     def gmd = new Gmd()
 
