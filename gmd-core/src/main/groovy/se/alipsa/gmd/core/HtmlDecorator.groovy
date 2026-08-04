@@ -10,6 +10,14 @@ class HtmlDecorator {
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
 
+  /**
+   * The external URL of the Bootstrap stylesheet.
+   *
+   * @deprecated Use {@link #BOOTSTRAP_CSS_PATH} when referring to the classpath resource.
+   */
+  @Deprecated
+  public static final String BOOTSTRAP_CSS = resourceUrlExternalForm(BOOTSTRAP_CSS_PATH)
+
   public static final String HTML5_DECLARATION = "<!DOCTYPE html>\n"
   static final XHTML_MATHML_DOCTYPE = "<!DOCTYPE html PUBLIC\n \"-//OPENHTMLTOPDF//MATH XHTML Character Entities With MathML 1.0//EN\" \"\">\n"
   public static final String OPENHTMLTOPDF_DECLARATION = "<!DOCTYPE html PUBLIC\n\"-//OPENHTMLTOPDF//MATH XHTML Character Entities With MathML 1.0//EN\" \"\">\n"
