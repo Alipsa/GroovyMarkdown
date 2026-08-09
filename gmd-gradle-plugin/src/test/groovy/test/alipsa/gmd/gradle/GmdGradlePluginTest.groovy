@@ -23,7 +23,9 @@ class GmdGradlePluginTest {
     factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, '')
     factory.setXIncludeAware(false)
     factory.setExpandEntityReferences(false)
-    def document = factory.newDocumentBuilder().parse(new File('../pom.xml'))
+    String rootPomPath = System.getProperty('gmd.root.pom')
+    Assertions.assertNotNull(rootPomPath, 'The root POM path must be provided by the Gradle test task')
+    def document = factory.newDocumentBuilder().parse(new File(rootPomPath))
     def project = document.documentElement
     def properties = directElementChild(project, 'properties')
     def revision = directElementChild(properties, 'revision')
@@ -32,7 +34,7 @@ class GmdGradlePluginTest {
   }
 
   private static org.w3c.dom.Node directElementChild(org.w3c.dom.Node parent, String localName) {
-    Assertions.assertNotNull(parent, "Expected a direct $localName element")
+    Assertions.assertNotNull(parent, "Expected a parent element containing direct $localName")
     for (int i = 0; i < parent.getChildNodes().getLength(); i++) {
       def child = parent.getChildNodes().item(i)
       if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && child.getLocalName() == localName) {

@@ -178,7 +178,7 @@ public class GmdMavenPlugin extends AbstractMojo {
         command.add(getJavaExecutable());
         command.add("-cp");
         command.add(classpath.toString());
-        command.add("se.alipsa.gmd.core.GmdProcessor");
+        command.add(se.alipsa.gmd.core.GmdProcessor.class.getName());
         command.add(srcDir.getCanonicalPath());
         command.add(outputDirectory.getCanonicalPath());
         command.add(normalizedOutputType);

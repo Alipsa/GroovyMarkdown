@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.GmdProcessor
 
 import static org.junit.jupiter.api.Assertions.assertEquals
+import static org.junit.jupiter.api.Assertions.assertFalse
 import static org.junit.jupiter.api.Assertions.assertTrue
 
 class GmdProcessorTest extends AbstractGmdTest {
@@ -20,6 +21,7 @@ class GmdProcessorTest extends AbstractGmdTest {
     File src = sourceDirWith('doc', "# Hi\n\n```{groovy}\nout.println('x')\n```\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-doc')
     target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'html')
 
@@ -35,6 +37,7 @@ class GmdProcessorTest extends AbstractGmdTest {
     File src = sourceDirWith('plain', "# Hi\n\n```{groovy echo=false}\nout.println('x')\n```\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-plain')
     target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'md')
 
@@ -48,6 +51,7 @@ class GmdProcessorTest extends AbstractGmdTest {
     File src = sourceDirWith('command-line', "# Hi\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-command-line')
     target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
     assertEquals('se.alipsa.gmd.core.GmdProcessor', GmdProcessor.name)
     GmdProcessor.main([src.absolutePath, target.absolutePath, 'md'] as String[])

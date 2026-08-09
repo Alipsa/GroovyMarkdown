@@ -91,6 +91,7 @@ dependencies {
 test {
   systemProperty('gmd.plugin.version', pluginVersion)
   systemProperty('gmd.publish.version', publishVersion ?: '')
+  systemProperty('gmd.root.pom', layout.projectDirectory.file('../pom.xml').asFile.absolutePath)
   useJUnitPlatform()
   testLogging {
     // set options for log level LIFECYCLE
