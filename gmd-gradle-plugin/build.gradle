@@ -34,7 +34,7 @@ if (!publishVersion) {
           new org.xml.sax.InputSource(new java.io.StringReader(pomText))
       )
       String value = javax.xml.xpath.XPathFactory.newInstance().newXPath().evaluate(
-          "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='revision']/text()",
+          "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='revision']",
           document
       )?.trim()
       if (!value) {

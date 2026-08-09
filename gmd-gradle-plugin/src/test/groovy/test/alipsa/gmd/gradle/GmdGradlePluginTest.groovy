@@ -4,9 +4,29 @@ import groovy.ant.AntBuilder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.gradle.testkit.runner.GradleRunner
+import se.alipsa.gmd.gradle.GmdGradlePlugin
+
+import java.util.Properties
+
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class GmdGradlePluginTest {
+
+  @Test
+  void defaultGmdVersionComesFromGeneratedResource() {
+    URL resource = GmdGradlePlugin.class.getResource('/gmd-version.properties')
+    Assertions.assertNotNull(resource, 'The plugin version resource must be generated during processResources')
+
+    Properties properties = new Properties()
+    resource.withInputStream { properties.load(it) }
+    String resourceVersion = properties.getProperty('gmd.version')
+    Assertions.assertNotNull(resourceVersion)
+    Assertions.assertFalse(resourceVersion.contains('$'), "The generated resource must be expanded: $resourceVersion")
+
+    def method = GmdGradlePlugin.class.getDeclaredMethod('defaultGmdVersion')
+    method.setAccessible(true)
+    Assertions.assertEquals(resourceVersion, method.invoke(null))
+  }
 
   @Test
   void testPlugin() {
