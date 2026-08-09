@@ -1,7 +1,7 @@
 # GMD Gradle Plugin release history
 
 ## v3.2.0, unreleased
-- derive the default GMD core version from a generated plugin-version resource, then the artifact manifest, with a released fallback for older and repackaged builds
+- derive the default GMD core version from a generated plugin-version resource populated from the root Maven revision
 - derive the development artifact version from the root Maven revision and require an explicit version when publishing
 - upgrade the Gradle Versions Plugin from 0.58.0 to 0.61.0
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3

@@ -41,12 +41,6 @@ version = publishVersion ?: revision
 def pluginVersion = version.toString()
 description = 'Compiles gmd files into markdown, html or pdf'
 
-jar {
-  manifest {
-    attributes('Implementation-Version': project.version)
-  }
-}
-
 processResources {
   inputs.property('gmdVersion', pluginVersion)
   filesMatching('gmd-version.properties') {
