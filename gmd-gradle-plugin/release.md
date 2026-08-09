@@ -1,7 +1,7 @@
 # GMD Gradle Plugin release history
 
 ## v3.2.0, unreleased
-- validate the Gradle Plugin Portal publication before uploading the plugin
+- align the default GMD core version with the current `3.2.0-SNAPSHOT` project revision
 - upgrade the Gradle Versions Plugin from 0.58.0 to 0.61.0
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
 
@@ -14,6 +14,7 @@
 - resolve all output types without JavaFX dependencies
 - declare `processGmd` inputs and outputs and remove stale generated files
 - validate output types and source/target directories before processing
+- validate the Gradle Plugin Portal publication before uploading the plugin
 
 ## v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version

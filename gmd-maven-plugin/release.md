@@ -1,15 +1,16 @@
 # GMD Maven Plugin release history
 
 ## v3.2.0, unreleased
-- validate Maven Central release artifacts before publishing
-- publish source and Javadoc artifacts as part of the release workflow
-- replace deprecated Maven `@Component` injection with JSR-330 `@Inject`
+- align the default GMD core version with the current `3.2.0-SNAPSHOT` project revision
 
 ## v3.1.0, 2026-08-02
 - resolve all output types without JavaFX dependencies
 - resolve relative source and target paths from the Maven project base directory
 - validate output types and source/target directories before processing
 - remove JavaFX runtime dependency from the plugin
+- validate Maven Central release artifacts before publishing
+- publish source and Javadoc artifacts as part of the release workflow
+- replace deprecated Maven `@Component` injection with JSR-330 `@Inject`
 
 ## v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version

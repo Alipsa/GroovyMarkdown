@@ -8,6 +8,7 @@ import se.alipsa.gmd.maven.GmdMavenPlugin;
 import java.io.File;
 import java.nio.file.Files;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MojoTest
@@ -18,6 +19,7 @@ public class GmdMavenPluginTest {
   public void testGmdMavenPlugin(GmdMavenPlugin plugin) throws Exception {
     File pomFile = new File("src/test/projects/");
     assertTrue(pomFile.exists());
+    assertEquals("3.2.0-SNAPSHOT", plugin.getGmdVersion());
 
     // Execute the plugin
     plugin.execute();

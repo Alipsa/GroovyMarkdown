@@ -24,7 +24,7 @@ Possible parameters are:
 `outputType=html` writes a complete decorated HTML document, including the doctype,
 embedded styles, and syntax-highlighted code blocks.
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
-- `gmdVersion` - the version of GMD to use. Default is `3.1.0`
+- `gmdVersion` - the version of GMD to use. Default is `3.2.0-SNAPSHOT`
 - `log4jVersion` - the version of log4j to use. Default is `2.26.1`
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`
 - `runTaskBefore` - the task that the gmd plugin should run before. Default is 'test'

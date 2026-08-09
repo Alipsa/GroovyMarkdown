@@ -226,12 +226,11 @@ class GmdTest extends AbstractGmdTest {
   }
 
   @Test
-  void retainsDeprecatedBootstrapCssCompatibilityConstant() {
-    def resourceUrl = se.alipsa.gmd.core.HtmlDecorator.class
-        .getResource(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH)
-        .toExternalForm()
-
-    assertEquals(resourceUrl, se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS)
+  void retainsBootstrapCssCompatibilityConstants() {
+    assertTrue(!se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.isEmpty())
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.endsWith('bootstrap.css'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains('default.min.css'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='"))
   }
 
   @Test

@@ -8,14 +8,15 @@ class HtmlDecorator {
   private static final Logger log = LogManager.getLogger(HtmlDecorator.class)
 
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
+  public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
 
   /**
-   * The external URL of the Bootstrap stylesheet.
+   * The external-form URL of the Bootstrap stylesheet, suitable for use in an HTML href.
    *
-   * @deprecated Use {@link #BOOTSTRAP_CSS_PATH} when referring to the classpath resource.
+   * {@link #BOOTSTRAP_CSS_PATH} is the classpath resource path and is not a replacement for
+   * this external URL.
    */
-  @Deprecated
   public static final String BOOTSTRAP_CSS = resourceUrlExternalForm(BOOTSTRAP_CSS_PATH)
 
   public static final String HTML5_DECLARATION = "<!DOCTYPE html>\n"

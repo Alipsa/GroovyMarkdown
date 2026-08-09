@@ -1,8 +1,7 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
-- remove obsolete JavaFX filtering from the fat jar assembly
-- restore the deprecated `HtmlDecorator.BOOTSTRAP_CSS` constant for source compatibility
+- restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
 - upgrade OpenHTMLToPDF from 1.1.65 to 1.1.70
 - upgrade CommonMark from 0.29.0 to 0.30.0
@@ -25,6 +24,7 @@
 - close th tags and quote attribute values in Html
 - omit missing stylesheets instead of emitting a link with an empty href
 - restore the Highlight.js stylesheet lost in the source tree move; the jar now ships exactly one theme
+- remove obsolete JavaFX filtering from the fat jar assembly
 
 ### v3.0.2, 2026-02-06
 - use CI-friendly parent version (`${revision}`) instead of a fixed parent version
