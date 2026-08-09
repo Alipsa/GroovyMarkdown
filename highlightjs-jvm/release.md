@@ -4,6 +4,7 @@
 - upgrade the JUnit BOM used by module tests to 6.1.3
 - require Node 22 for bundle generation and verify the generated bundle in CI
 - add Maven publication metadata and attach source and Javadoc artifacts
+- configure the versions Maven plugin to use the shared repository version rules
 - add Javadocs to the public highlighter APIs
 
 ## v3.1.0, 2026-08-02

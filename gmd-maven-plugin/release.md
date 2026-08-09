@@ -1,7 +1,7 @@
 # GMD Maven Plugin release history
 
 ## v3.2.0, unreleased
-- align the default GMD core version with the current `3.2.0-SNAPSHOT` project revision
+- make the default GMD core version follow the Maven plugin version to prevent release drift
 - validate Maven Central release artifacts before publishing
 - publish source and Javadoc artifacts as part of the release workflow
 - replace deprecated Maven `@Component` injection with JSR-330 `@Inject`
