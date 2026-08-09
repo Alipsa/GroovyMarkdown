@@ -32,7 +32,7 @@ class GmdHighlightTest extends AbstractGmdTest {
     def html = gmd.gmdToHtmlDoc(text)
 
     // create a pdf file from the html
-    def pdfFile = new File(AbstractGmdTest.testOutputDir, "testHighlight.pdf")
+    def pdfFile = new File(testOutputDir, "testHighlight.pdf")
     if (pdfFile.exists()) pdfFile.delete()
     gmd.processHtmlAndSaveAsPdf(html, pdfFile)
     //gmd.gmdToPdf(text, pdfFile)

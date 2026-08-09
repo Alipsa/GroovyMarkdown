@@ -1,18 +1,9 @@
 package test.alipsa.groovy.gmd
 
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.io.TempDir
 
 class AbstractGmdTest {
 
-  static File testOutputDir = new File("build/test-results/")
-
-  @BeforeAll
-  static void init() {
-    if (testOutputDir.exists()) {
-      testOutputDir.deleteDir()
-    }
-    if (testOutputDir.exists() || (!testOutputDir.mkdirs() && !testOutputDir.isDirectory())) {
-      throw new IllegalStateException("Could not recreate test output directory ${testOutputDir.absolutePath}")
-    }
-  }
+  @TempDir
+  File testOutputDir
 }

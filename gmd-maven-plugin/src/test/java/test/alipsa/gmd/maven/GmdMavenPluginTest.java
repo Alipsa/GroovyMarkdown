@@ -3,6 +3,8 @@ package test.alipsa.gmd.maven;
 import org.apache.maven.api.plugin.testing.InjectMojo;
 import org.apache.maven.api.plugin.testing.MojoTest;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import se.alipsa.gmd.maven.GmdMavenPlugin;
 
@@ -28,6 +30,7 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -98,16 +101,39 @@ public class GmdMavenPluginTest {
     deleteDirectory(outputDirectory);
     assertFalse(outputDirectory.exists(), "Could not clear resolved-dependency test output");
 
-    try {
-      plugin.execute();
+    plugin.execute();
 
-      File testHtml = new File(plugin.getTargetDir(), "test.html");
-      assertTrue(testHtml.isFile(), "The resolved-dependency fork did not write test.html");
-      assertTrue(Files.readString(testHtml.toPath()).contains("<h1>Greetings</h1>"));
-      Mockito.verify(repositorySystem).resolveDependencies(any(RepositorySystemSession.class), any(DependencyRequest.class));
-    } finally {
-      deleteDirectory(outputDirectory);
-    }
+    File testHtml = new File(plugin.getTargetDir(), "test.html");
+    assertTrue(testHtml.isFile(), "The resolved-dependency fork did not write test.html");
+    assertTrue(Files.readString(testHtml.toPath()).contains("<h1>Greetings</h1>"));
+    Mockito.verify(repositorySystem).resolveDependencies(any(RepositorySystemSession.class), any(DependencyRequest.class));
+  }
+
+  @Test
+  public void testGmdMavenPluginReportsForkFailure() throws Exception {
+    FailingGmdMavenPlugin plugin = new FailingGmdMavenPlugin();
+    RepositorySystem repositorySystem = Mockito.mock(RepositorySystem.class);
+    RepositorySystemSession repositorySession = Mockito.mock(RepositorySystemSession.class);
+    LocalRepositoryManager localRepositoryManager = Mockito.mock(LocalRepositoryManager.class);
+    MavenSession session = Mockito.mock(MavenSession.class);
+    MavenProject project = Mockito.mock(MavenProject.class);
+    DependencyResult dependencyResult = new DependencyResult(new DependencyRequest());
+
+    when(session.getRepositorySession()).thenReturn(repositorySession);
+    when(repositorySession.getLocalRepositoryManager()).thenReturn(localRepositoryManager);
+    when(repositorySystem.resolveDependencies(any(RepositorySystemSession.class), any(DependencyRequest.class)))
+        .thenReturn(dependencyResult);
+    when(project.getBasedir()).thenReturn(new File("src/test/projects/manual").getAbsoluteFile());
+
+    setField(plugin, "repositorySystem", repositorySystem);
+    setField(plugin, "session", session);
+    setField(plugin, "project", project);
+    setField(plugin, "sourceDir", "src/test/gmd");
+    setField(plugin, "targetDir", "target/gmd-bad-main");
+    setField(plugin, "outputType", "html");
+
+    MojoFailureException exception = assertThrows(MojoFailureException.class, plugin::execute);
+    assertTrue(exception.getMessage().contains("GmdProcessor exited with code"));
   }
 
   private static void deleteDirectory(File directory) throws IOException {
@@ -130,9 +156,25 @@ public class GmdMavenPluginTest {
   }
 
   private static void setField(Object target, String name, Object value) throws Exception {
-    Field field = target.getClass().getDeclaredField(name);
-    field.setAccessible(true);
-    field.set(target, value);
+    Class<?> type = target.getClass();
+    while (type != null) {
+      try {
+        Field field = type.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(target, value);
+        return;
+      } catch (NoSuchFieldException e) {
+        type = type.getSuperclass();
+      }
+    }
+    throw new NoSuchFieldException(name);
+  }
+
+  private static final class FailingGmdMavenPlugin extends GmdMavenPlugin {
+    @Override
+    protected String getGmdProcessorClassName() {
+      return "se.alipsa.gmd.core.MissingGmdProcessor";
+    }
   }
 
 }

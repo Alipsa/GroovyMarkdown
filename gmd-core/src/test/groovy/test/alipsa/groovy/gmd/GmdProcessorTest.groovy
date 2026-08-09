@@ -9,8 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue
 
 class GmdProcessorTest extends AbstractGmdTest {
 
-  private static File sourceDirWith(String name, String content) {
-    File dir = new File(AbstractGmdTest.testOutputDir, "src-${name}")
+  private File sourceDirWith(String name, String content) {
+    File dir = new File(testOutputDir, "src-${name}")
     dir.mkdirs()
     new File(dir, "${name}.gmd").text = content
     return dir
@@ -19,7 +19,7 @@ class GmdProcessorTest extends AbstractGmdTest {
   @Test
   void htmlOutputIsACompleteDocument() {
     File src = sourceDirWith('doc', "# Hi\n\n```{groovy}\nout.println('x')\n```\n")
-    File target = new File(AbstractGmdTest.testOutputDir, 'out-doc')
+    File target = new File(testOutputDir, 'out-doc')
     target.deleteDir()
     assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
@@ -35,7 +35,7 @@ class GmdProcessorTest extends AbstractGmdTest {
   @Test
   void mdOutputIsStillPlainMarkdown() {
     File src = sourceDirWith('plain', "# Hi\n\n```{groovy echo=false}\nout.println('x')\n```\n")
-    File target = new File(AbstractGmdTest.testOutputDir, 'out-plain')
+    File target = new File(testOutputDir, 'out-plain')
     target.deleteDir()
     assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
@@ -49,7 +49,7 @@ class GmdProcessorTest extends AbstractGmdTest {
   @Test
   void commandLineEntryPointAcceptsSourceTargetAndOutputTypeArguments() {
     File src = sourceDirWith('command-line', "# Hi\n")
-    File target = new File(AbstractGmdTest.testOutputDir, 'out-command-line')
+    File target = new File(testOutputDir, 'out-command-line')
     target.deleteDir()
     assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 

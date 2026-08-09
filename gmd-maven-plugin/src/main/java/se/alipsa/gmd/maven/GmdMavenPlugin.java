@@ -178,7 +178,7 @@ public class GmdMavenPlugin extends AbstractMojo {
         command.add(getJavaExecutable());
         command.add("-cp");
         command.add(classpath.toString());
-        command.add(se.alipsa.gmd.core.GmdProcessor.class.getName());
+        command.add(getGmdProcessorClassName());
         command.add(srcDir.getCanonicalPath());
         command.add(outputDirectory.getCanonicalPath());
         command.add(normalizedOutputType);
@@ -261,5 +261,14 @@ public class GmdMavenPlugin extends AbstractMojo {
   private String getJavaExecutable() {
     String javaHome = System.getProperty("java.home");
     return javaHome + File.separator + "bin" + File.separator + "java";
+  }
+
+  /**
+   * Returns the entry point used by the forked GMD process.
+   *
+   * @return the fully qualified GmdProcessor class name
+   */
+  protected String getGmdProcessorClassName() {
+    return se.alipsa.gmd.core.GmdProcessor.class.getName();
   }
 }
