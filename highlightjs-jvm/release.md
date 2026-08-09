@@ -1,5 +1,11 @@
 # Highlight.js JVM release history
 
+## v3.2.0, unreleased
+- upgrade the Babel build dependencies
+- require Node 22 for bundle generation and verify the generated bundle in CI
+- add Maven publication metadata and attach source and Javadoc artifacts
+- add Javadocs to the public highlighter APIs
+
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module
 - expose Highlight.js string highlighting through the `SyntaxHighlighter` API

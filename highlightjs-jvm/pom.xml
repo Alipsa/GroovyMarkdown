@@ -98,6 +98,13 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <configuration>
+          <rulesUri>file://${project.parent.basedir}/version-plugin-rules.xml</rulesUri>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>

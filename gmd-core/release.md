@@ -1,5 +1,12 @@
 # Gmd Release History
 
+## v3.2.0, unreleased
+- remove obsolete JavaFX filtering from the fat jar assembly
+- restore the deprecated `HtmlDecorator.BOOTSTRAP_CSS` constant for source compatibility
+- upgrade the JUnit BOM from 6.1.2 to 6.1.3
+- upgrade OpenHTMLToPDF from 1.1.65 to 1.1.70
+- upgrade CommonMark from 0.29.0 to 0.30.0
+
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module using Rhino and a syntax-transpiled Highlight.js bundle
 - highlight code blocks synchronously before PDF rendering
