@@ -12,31 +12,42 @@ plugins {
 
 group = 'se.alipsa.gmd'
 def publishVersion = project.findProperty("publish.version")
-def revision = providers.fileContents(layout.projectDirectory.file('../pom.xml')).asText.orElse('').map { pomText ->
-  if (!pomText) {
-    throw new GradleException('Could not read the project revision from ../pom.xml')
-  }
-  try {
-    def documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
-    documentBuilderFactory.setNamespaceAware(true)
-    def document = documentBuilderFactory.newDocumentBuilder().parse(
-        new org.xml.sax.InputSource(new java.io.StringReader(pomText))
-    )
-    def revisionNodes = document.getElementsByTagNameNS('*', 'revision')
-    if (revisionNodes.length == 0) {
+def revision = null
+if (!publishVersion) {
+  revision = providers.fileContents(layout.projectDirectory.file('../pom.xml')).asText.orElse('').map { pomText ->
+    if (!pomText) {
       throw new GradleException('Could not read the project revision from ../pom.xml')
     }
-    String value = revisionNodes.item(0).getTextContent()?.trim()
-    if (!value) {
-      throw new GradleException('Could not read the project revision from ../pom.xml')
+    try {
+      def documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+      documentBuilderFactory.setNamespaceAware(true)
+      documentBuilderFactory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true)
+      documentBuilderFactory.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+      documentBuilderFactory.setFeature('http://apache.org/xml/features/nonvalidating/load-external-dtd', false)
+      documentBuilderFactory.setFeature('http://xml.org/sax/features/external-general-entities', false)
+      documentBuilderFactory.setFeature('http://xml.org/sax/features/external-parameter-entities', false)
+      documentBuilderFactory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD, '')
+      documentBuilderFactory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, '')
+      documentBuilderFactory.setXIncludeAware(false)
+      documentBuilderFactory.setExpandEntityReferences(false)
+      def document = documentBuilderFactory.newDocumentBuilder().parse(
+          new org.xml.sax.InputSource(new java.io.StringReader(pomText))
+      )
+      String value = javax.xml.xpath.XPathFactory.newInstance().newXPath().evaluate(
+          "/*[local-name()='project']/*[local-name()='properties']/*[local-name()='revision']/text()",
+          document
+      )?.trim()
+      if (!value) {
+        throw new GradleException('Could not read the project revision from ../pom.xml')
+      }
+      value
+    } catch (GradleException e) {
+      throw e
+    } catch (Exception e) {
+      throw new GradleException('Could not read the project revision from ../pom.xml', e)
     }
-    value
-  } catch (GradleException e) {
-    throw e
-  } catch (Exception e) {
-    throw new GradleException('Could not read the project revision from ../pom.xml', e)
-  }
-}.get()
+  }.get()
+}
 version = publishVersion ?: revision
 def pluginVersion = version.toString()
 description = 'Compiles gmd files into markdown, html or pdf'

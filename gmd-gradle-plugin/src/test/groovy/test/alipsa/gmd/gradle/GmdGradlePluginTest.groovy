@@ -55,13 +55,13 @@ class GmdGradlePluginTest {
         group = 'test.alipsa.gmd'
         version = '1.0.0-SNAPSHOT'
         repositories {
-            // Enable us to to use local snapshots
-            mavenLocal()
+            mavenCentral()
         }
         gmdPlugin {
             sourceDir = 'src/test/gmd'
             targetDir = 'build/target'
             outputType = 'html'
+            gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
             runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning 
         }
         """.stripIndent()
@@ -70,7 +70,7 @@ class GmdGradlePluginTest {
       settingsFile.text = """
       pluginManagement {
           repositories {
-              mavenLocal()
+              mavenCentral()
           }
           plugins {
               id 'se.alipsa.gmd.gmd-gradle-plugin' version "1.0.0"
