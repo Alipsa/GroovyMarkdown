@@ -201,7 +201,7 @@ Requires:
 ### Gradle Plugin Portal (gmd-gradle-plugin)
 ```bash
 cd gmd-gradle-plugin
-./gradlew publishPlugins
+./gradlew publishPlugins -Ppublish.version=<release-version>
 ```
 
 ### GitHub Releases

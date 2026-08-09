@@ -6,6 +6,7 @@
 - add Maven publication metadata and attach source and Javadoc artifacts
 - configure the versions Maven plugin to use the shared repository version rules
 - add Javadocs to the public highlighter APIs
+- upgrade the Babel build dependencies
 
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module
@@ -16,4 +17,3 @@
   syntax-only transpile, no polyfills, no hand-editing
 - return null instead of auto-detecting when a language is unknown or absent
 - synchronize access because Highlight.js keeps mutable state in the shared scope
-- upgrade the Babel build dependencies

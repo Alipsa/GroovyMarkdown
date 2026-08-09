@@ -8,7 +8,7 @@ class HtmlDecorator {
   private static final Logger log = LogManager.getLogger(HtmlDecorator.class)
 
   public static final String HIGHLIGHT_JS_CSS_PATH = "/highlightJs/styles/default.min.css"
-  public static final String HIGHLIGHT_JS_CSS = "\n<link rel='stylesheet' href='" + resourceUrlExternalForm(HIGHLIGHT_JS_CSS_PATH) + "'>\n"
+  public static final String HIGHLIGHT_JS_CSS = styleLink(HIGHLIGHT_JS_CSS_PATH, "\n", "\n")
   public static final String BOOTSTRAP_CSS_PATH = "/META-INF/resources/webjars/bootstrap/5.3.8/css/bootstrap.css"
 
   /**

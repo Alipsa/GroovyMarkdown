@@ -11,7 +11,15 @@ plugins {
 }
 
 group = 'se.alipsa.gmd'
-version = project.findProperty("publish.version") ?: "3.2.0-SNAPSHOT"
+def publishVersion = project.findProperty("publish.version")
+def pomDocument = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+    .newDocumentBuilder()
+    .parse(file('../pom.xml'))
+def revision = pomDocument.getElementsByTagName('revision').item(0)?.getTextContent()?.trim()
+if (!revision) {
+  throw new GradleException('Could not read the project revision from ../pom.xml')
+}
+version = publishVersion ?: revision
 description = 'Compiles gmd files into markdown, html or pdf'
 
 jar {
@@ -68,6 +76,13 @@ test {
 }
 
 project.afterEvaluate {
+  tasks.matching { it.name == 'publishPlugins' }.configureEach {
+    doFirst {
+      if (!publishVersion) {
+        throw new GradleException('publishPlugins requires -Ppublish.version=<release-version>')
+      }
+    }
+  }
   tasks.named('signPluginMavenPublication') {
     enabled = project.findProperty('signing.keyId') != null
   }
