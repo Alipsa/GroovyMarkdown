@@ -51,9 +51,9 @@ mvn versions:display-dependency-updates    # Maven dependency updates only
 mvn -pl gmd-core clean package
 
 # Use the fat JAR
-java -jar gmd-core/target/gmd-3.1.0.jar toHtml input.gmd output.html
-java -jar gmd-core/target/gmd-3.1.0.jar toPdf input.gmd output.pdf
-java -jar gmd-core/target/gmd-3.1.0.jar toPdfRaw input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toHtml input.gmd output.html
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toPdf input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toPdfRaw input.gmd output.pdf
 ```
 
 ## Version Management
@@ -69,7 +69,7 @@ java -jar gmd-core/target/gmd-3.1.0.jar toPdfRaw input.gmd output.pdf
 
 All child modules automatically inherit this version via `${revision}`. The `flatten-maven-plugin` resolves this during build/deployment.
 
-When bumping `revision`, also update the default `gmdVersion` in both the Maven and Gradle plugins and their user documentation so the plugins do not silently run an older core version.
+When bumping `revision`, verify that the Maven `${plugin.version}` default and Gradle manifest-based default remain synchronized with the core version, and update their user documentation if the default behavior changes.
 
 ## Project Structure
 

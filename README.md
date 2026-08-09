@@ -168,7 +168,7 @@ The library, which requires Java 21 or later, is available from maven central:
 Gradle: 
 ```groovy
 def groovyVersion = '5.0.8' // any 4.x version should work
-implementation "se.alipsa.gmd:gmd-core:3.1.0"
+implementation "se.alipsa.gmd:gmd-core:3.2.0-SNAPSHOT"
 implementation "org.apache.groovy:groovy:${groovyVersion}"
 implementation "org.apache.groovy:groovy-templates:${groovyVersion}"
 implementation "org.apache.groovy:groovy-jsr223:${groovyVersion}"
@@ -182,7 +182,7 @@ Maven:
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>

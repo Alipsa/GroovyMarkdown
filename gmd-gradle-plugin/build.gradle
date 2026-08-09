@@ -11,8 +11,14 @@ plugins {
 }
 
 group = 'se.alipsa.gmd'
-version = project.findProperty("publish.version") ?: "unspecified"
+version = project.findProperty("publish.version") ?: "3.2.0-SNAPSHOT"
 description = 'Compiles gmd files into markdown, html or pdf'
+
+jar {
+  manifest {
+    attributes('Implementation-Version': project.version)
+  }
+}
 
 gradlePlugin {
   website.set("https://github.com/Alipsa/GroovyMarkdown")

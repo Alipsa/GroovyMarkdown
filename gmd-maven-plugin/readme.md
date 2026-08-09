@@ -34,7 +34,7 @@ Possible configuration parameters are:
 embedded styles, and syntax-highlighted code blocks.
 - `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
 - `log4jVersion` - the version of Log4j to use. Default is `2.26.1`
-- `gmdVersion` - the version of GMD core to use. Default is `3.2.0-SNAPSHOT`
+- `gmdVersion` - the version of GMD core to use. Defaults to the plugin version.
 - `ivyVersion` - the version of Ivy to use. Default is `2.6.0`
 
 If you don't want to run the plugin explicitly, you can add it to an existing lifecycle as follows:

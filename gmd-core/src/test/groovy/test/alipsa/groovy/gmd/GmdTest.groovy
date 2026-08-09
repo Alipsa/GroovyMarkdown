@@ -228,9 +228,14 @@ class GmdTest extends AbstractGmdTest {
   @Test
   void retainsBootstrapCssCompatibilityConstants() {
     assertTrue(!se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.isEmpty())
+    assertNotEquals(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH,
+        se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS)
     assertTrue(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.endsWith('bootstrap.css'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.startsWith('file:')
+        || se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.startsWith('jar:'))
     assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains('default.min.css'))
-    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='"))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='file:")
+        || se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='jar:"))
   }
 
   @Test

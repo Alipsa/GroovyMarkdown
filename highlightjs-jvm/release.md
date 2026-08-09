@@ -2,6 +2,9 @@
 
 ## v3.2.0, unreleased
 - upgrade the JUnit BOM used by module tests to 6.1.3
+- require Node 22 for bundle generation and verify the generated bundle in CI
+- add Maven publication metadata and attach source and Javadoc artifacts
+- add Javadocs to the public highlighter APIs
 
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module
@@ -13,6 +16,3 @@
 - return null instead of auto-detecting when a language is unknown or absent
 - synchronize access because Highlight.js keeps mutable state in the shared scope
 - upgrade the Babel build dependencies
-- require Node 22 for bundle generation and verify the generated bundle in CI
-- add Maven publication metadata and attach source and Javadoc artifacts
-- add Javadocs to the public highlighter APIs
