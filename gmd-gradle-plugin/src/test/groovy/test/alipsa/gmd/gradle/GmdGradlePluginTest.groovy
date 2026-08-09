@@ -12,6 +12,36 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class GmdGradlePluginTest {
 
+  private static String rootPomRevision() {
+    def factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+    factory.setNamespaceAware(true)
+    factory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true)
+    factory.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+    factory.setFeature('http://xml.org/sax/features/external-general-entities', false)
+    factory.setFeature('http://xml.org/sax/features/external-parameter-entities', false)
+    factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD, '')
+    factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, '')
+    factory.setXIncludeAware(false)
+    factory.setExpandEntityReferences(false)
+    def document = factory.newDocumentBuilder().parse(new File('../pom.xml'))
+    def project = document.documentElement
+    def properties = directElementChild(project, 'properties')
+    def revision = directElementChild(properties, 'revision')
+    Assertions.assertNotNull(revision, 'The root POM must define project/properties/revision')
+    revision.getTextContent().trim()
+  }
+
+  private static org.w3c.dom.Node directElementChild(org.w3c.dom.Node parent, String localName) {
+    Assertions.assertNotNull(parent, "Expected a direct $localName element")
+    for (int i = 0; i < parent.getChildNodes().getLength(); i++) {
+      def child = parent.getChildNodes().item(i)
+      if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && child.getLocalName() == localName) {
+        return child
+      }
+    }
+    return null
+  }
+
   @Test
   void defaultGmdVersionComesFromGeneratedResource() {
     URL resource = GmdGradlePlugin.class.getResource('/gmd-version.properties')
@@ -21,8 +51,12 @@ class GmdGradlePluginTest {
     resource.withInputStream { properties.load(it) }
     String resourceVersion = properties.getProperty('gmd.version')
     String expectedVersion = System.getProperty('gmd.plugin.version')
+    String publishVersion = System.getProperty('gmd.publish.version')
     Assertions.assertNotNull(expectedVersion)
     Assertions.assertNotNull(resourceVersion)
+    if (!publishVersion) {
+      Assertions.assertEquals(rootPomRevision(), expectedVersion)
+    }
     Assertions.assertEquals(expectedVersion, resourceVersion)
     Assertions.assertFalse(resourceVersion.contains('$'), "The generated resource must be expanded: $resourceVersion")
 

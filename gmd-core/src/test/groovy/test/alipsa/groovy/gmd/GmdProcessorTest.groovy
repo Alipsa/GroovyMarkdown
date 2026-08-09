@@ -3,6 +3,7 @@ package test.alipsa.groovy.gmd
 import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.GmdProcessor
 
+import static org.junit.jupiter.api.Assertions.assertEquals
 import static org.junit.jupiter.api.Assertions.assertTrue
 
 class GmdProcessorTest extends AbstractGmdTest {
@@ -18,6 +19,7 @@ class GmdProcessorTest extends AbstractGmdTest {
   void htmlOutputIsACompleteDocument() {
     File src = sourceDirWith('doc', "# Hi\n\n```{groovy}\nout.println('x')\n```\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-doc')
+    target.deleteDir()
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'html')
 
@@ -32,6 +34,7 @@ class GmdProcessorTest extends AbstractGmdTest {
   void mdOutputIsStillPlainMarkdown() {
     File src = sourceDirWith('plain', "# Hi\n\n```{groovy echo=false}\nout.println('x')\n```\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-plain')
+    target.deleteDir()
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'md')
 
@@ -44,7 +47,9 @@ class GmdProcessorTest extends AbstractGmdTest {
   void commandLineEntryPointAcceptsSourceTargetAndOutputTypeArguments() {
     File src = sourceDirWith('command-line', "# Hi\n")
     File target = new File(AbstractGmdTest.testOutputDir, 'out-command-line')
+    target.deleteDir()
 
+    assertEquals('se.alipsa.gmd.core.GmdProcessor', GmdProcessor.name)
     GmdProcessor.main([src.absolutePath, target.absolutePath, 'md'] as String[])
 
     File output = new File(target, 'command-line.md')
