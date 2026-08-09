@@ -20,7 +20,10 @@ class GmdGradlePluginTest {
     Properties properties = new Properties()
     resource.withInputStream { properties.load(it) }
     String resourceVersion = properties.getProperty('gmd.version')
+    String expectedVersion = System.getProperty('gmd.plugin.version')
+    Assertions.assertNotNull(expectedVersion)
     Assertions.assertNotNull(resourceVersion)
+    Assertions.assertEquals(expectedVersion, resourceVersion)
     Assertions.assertFalse(resourceVersion.contains('$'), "The generated resource must be expanded: $resourceVersion")
 
     def method = GmdGradlePlugin.class.getDeclaredMethod('defaultGmdVersion')

@@ -39,4 +39,16 @@ class GmdProcessorTest extends AbstractGmdTest {
     assertTrue(md.contains('# Hi'))
     assertTrue(!md.contains('<!DOCTYPE'), 'Markdown output must not be decorated')
   }
+
+  @Test
+  void commandLineEntryPointAcceptsSourceTargetAndOutputTypeArguments() {
+    File src = sourceDirWith('command-line', "# Hi\n")
+    File target = new File(AbstractGmdTest.testOutputDir, 'out-command-line')
+
+    GmdProcessor.main([src.absolutePath, target.absolutePath, 'md'] as String[])
+
+    File output = new File(target, 'command-line.md')
+    assertTrue(output.isFile(), "Expected command-line output at ${output.absolutePath}")
+    assertTrue(output.text.contains('# Hi'))
+  }
 }

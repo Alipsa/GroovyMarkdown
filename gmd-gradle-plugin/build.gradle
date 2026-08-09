@@ -89,6 +89,7 @@ dependencies {
 }
 
 test {
+  systemProperty('gmd.plugin.version', pluginVersion)
   useJUnitPlatform()
   testLogging {
     // set options for log level LIFECYCLE
