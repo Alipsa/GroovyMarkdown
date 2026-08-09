@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MojoTest
@@ -19,7 +20,10 @@ public class GmdMavenPluginTest {
   public void testGmdMavenPlugin(GmdMavenPlugin plugin) throws Exception {
     File pomFile = new File("src/test/projects/");
     assertTrue(pomFile.exists());
-    assertEquals(System.getProperty("gmd.plugin.version"), plugin.getGmdVersion());
+    String expectedVersion = System.getProperty("gmd.plugin.version");
+    assertNotNull(expectedVersion);
+    assertNotNull(plugin.getGmdVersion());
+    assertEquals(expectedVersion, plugin.getGmdVersion());
 
     // Execute the plugin
     plugin.execute();

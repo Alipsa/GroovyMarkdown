@@ -69,7 +69,7 @@ java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toPdfRaw input.gmd output.pdf
 
 All child modules automatically inherit this version via `${revision}`. The `flatten-maven-plugin` resolves this during build/deployment.
 
-When bumping `revision`, verify that the Maven `${plugin.version}` default and Gradle manifest-based default remain synchronized with the core version, and update their user documentation if the default behavior changes.
+When bumping `revision`, verify that the Maven `${plugin.version}` default and Gradle resource/manifest-based default remain synchronized with the core version, and update their user documentation if the default behavior changes.
 
 ## Project Structure
 

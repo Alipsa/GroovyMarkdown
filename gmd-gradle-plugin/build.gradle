@@ -12,19 +12,26 @@ plugins {
 
 group = 'se.alipsa.gmd'
 def publishVersion = project.findProperty("publish.version")
-def pomDocument = javax.xml.parsers.DocumentBuilderFactory.newInstance()
-    .newDocumentBuilder()
-    .parse(file('../pom.xml'))
-def revision = pomDocument.getElementsByTagName('revision').item(0)?.getTextContent()?.trim()
-if (!revision) {
-  throw new GradleException('Could not read the project revision from ../pom.xml')
-}
+def revision = providers.fileContents(layout.projectDirectory.file('../pom.xml')).asText.map { pomText ->
+  def revisionMatcher = pomText =~ /<revision>\s*([^<]+)\s*<\/revision>/
+  if (!revisionMatcher.find()) {
+    throw new GradleException('Could not read the project revision from ../pom.xml')
+  }
+  revisionMatcher.group(1).trim()
+}.get()
 version = publishVersion ?: revision
+def pluginVersion = version.toString()
 description = 'Compiles gmd files into markdown, html or pdf'
 
 jar {
   manifest {
     attributes('Implementation-Version': project.version)
+  }
+}
+
+processResources {
+  filesMatching('gmd-version.properties') {
+    expand(gmdVersion: pluginVersion)
   }
 }
 
