@@ -12,12 +12,30 @@ plugins {
 
 group = 'se.alipsa.gmd'
 def publishVersion = project.findProperty("publish.version")
-def revision = providers.fileContents(layout.projectDirectory.file('../pom.xml')).asText.map { pomText ->
-  def revisionMatcher = pomText =~ /<revision>\s*([^<]+)\s*<\/revision>/
-  if (!revisionMatcher.find()) {
+def revision = providers.fileContents(layout.projectDirectory.file('../pom.xml')).asText.orElse('').map { pomText ->
+  if (!pomText) {
     throw new GradleException('Could not read the project revision from ../pom.xml')
   }
-  revisionMatcher.group(1).trim()
+  try {
+    def documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+    documentBuilderFactory.setNamespaceAware(true)
+    def document = documentBuilderFactory.newDocumentBuilder().parse(
+        new org.xml.sax.InputSource(new java.io.StringReader(pomText))
+    )
+    def revisionNodes = document.getElementsByTagNameNS('*', 'revision')
+    if (revisionNodes.length == 0) {
+      throw new GradleException('Could not read the project revision from ../pom.xml')
+    }
+    String value = revisionNodes.item(0).getTextContent()?.trim()
+    if (!value) {
+      throw new GradleException('Could not read the project revision from ../pom.xml')
+    }
+    value
+  } catch (GradleException e) {
+    throw e
+  } catch (Exception e) {
+    throw new GradleException('Could not read the project revision from ../pom.xml', e)
+  }
 }.get()
 version = publishVersion ?: revision
 def pluginVersion = version.toString()
@@ -30,6 +48,7 @@ jar {
 }
 
 processResources {
+  inputs.property('gmdVersion', pluginVersion)
   filesMatching('gmd-version.properties') {
     expand(gmdVersion: pluginVersion)
   }
