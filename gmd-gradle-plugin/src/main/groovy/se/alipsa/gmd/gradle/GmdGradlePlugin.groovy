@@ -10,6 +10,10 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
 import org.gradle.api.tasks.TaskProvider
 
+import java.io.IOException
+import java.io.InputStream
+import java.util.Properties
+
 @CompileStatic
 class GmdGradlePlugin implements Plugin<Project> {
 
@@ -21,7 +25,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.outputType.convention('md')
     extension.groovyVersion.convention('5.0.8')
     extension.log4jVersion.convention('2.26.1')
-    extension.gmdVersion.convention('3.1.0')
+    extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
     extension.ivyVersion.convention('2.6.0')
     extension.runTaskBefore.convention('test')
 
@@ -55,6 +59,36 @@ class GmdGradlePlugin implements Plugin<Project> {
         }
       } catch (Exception e) {
         project.logger.warn("Could not add processGmd task before the test task: ${e.message}")
+      }
+    }
+  }
+
+  private static String defaultGmdVersion() {
+    InputStream stream = GmdGradlePlugin.class.getResourceAsStream('/gmd-version.properties')
+    if (stream == null) {
+      throw new IllegalStateException(
+          'GMD core version metadata is missing from the Gradle plugin; set gmdPlugin.gmdVersion explicitly'
+      )
+    }
+    try {
+      Properties properties = new Properties()
+      properties.load(stream)
+      String version = properties.getProperty('gmd.version')
+      String normalizedVersion = version == null ? null : version.trim()
+      if (normalizedVersion == null || normalizedVersion.isEmpty()
+          || normalizedVersion.contains('$') || normalizedVersion.contains('{')) {
+        throw new IllegalStateException(
+            'GMD core version metadata is invalid; set gmdPlugin.gmdVersion explicitly'
+        )
+      }
+      return normalizedVersion
+    } catch (IOException e) {
+      throw new IllegalStateException('Could not read GMD core version metadata', e)
+    } finally {
+      try {
+        stream.close()
+      } catch (IOException ignored) {
+        // Ignore cleanup failures while resolving the version resource.
       }
     }
   }
