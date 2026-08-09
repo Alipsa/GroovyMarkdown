@@ -8,8 +8,11 @@ class AbstractGmdTest {
 
   @BeforeAll
   static void init() {
-    if (!testOutputDir.exists()) {
-      testOutputDir.mkdirs()
+    if (testOutputDir.exists()) {
+      testOutputDir.deleteDir()
+    }
+    if (testOutputDir.exists() || (!testOutputDir.mkdirs() && !testOutputDir.isDirectory())) {
+      throw new IllegalStateException("Could not recreate test output directory ${testOutputDir.absolutePath}")
     }
   }
 }
