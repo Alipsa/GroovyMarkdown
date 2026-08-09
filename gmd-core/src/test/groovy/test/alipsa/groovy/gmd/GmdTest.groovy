@@ -53,10 +53,10 @@ class GmdTest extends AbstractGmdTest {
     }
 
     def exception = assertThrows(GmdException) {
-      gmd.gmdToPdf('# Test', new File(AbstractGmdTest.testOutputDir, 'failed.pdf'))
+      gmd.gmdToPdf('# Test', new File(testOutputDir, 'failed.pdf'))
     }
     def processException = assertThrows(GmdException) {
-      gmd.processHtmlAndSaveAsPdf('<p>Test</p>', new File(AbstractGmdTest.testOutputDir, 'failed-process.pdf'))
+      gmd.processHtmlAndSaveAsPdf('<p>Test</p>', new File(testOutputDir, 'failed-process.pdf'))
     }
 
     assertInstanceOf(IllegalStateException, exception.cause)
@@ -66,7 +66,7 @@ class GmdTest extends AbstractGmdTest {
   @Test
   void gmdToHtmlFile() {
     def gmd = new Gmd()
-    def htmlfFile = new File(AbstractGmdTest.testOutputDir, "gmdToHtmlFile.pdf")
+    def htmlfFile = new File(testOutputDir, "gmdToHtmlFile.pdf")
     if (htmlfFile.exists()) htmlfFile.delete()
     gmd.gmdToHtml(text, htmlfFile)
     assertEquals(gmd.gmdToHtmlDoc(text), htmlfFile.text)
@@ -79,30 +79,30 @@ class GmdTest extends AbstractGmdTest {
   @Test
   void gmdToPdf() {
     def gmd = new Gmd()
-    def pdfFile = new File(AbstractGmdTest.testOutputDir, "gmdToPdf.pdf")
+    def pdfFile = new File(testOutputDir, "gmdToPdf.pdf")
     if (pdfFile.exists()) pdfFile.delete()
     def html = gmd.gmdToHtmlDoc(text)
     gmd.htmlToPdf(html, pdfFile)
     assertTrue(pdfFile.exists())
-    def pdfFile2 = new File(AbstractGmdTest.testOutputDir, "gmdToPdf2.pdf")
+    def pdfFile2 = new File(testOutputDir, "gmdToPdf2.pdf")
     if (pdfFile2.exists()) pdfFile2.delete()
     gmd.gmdToPdf(text, pdfFile2)
     assertTrue(pdfFile.exists())
     // Files might differ with a few bytes
     assertEquals((pdfFile.length()/15).intValue(), (pdfFile2.length()/15).intValue())
 
-    def pdfFile3 = new File(AbstractGmdTest.testOutputDir, "gmdToPdf3.pdf")
+    def pdfFile3 = new File(testOutputDir, "gmdToPdf3.pdf")
     gmd.gmdToPdf(text, pdfFile3)
     assertEquals((pdfFile2.length()/15).intValue(), (pdfFile3.length()/15).intValue())
   }
 
   @Test
   void toPdfRawIsUndecorated() {
-    File source = new File(AbstractGmdTest.testOutputDir, 'rawVsStyled.gmd')
+    File source = new File(testOutputDir, 'rawVsStyled.gmd')
     source.text = "# Test\n\n```groovy\ndef a = 1\n```\n"
 
-    File styled = new File(AbstractGmdTest.testOutputDir, 'styled.pdf')
-    File raw = new File(AbstractGmdTest.testOutputDir, 'raw.pdf')
+    File styled = new File(testOutputDir, 'styled.pdf')
+    File raw = new File(testOutputDir, 'raw.pdf')
     if (styled.exists()) styled.delete()
     if (raw.exists()) raw.delete()
 
@@ -226,12 +226,16 @@ class GmdTest extends AbstractGmdTest {
   }
 
   @Test
-  void retainsDeprecatedBootstrapCssCompatibilityConstant() {
-    def resourceUrl = se.alipsa.gmd.core.HtmlDecorator.class
-        .getResource(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH)
-        .toExternalForm()
-
-    assertEquals(resourceUrl, se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS)
+  void retainsBootstrapCssCompatibilityConstants() {
+    assertTrue(!se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.isEmpty())
+    assertNotEquals(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS_PATH,
+        se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS)
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.endsWith('bootstrap.css'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.startsWith('file:')
+        || se.alipsa.gmd.core.HtmlDecorator.BOOTSTRAP_CSS.startsWith('jar:'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains('default.min.css'))
+    assertTrue(se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='file:")
+        || se.alipsa.gmd.core.HtmlDecorator.HIGHLIGHT_JS_CSS.contains("href='jar:"))
   }
 
   @Test
@@ -281,7 +285,7 @@ class GmdTest extends AbstractGmdTest {
     def text = '## Hello `=name`!'
     def gmd = new Gmd()
     def html = gmd.gmdToHtmlDoc(text, [name: "Per"])
-    def pdfFile = new File(AbstractGmdTest.testOutputDir, "gmdToPdfWithParameter.pdf")
+    def pdfFile = new File(testOutputDir, "gmdToPdfWithParameter.pdf")
     if (pdfFile.exists()) pdfFile.delete()
     gmd.htmlToPdf(html, pdfFile)
     assertTrue(pdfFile.exists())
@@ -313,7 +317,7 @@ class GmdTest extends AbstractGmdTest {
 
     assertTrue(html.contains("<h1>Some equations</h1>\n<p>X = ∑(√2π + ∛3)</p>\n"))
 
-    def pdfFile = new File(AbstractGmdTest.testOutputDir, "testPdfWithSpecialCharacters.pdf")
+    def pdfFile = new File(testOutputDir, "testPdfWithSpecialCharacters.pdf")
     if (pdfFile.exists()) pdfFile.delete()
     gmd.htmlToPdf(html, pdfFile)
     assertTrue(pdfFile.exists())
@@ -565,7 +569,7 @@ out.println(chart)
     assertTrue(md.contains('# Employees'))
     assertTrue(md.contains("![''](data:image/svg+xml;base64,"))
 
-    def htmlFile = new File(AbstractGmdTest.testOutputDir, "testXChart.html")
+    def htmlFile = new File(testOutputDir, "testXChart.html")
     gmd.gmdToHtml(text, htmlFile)
     assertTrue(htmlFile.exists())
     assertTrue(htmlFile.length() > 100, "No html content")
@@ -577,7 +581,7 @@ out.println(chart)
   void testMathmlToPDF() {
     def html = IOUtils.toString(this.class.getResource('/mathml.html'), StandardCharsets.UTF_8)
     Gmd gmd = new Gmd()
-    def pdfFile = new File(AbstractGmdTest.testOutputDir, "testMathmlToPDF.pdf")
+    def pdfFile = new File(testOutputDir, "testMathmlToPDF.pdf")
     gmd.htmlToPdf(html, pdfFile)
     assertTrue(pdfFile.exists())
     println("Wrote $pdfFile.absolutePath")
@@ -587,12 +591,12 @@ out.println(chart)
   void gmdCommandLineTest() {
     String file = getClass().getResource("/test.gmd").getFile()
 
-    File htmlFile = new File(AbstractGmdTest.testOutputDir,"gmdCommandLineTest.html")
+    File htmlFile = new File(testOutputDir,"gmdCommandLineTest.html")
     Gmd.main("toHtml", file, htmlFile.absolutePath)
     assertTrue(htmlFile.exists())
     assertTrue(htmlFile.length() > 100, "No html content")
 
-    File pdfFile = new File(AbstractGmdTest.testOutputDir, "gmdCommandLineTest.pdf")
+    File pdfFile = new File(testOutputDir, "gmdCommandLineTest.pdf")
     Gmd.main("toPdf", file, pdfFile.absolutePath)
     assertTrue(pdfFile.exists())
     assertTrue(pdfFile.length() > 100, "No pdf content")

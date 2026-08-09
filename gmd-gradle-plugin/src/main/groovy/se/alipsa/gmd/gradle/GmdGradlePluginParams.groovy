@@ -36,7 +36,7 @@ interface GmdGradlePluginParams {
   Property<String> getLog4jVersion()
 
   /**
-   * The version of GMD to use. Default is 3.1.0
+   * The version of GMD to use. Defaults to the Gradle plugin version.
    */
   Property<String> getGmdVersion()
 

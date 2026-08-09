@@ -4,9 +4,68 @@ import groovy.ant.AntBuilder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.gradle.testkit.runner.GradleRunner
+import se.alipsa.gmd.gradle.GmdGradlePlugin
+
+import java.util.Properties
+
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class GmdGradlePluginTest {
+
+  private static String rootPomRevision() {
+    def factory = javax.xml.parsers.DocumentBuilderFactory.newInstance()
+    factory.setNamespaceAware(true)
+    factory.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true)
+    factory.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true)
+    factory.setFeature('http://xml.org/sax/features/external-general-entities', false)
+    factory.setFeature('http://xml.org/sax/features/external-parameter-entities', false)
+    factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD, '')
+    factory.setAttribute(javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA, '')
+    factory.setXIncludeAware(false)
+    factory.setExpandEntityReferences(false)
+    String rootPomPath = System.getProperty('gmd.root.pom')
+    Assertions.assertNotNull(rootPomPath, 'The root POM path must be provided by the Gradle test task')
+    def document = factory.newDocumentBuilder().parse(new File(rootPomPath))
+    def project = document.documentElement
+    def properties = directElementChild(project, 'properties')
+    def revision = directElementChild(properties, 'revision')
+    Assertions.assertNotNull(revision, 'The root POM must define project/properties/revision')
+    revision.getTextContent().trim()
+  }
+
+  private static org.w3c.dom.Node directElementChild(org.w3c.dom.Node parent, String localName) {
+    Assertions.assertNotNull(parent, "Expected a parent element containing direct $localName")
+    for (int i = 0; i < parent.getChildNodes().getLength(); i++) {
+      def child = parent.getChildNodes().item(i)
+      if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE && child.getLocalName() == localName) {
+        return child
+      }
+    }
+    return null
+  }
+
+  @Test
+  void defaultGmdVersionComesFromGeneratedResource() {
+    URL resource = GmdGradlePlugin.class.getResource('/gmd-version.properties')
+    Assertions.assertNotNull(resource, 'The plugin version resource must be generated during processResources')
+
+    Properties properties = new Properties()
+    resource.withInputStream { properties.load(it) }
+    String resourceVersion = properties.getProperty('gmd.version')
+    String expectedVersion = System.getProperty('gmd.plugin.version')
+    String publishVersion = System.getProperty('gmd.publish.version')
+    Assertions.assertNotNull(expectedVersion)
+    Assertions.assertNotNull(resourceVersion)
+    if (!publishVersion) {
+      Assertions.assertEquals(rootPomRevision(), expectedVersion)
+    }
+    Assertions.assertEquals(expectedVersion, resourceVersion)
+    Assertions.assertFalse(resourceVersion.contains('$'), "The generated resource must be expanded: $resourceVersion")
+
+    def method = GmdGradlePlugin.class.getDeclaredMethod('defaultGmdVersion')
+    method.setAccessible(true)
+    Assertions.assertEquals(resourceVersion, method.invoke(null))
+  }
 
   @Test
   void testPlugin() {
@@ -55,13 +114,13 @@ class GmdGradlePluginTest {
         group = 'test.alipsa.gmd'
         version = '1.0.0-SNAPSHOT'
         repositories {
-            // Enable us to to use local snapshots
-            mavenLocal()
+            mavenCentral()
         }
         gmdPlugin {
             sourceDir = 'src/test/gmd'
             targetDir = 'build/target'
             outputType = 'html'
+            gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
             runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning 
         }
         """.stripIndent()
@@ -70,7 +129,7 @@ class GmdGradlePluginTest {
       settingsFile.text = """
       pluginManagement {
           repositories {
-              mavenLocal()
+              mavenCentral()
           }
           plugins {
               id 'se.alipsa.gmd.gmd-gradle-plugin' version "1.0.0"

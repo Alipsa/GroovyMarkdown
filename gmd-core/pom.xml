@@ -39,9 +39,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
 
-    <openhtmltopdf.version>1.1.65</openhtmltopdf.version>
-    <commonmark.version>0.29.0</commonmark.version>
-    <junit.version>6.1.2</junit.version>
+    <openhtmltopdf.version>1.1.70</openhtmltopdf.version>
+    <commonmark.version>0.30.0</commonmark.version>
+    <junit.version>6.1.3</junit.version>
     <!-- paths for groovydoc -> javadoc jar -->
     <groovydoc.output>${project.build.directory}/site/groovydoc</groovydoc.output>
     <main.class>se.alipsa.gmd.core.Gmd</main.class>

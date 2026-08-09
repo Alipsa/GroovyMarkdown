@@ -3,12 +3,14 @@ package test.alipsa.groovy.gmd
 import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.GmdProcessor
 
+import static org.junit.jupiter.api.Assertions.assertEquals
+import static org.junit.jupiter.api.Assertions.assertFalse
 import static org.junit.jupiter.api.Assertions.assertTrue
 
 class GmdProcessorTest extends AbstractGmdTest {
 
-  private static File sourceDirWith(String name, String content) {
-    File dir = new File(AbstractGmdTest.testOutputDir, "src-${name}")
+  private File sourceDirWith(String name, String content) {
+    File dir = new File(testOutputDir, "src-${name}")
     dir.mkdirs()
     new File(dir, "${name}.gmd").text = content
     return dir
@@ -17,7 +19,9 @@ class GmdProcessorTest extends AbstractGmdTest {
   @Test
   void htmlOutputIsACompleteDocument() {
     File src = sourceDirWith('doc', "# Hi\n\n```{groovy}\nout.println('x')\n```\n")
-    File target = new File(AbstractGmdTest.testOutputDir, 'out-doc')
+    File target = new File(testOutputDir, 'out-doc')
+    target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'html')
 
@@ -31,12 +35,29 @@ class GmdProcessorTest extends AbstractGmdTest {
   @Test
   void mdOutputIsStillPlainMarkdown() {
     File src = sourceDirWith('plain', "# Hi\n\n```{groovy echo=false}\nout.println('x')\n```\n")
-    File target = new File(AbstractGmdTest.testOutputDir, 'out-plain')
+    File target = new File(testOutputDir, 'out-plain')
+    target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
 
     new GmdProcessor().process(src.absolutePath, target.absolutePath, 'md')
 
     String md = new File(target, 'plain.md').text
     assertTrue(md.contains('# Hi'))
     assertTrue(!md.contains('<!DOCTYPE'), 'Markdown output must not be decorated')
+  }
+
+  @Test
+  void commandLineEntryPointAcceptsSourceTargetAndOutputTypeArguments() {
+    File src = sourceDirWith('command-line', "# Hi\n")
+    File target = new File(testOutputDir, 'out-command-line')
+    target.deleteDir()
+    assertFalse(target.exists(), "Could not clear test target ${target.absolutePath}")
+
+    assertEquals('se.alipsa.gmd.core.GmdProcessor', GmdProcessor.name)
+    GmdProcessor.main([src.absolutePath, target.absolutePath, 'md'] as String[])
+
+    File output = new File(target, 'command-line.md')
+    assertTrue(output.isFile(), "Expected command-line output at ${output.absolutePath}")
+    assertTrue(output.text.contains('# Hi'))
   }
 }

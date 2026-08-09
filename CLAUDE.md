@@ -51,9 +51,9 @@ mvn versions:display-dependency-updates    # Maven dependency updates only
 mvn -pl gmd-core clean package
 
 # Use the fat JAR
-java -jar gmd-core/target/gmd-3.1.0.jar toHtml input.gmd output.html
-java -jar gmd-core/target/gmd-3.1.0.jar toPdf input.gmd output.pdf
-java -jar gmd-core/target/gmd-3.1.0.jar toPdfRaw input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toHtml input.gmd output.html
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toPdf input.gmd output.pdf
+java -jar gmd-core/target/gmd-3.2.0-SNAPSHOT.jar toPdfRaw input.gmd output.pdf
 ```
 
 ## Version Management
@@ -63,11 +63,13 @@ java -jar gmd-core/target/gmd-3.1.0.jar toPdfRaw input.gmd output.pdf
 ```xml
 <!-- In /pom.xml -->
 <properties>
-  <revision>3.1.0</revision>
+  <revision>3.2.0-SNAPSHOT</revision>
 </properties>
 ```
 
 All child modules automatically inherit this version via `${revision}`. The `flatten-maven-plugin` resolves this during build/deployment.
+
+When bumping `revision`, verify that the Maven `${plugin.version}` default and Gradle resource-based default remain synchronized with the core version, and update their user documentation if the default behavior changes.
 
 ## Project Structure
 
@@ -149,8 +151,8 @@ PDF Output
 ## Key Dependencies
 
 - **Groovy**: 5.0.8 (groovy, groovy-templates, groovy-jsr223)
-- **Markdown**: commonmark 0.29.0 + GFM tables extension
-- **PDF**: openhtmltopdf 1.1.65 (core, pdfbox, mathml, svg)
+- **Markdown**: commonmark 0.30.0 + GFM tables extension
+- **PDF**: openhtmltopdf 1.1.70 (core, pdfbox, mathml, svg)
 - **Syntax highlighting**: Highlight.js 11.7.0, syntax-transpiled and evaluated by Rhino 1.9.1
 - **HTML fragments**: Jsoup 1.23.1
 - **Matrix**: se.alipsa.matrix BOM 2.5.1 (charts, core, xchart)
@@ -177,7 +179,7 @@ Rhino keeps mutable Highlight.js state in a shared scope, so calls are synchroni
 
 ## Testing
 
-Tests use JUnit 5 (Jupiter 6.1.2):
+Tests use JUnit Jupiter 6.1.3:
 - `gmd-core/src/test/groovy/test/alipsa/groovy/gmd/`
   - GmdTest.groovy
   - GmdTemplateEngineTest.groovy
@@ -199,7 +201,7 @@ Requires:
 ### Gradle Plugin Portal (gmd-gradle-plugin)
 ```bash
 cd gmd-gradle-plugin
-./gradlew publishPlugins
+./gradlew publishPlugins -Ppublish.version=<release-version>
 ```
 
 ### GitHub Releases

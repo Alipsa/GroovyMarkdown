@@ -4,11 +4,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import javax.inject.Inject;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -40,7 +44,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
   private String log4jVersion;
 
-  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "3.1.0")
+  @Parameter(name = "gmdVersion", property = "processGmd.gmdVersion", defaultValue = "${plugin.version}")
   private String gmdVersion;
 
   @Parameter(name = "ivyVersion", property = "processGmd.ivyVersion", defaultValue = "2.6.0")
@@ -52,7 +56,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(defaultValue = "${session}", readonly = true, required = true)
   private MavenSession session;
 
-  @Component
+  @Inject
   private RepositorySystem repositorySystem;
 
   /**
@@ -111,7 +115,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of GMD core to use. Default is 3.1.0
+   * The version of GMD core to use. Defaults to the plugin version.
    *
    * @return The version of GMD core to use.
    */
@@ -174,7 +178,7 @@ public class GmdMavenPlugin extends AbstractMojo {
         command.add(getJavaExecutable());
         command.add("-cp");
         command.add(classpath.toString());
-        command.add("se.alipsa.gmd.core.GmdProcessor");
+        command.add(getGmdProcessorClassName());
         command.add(srcDir.getCanonicalPath());
         command.add(outputDirectory.getCanonicalPath());
         command.add(normalizedOutputType);
@@ -257,5 +261,14 @@ public class GmdMavenPlugin extends AbstractMojo {
   private String getJavaExecutable() {
     String javaHome = System.getProperty("java.home");
     return javaHome + File.separator + "bin" + File.separator + "java";
+  }
+
+  /**
+   * Returns the entry point used by the forked GMD process.
+   *
+   * @return the fully qualified GmdProcessor class name
+   */
+  protected String getGmdProcessorClassName() {
+    return se.alipsa.gmd.core.GmdProcessor.class.getName();
   }
 }
