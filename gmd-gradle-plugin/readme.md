@@ -23,7 +23,7 @@ Possible parameters are:
 
 `outputType=html` writes a complete decorated HTML document, including the doctype,
 embedded styles, and syntax-highlighted code blocks.
-- `groovyVersion` - the version of Groovy to use. Default is `5.0.8`
+- `groovyVersion` - the version of Groovy to use. Default is `5.1.1`
 - `gmdVersion` - the version of GMD to use. Defaults to the Gradle plugin version.
 - `log4jVersion` - the version of log4j to use. Default is `2.26.1`
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`

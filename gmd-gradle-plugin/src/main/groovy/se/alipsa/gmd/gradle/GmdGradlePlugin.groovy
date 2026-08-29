@@ -23,7 +23,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.sourceDir.convention('src/main/gmd')
     extension.targetDir.convention('build/gmd')
     extension.outputType.convention('md')
-    extension.groovyVersion.convention('5.0.8')
+    extension.groovyVersion.convention('5.1.1')
     extension.log4jVersion.convention('2.26.1')
     extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
     extension.ivyVersion.convention('2.6.0')

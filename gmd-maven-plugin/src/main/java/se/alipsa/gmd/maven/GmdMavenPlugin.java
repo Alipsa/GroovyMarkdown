@@ -38,7 +38,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "outputType", property = "processGmd.outputType", defaultValue = "md" )
   private String outputType;
 
-  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.0.8")
+  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.1.1")
   private String groovyVersion;
 
   @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
@@ -97,7 +97,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of Groovy to use. Default is 5.0.8
+   * The version of Groovy to use. Default is 5.1.1
    *
    * @return The version of Groovy to use.
    */

@@ -6,6 +6,7 @@
 - upgrade the Gradle Versions Plugin from 0.58.0 to 0.61.0
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
 - validate the Gradle Plugin Portal publication before uploading the plugin
+- upgrade groovy to 5.1.1
 
 ## v3.1.1, in progress
 - replace the deprecated `Project.getProperties()` calls used by signing configuration with `findProperty`, keeping the plugin compatible with Gradle 10

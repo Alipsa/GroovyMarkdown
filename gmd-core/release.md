@@ -3,9 +3,10 @@
 ## v3.2.0, unreleased
 - restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
-- upgrade OpenHTMLToPDF from 1.1.65 to 1.1.70
+- upgrade OpenHTMLToPDF from 1.1.65 to 1.1.83
 - upgrade CommonMark from 0.29.0 to 0.30.0
 - remove obsolete JavaFX filtering from the fat jar assembly
+- upgrade groovy to 5.1.1
 
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module using Rhino and a syntax-transpiled Highlight.js bundle

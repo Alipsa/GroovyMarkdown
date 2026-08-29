@@ -29,8 +29,8 @@
     <central.skipPublishing>false</central.skipPublishing>
     <central.waitUntil>validated</central.waitUntil>
     <!-- Dependency versions -->
-    <groovy.version>5.0.8</groovy.version>
-    <jsoup.version>1.23.1</jsoup.version>
+    <groovy.version>5.1.1</groovy.version>
+    <jsoup.version>1.23.2</jsoup.version>
     <junit.jupiter.version>6.1.3</junit.jupiter.version>
     <log4j.version>2.26.1</log4j.version>
   </properties>

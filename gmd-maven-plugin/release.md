@@ -5,6 +5,7 @@
 - validate Maven Central release artifacts before publishing
 - publish source and Javadoc artifacts as part of the release workflow
 - replace deprecated Maven `@Component` injection with JSR-330 `@Inject`
+- upgrade groovy to 5.1.1
 
 ## v3.1.0, 2026-08-02
 - resolve all output types without JavaFX dependencies
