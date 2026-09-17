@@ -3,10 +3,12 @@
 ## v3.2.0, unreleased
 - restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
-- upgrade OpenHTMLToPDF from 1.1.65 to 1.1.83
+- upgrade OpenHTMLToPDF from 1.1.65 to 1.1.86
 - upgrade CommonMark from 0.29.0 to 0.30.0
 - remove obsolete JavaFX filtering from the fat jar assembly
-- upgrade groovy to 5.1.1
+- upgrade groovy to 5.1.2
+- exclude xml-apis, which bundles pre-Java-5 javax.xml.parsers classes.
+  On a child-first classloader (e.g. Groovy's RootLoader / @Grab) its FactoryFinder shadows the JDK's JAXP and fails with FactoryConfigurationError looking for org.apache.xerces.jaxp.DocumentBuilderFactoryImpl. The JDK already provides these APIs.
 
 ## v3.1.0, 2026-08-02
 - add the independent `highlightjs-jvm` module using Rhino and a syntax-transpiled Highlight.js bundle

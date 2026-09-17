@@ -6,8 +6,8 @@ plugins {
   id 'java-gradle-plugin'
   id 'signing'
   id 'maven-publish'
-  id 'com.gradle.plugin-publish' version '2.1.1'
-  id "io.github.ben-manes.versions" version "0.61.0"
+  id 'com.gradle.plugin-publish' version '2.2.1'
+  id "io.github.ben-manes.versions" version "0.64.0"
 }
 
 group = 'se.alipsa.gmd'

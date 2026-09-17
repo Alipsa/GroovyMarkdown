@@ -68,7 +68,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.15.2</version>
+      <version>3.16.0</version>
       <scope>provided</scope>
     </dependency>
 
@@ -169,7 +169,7 @@
       <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-plugin-plugin</artifactId>
-          <version>3.15.2</version>
+          <version>3.16.0</version>
           <configuration>
             <goalPrefix>gmd</goalPrefix>
           </configuration>
@@ -271,7 +271,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>3.5.6</version>
+        <version>3.6.0</version>
       </plugin>
     </plugins>
   </reporting>
