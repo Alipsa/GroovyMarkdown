@@ -196,7 +196,15 @@ public class GmdMavenPlugin extends AbstractMojo {
             throw new MojoFailureException("GmdProcessor exited with code " + exitCode);
           }
         } finally {
-          Files.deleteIfExists(argFile.toPath());
+          // Never let a cleanup failure here replace a pending exception from
+          // the try block (e.g. the non-zero exit code above) with a less
+          // informative one.
+          try {
+            Files.deleteIfExists(argFile.toPath());
+          } catch (IOException e) {
+            getLog().warn("Could not delete temporary classpath argfile " + argFile.getAbsolutePath()
+                + ": " + e.getMessage());
+          }
         }
       } else {
         // Fall back to using GmdProcessor directly with bundled dependencies
@@ -283,6 +291,7 @@ public class GmdMavenPlugin extends AbstractMojo {
       lines.add(quoteArgFileToken(arg));
     }
     File argFile = File.createTempFile("gmd-classpath", ".args");
+    argFile.deleteOnExit();
     Files.write(argFile.toPath(), lines, StandardCharsets.UTF_8);
     return argFile;
   }

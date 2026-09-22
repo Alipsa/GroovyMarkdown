@@ -18,7 +18,11 @@ gmdPlugin {
 ```
 Possible parameters are:
 - `sourceDir` - the directory where the GMD files are located. Default is `src/main/gmd`
-- `targetDir` - the directory where the output files will be created. Default is `build/gmd`
+- `targetDir` - the directory where the output files will be created. Default is `build/gmd`. This directory
+  must be exclusive to `processGmd` - don't point it at a directory another task or tool also writes to.
+  Gradle treats a task's `@OutputDirectory` as owned by that task and removes files it doesn't recognize as
+  current outputs before running it, and `processGmd` additionally removes generated files left over from a
+  `.gmd` source that was renamed or deleted. Either mechanism can delete unrelated content in a shared directory.
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
 
 `outputType=html` writes a complete decorated HTML document, including the doctype,

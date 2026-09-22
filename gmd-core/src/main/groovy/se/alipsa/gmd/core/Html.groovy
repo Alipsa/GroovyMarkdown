@@ -61,13 +61,13 @@ class Html {
    * Markdown.
    */
   private static String imgToHtml(String base64String, String alt, Map<String, String> attributes) {
-    StringBuilder attr = new StringBuilder()
-    if (attributes.size() > 0) {
-      attributes.each {
-        attr.append(it.key).append('="').append(escape(it.value)).append('" ')
-      }
+    StringBuilder tag = new StringBuilder('<img alt="').append(escape(alt))
+        .append('" src="').append(escape(base64String)).append('"')
+    attributes.each {
+      tag.append(' ').append(escape(it.key)).append('="').append(escape(it.value)).append('"')
     }
-    return "<img alt=\"${escape(alt)}\" src=\"${escape(base64String)}\" ${attr.toString()} />\n"
+    tag.append(' />\n')
+    return tag.toString()
   }
 
   private static String tableToHtml(Matrix table, Map<String, String> htmlattr) {

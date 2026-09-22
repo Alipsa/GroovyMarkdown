@@ -73,8 +73,14 @@ abstract class ProcessGmdTask extends DefaultTask {
     if (getTargetDirInsideBuildDir().getOrElse(false)) {
       cleanStaleGeneratedFiles(source, target, output)
     } else {
-      logger.warn("targetDir ${target.canonicalPath} is outside the project build directory; " +
-          "skipping stale generated-file cleanup to avoid deleting files it did not generate")
+      // This also fires when the task was registered directly instead of via
+      // GmdGradlePlugin (targetDirInsideBuildDir then falls back to its
+      // constructor convention of false), not only when targetDir is
+      // genuinely outside the build directory - so the wording can't assume
+      // which one it is.
+      logger.warn("Could not confirm that targetDir ${target.canonicalPath} is inside the project's build " +
+          "directory (it may be outside it, or this task may not have been configured via the GMD Gradle " +
+          "plugin); skipping stale generated-file cleanup to avoid deleting files it did not generate")
     }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->
