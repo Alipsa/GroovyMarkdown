@@ -53,6 +53,13 @@ class Html {
     }
   }
 
+  /**
+   * A bare <img> line starts a CommonMark HTML block, which swallows every
+   * following line verbatim until a blank line. If this Html instance is
+   * printed into a Markdown (.gmd) document, the trailing blank line here
+   * terminates that block so the rest of the document keeps parsing as
+   * Markdown.
+   */
   private static String imgToHtml(String base64String, String alt, Map<String, String> attributes) {
     StringBuilder attr = new StringBuilder()
     if (attributes.size() > 0) {
@@ -60,7 +67,7 @@ class Html {
         attr.append(it.key).append('="').append(escape(it.value)).append('" ')
       }
     }
-    return "<img alt=\"${escape(alt)}\" src=\"${escape(base64String)}\" ${attr.toString()} />"
+    return "<img alt=\"${escape(alt)}\" src=\"${escape(base64String)}\" ${attr.toString()} />\n"
   }
 
   private static String tableToHtml(Matrix table, Map<String, String> htmlattr) {

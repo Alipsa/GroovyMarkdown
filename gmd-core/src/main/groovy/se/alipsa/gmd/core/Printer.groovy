@@ -70,13 +70,18 @@ class Printer extends PrintWriter {
      * CommonMark's image syntax has no attribute extension, so Pandoc-style
      * {key=value} suffixes are left as literal text in the output. Emit raw
      * <img> HTML instead, which CommonMark passes through unchanged.
+     *
+     * A bare <img> line starts a CommonMark HTML block, which swallows every
+     * following line verbatim until a blank line. The trailing blank line
+     * here terminates that block so the rest of the document keeps parsing
+     * as Markdown.
      */
     private static String imgToHtml(String src, String alt, Map<String, String> attributes) {
         StringBuilder attr = new StringBuilder()
         attributes.each {
             attr.append(it.key).append('="').append(escape(it.value)).append('" ')
         }
-        return "<img alt=\"${escape(alt)}\" src=\"${escape(src)}\" ${attr.toString()} />"
+        return "<img alt=\"${escape(alt)}\" src=\"${escape(src)}\" ${attr.toString()} />\n\n"
     }
 
     private static String escape(Object value) {

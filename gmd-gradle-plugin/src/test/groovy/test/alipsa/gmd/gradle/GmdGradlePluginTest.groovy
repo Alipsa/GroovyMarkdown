@@ -3,8 +3,10 @@ package test.alipsa.gmd.gradle
 import groovy.ant.AntBuilder
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.GradleRunner
 import se.alipsa.gmd.gradle.GmdGradlePlugin
+import se.alipsa.gmd.gradle.ProcessGmdTask
 
 import java.util.Properties
 
@@ -65,6 +67,18 @@ class GmdGradlePluginTest {
     def method = GmdGradlePlugin.class.getDeclaredMethod('defaultGmdVersion')
     method.setAccessible(true)
     Assertions.assertEquals(resourceVersion, method.invoke(null))
+  }
+
+  @Test
+  void targetDirInsideBuildDirHasASafeDefaultForDirectRegistration() {
+    // Registering the task directly (bypassing GmdGradlePlugin's afterEvaluate
+    // wiring, which is the only place targetDirInsideBuildDir is normally set)
+    // must not leave this @Input property without a value.
+    def project = ProjectBuilder.builder().build()
+    ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
+
+    Assertions.assertFalse(task.targetDirInsideBuildDir.get(),
+        'targetDirInsideBuildDir should default to false when set only by convention')
   }
 
   @Test

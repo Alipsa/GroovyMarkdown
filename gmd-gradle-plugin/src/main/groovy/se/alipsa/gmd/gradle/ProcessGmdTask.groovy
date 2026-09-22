@@ -26,6 +26,10 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Inject
   ProcessGmdTask(ExecOperations execOperations) {
     this.execOperations = execOperations
+    // Fail-safe default for anyone registering this task directly instead of
+    // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
+    // rather than fail validation or delete files outside the build dir.
+    targetDirInsideBuildDir.convention(false)
   }
 
   @InputDirectory
