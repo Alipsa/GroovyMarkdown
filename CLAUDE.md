@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Groovy Markdown (GMD) is a multi-module Maven project that processes Markdown files with embedded Groovy code blocks, converting them to standard Markdown, HTML, or PDF. The project targets Java 21+ and Groovy 5.0.8.
+Groovy Markdown (GMD) is a multi-module Maven project that processes Markdown files with embedded Groovy code blocks, converting them to standard Markdown, HTML, or PDF. The project targets Java 21+ and Groovy 5.1.3.
 
 ## Build Commands
 
@@ -150,12 +150,12 @@ PDF Output
 
 ## Key Dependencies
 
-- **Groovy**: 5.0.8 (groovy, groovy-templates, groovy-jsr223)
+- **Groovy**: 5.1.3 (groovy, groovy-templates, groovy-jsr223)
 - **Markdown**: commonmark 0.30.0 + GFM tables extension
-- **PDF**: openhtmltopdf 1.1.70 (core, pdfbox, mathml, svg)
+- **PDF**: openhtmltopdf 1.1.86 (core, pdfbox, mathml, svg)
 - **Syntax highlighting**: Highlight.js 11.7.0, syntax-transpiled and evaluated by Rhino 1.9.1
-- **HTML fragments**: Jsoup 1.23.1
-- **Matrix**: se.alipsa.matrix BOM 2.5.1 (charts, core, xchart)
+- **HTML fragments**: Jsoup 1.23.2
+- **Matrix**: se.alipsa.matrix BOM 2.6.0 (charts, core, xchart)
 - **Bootstrap**: 5.3.8 (webjar)
 - **Logging**: log4j 2.26.1
 

@@ -150,8 +150,9 @@ class GmdTest extends AbstractGmdTest {
         - Sunday: Sunny
         - Monday: Rainy
         - Tuesday: Cloudy
-        
+
         Now, that's something to look forward to!
+
         """.stripIndent(), md)
   }
 
@@ -413,7 +414,7 @@ class GmdTest extends AbstractGmdTest {
     '''
     html = gmd.gmdToHtml(text)
     assertTrue(html.contains('BarChart chart = BarChart.createVertical('), 'Should contain code content')
-    assertTrue(html.contains('<p><img src="data:image/svg+xml;base64,'), 'Should contain SVG image content')
+    assertTrue(html.contains('<img alt="" src="data:image/svg+xml;base64,'), 'Should contain SVG image content')
   }
 
   @Test
@@ -485,7 +486,8 @@ class GmdTest extends AbstractGmdTest {
       out.println "Today (" + dayName(now) + ") is " + now + "."
     ```
     Today (Saturday) is 2022-07-23.
-    How about that?""".stripIndent(), md)
+    How about that?
+    """.stripIndent(), md)
   }
 
   @Test
@@ -501,6 +503,7 @@ class GmdTest extends AbstractGmdTest {
 
     assertEquals("""
         X = 5
+
         """.stripIndent(), gmd.gmdToMd(text))
 
     assertEquals("""<p>X = 5</p>
@@ -533,7 +536,7 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split("\\)", 2)[0]
+    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split('"', 2)[0]
     assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
   }
 
@@ -567,14 +570,14 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    assertTrue(md.contains("![''](data:image/svg+xml;base64,"))
+    assertTrue(md.contains('<img alt="" src="data:image/svg+xml;base64,'))
 
     def htmlFile = new File(testOutputDir, "testXChart.html")
     gmd.gmdToHtml(text, htmlFile)
     assertTrue(htmlFile.exists())
     assertTrue(htmlFile.length() > 100, "No html content")
     assertTrue(htmlFile.text.contains('<h1>Employees</h1>'))
-    assertTrue(htmlFile.text.contains('<img src="data:image/svg+xml;base64,'), "No SVG image content")
+    assertTrue(htmlFile.text.contains('<img alt="" src="data:image/svg+xml;base64,'), "No SVG image content")
   }
 
   @Test
@@ -615,6 +618,7 @@ out.println(chart)
     ```groovy
     a = 23
     ```
-    12 + a = 35'''.stripIndent(), gmd.gmdToMd(text))
+    12 + a = 35
+    '''.stripIndent(), gmd.gmdToMd(text))
   }
 }

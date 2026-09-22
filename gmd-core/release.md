@@ -6,7 +6,8 @@
 - upgrade OpenHTMLToPDF from 1.1.65 to 1.1.86
 - upgrade CommonMark from 0.29.0 to 0.30.0
 - remove obsolete JavaFX filtering from the fat jar assembly
-- upgrade groovy to 5.1.2
+- upgrade groovy to 5.1.3
+- Upgrade matrix bom to 2.6.0
 - exclude xml-apis, which bundles pre-Java-5 javax.xml.parsers classes.
   On a child-first classloader (e.g. Groovy's RootLoader / @Grab) its FactoryFinder shadows the JDK's JAXP and fails with FactoryConfigurationError looking for org.apache.xerces.jaxp.DocumentBuilderFactoryImpl. The JDK already provides these APIs.
 

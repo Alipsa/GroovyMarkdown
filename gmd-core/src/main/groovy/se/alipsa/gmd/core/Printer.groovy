@@ -1,5 +1,6 @@
 package se.alipsa.gmd.core
 
+import org.jsoup.nodes.Entities
 import se.alipsa.groovy.svg.Svg
 import se.alipsa.matrix.chartexport.ChartToSvg
 import se.alipsa.matrix.pict.CharmBridge;
@@ -49,36 +50,37 @@ class Printer extends PrintWriter {
 
 
     private static String chartToMd(Chart x, double width, double height, String alt, Map<String, String> attributes) {
-        StringBuilder attr = new StringBuilder()
-        if (attributes.size() > 0) {
-            attr.append('{')
-            attributes.each {
-                attr.append(it.key).append('=').append(it.value).append(' ')
-            }
-            attr.append('}')
-        }
         Svg svg = CharmBridge.renderSvg(x, width as int, height as int)
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             ChartToSvg.export(svg, os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return "!['${alt}'](data:image/svg+xml;base64,${imgContent})${attr.toString()}"
+            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
         }
     }
 
     private static String chartToMd(MatrixXChart x, String alt, Map<String, String> attributes) {
-        StringBuilder attr = new StringBuilder()
-        if (attributes.size() > 0) {
-            attr.append('{')
-            attributes.each {
-                attr.append(it.key).append('=').append(it.value).append(' ')
-            }
-            attr.append('}')
-        }
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             x.exportSvg(os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return "!['${alt}'](data:image/svg+xml;base64,${imgContent})${attr.toString()}"
+            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
         }
+    }
+
+    /**
+     * CommonMark's image syntax has no attribute extension, so Pandoc-style
+     * {key=value} suffixes are left as literal text in the output. Emit raw
+     * <img> HTML instead, which CommonMark passes through unchanged.
+     */
+    private static String imgToHtml(String src, String alt, Map<String, String> attributes) {
+        StringBuilder attr = new StringBuilder()
+        attributes.each {
+            attr.append(it.key).append('="').append(escape(it.value)).append('" ')
+        }
+        return "<img alt=\"${escape(alt)}\" src=\"${escape(src)}\" ${attr.toString()} />"
+    }
+
+    private static String escape(Object value) {
+        return value == null ? '' : Entities.escape(value.toString())
     }
 
     void print(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {

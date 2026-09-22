@@ -49,7 +49,7 @@ class Html {
     try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
       ChartToSvg.export(svg, os)
       String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-      imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+      return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
     }
   }
 

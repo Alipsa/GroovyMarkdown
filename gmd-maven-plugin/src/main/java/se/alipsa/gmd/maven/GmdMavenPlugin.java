@@ -1,6 +1,9 @@
 package se.alipsa.gmd.maven;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +41,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   @Parameter(name = "outputType", property = "processGmd.outputType", defaultValue = "md" )
   private String outputType;
 
-  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.1.2")
+  @Parameter(name = "groovyVersion", property = "processGmd.groovyVersion", defaultValue = "5.1.3")
   private String groovyVersion;
 
   @Parameter(name = "log4jVersion", property = "processGmd.log4jVersion", defaultValue = "2.26.1")
@@ -97,7 +100,7 @@ public class GmdMavenPlugin extends AbstractMojo {
   }
 
   /**
-   * The version of Groovy to use. Default is 5.1.2
+   * The version of Groovy to use. Default is 5.1.3
    *
    * @return The version of Groovy to use.
    */
@@ -173,23 +176,27 @@ public class GmdMavenPlugin extends AbstractMojo {
           classpath.append(file.getAbsolutePath());
         }
 
-        // Execute GmdProcessor in a forked process with custom classpath
-        List<String> command = new ArrayList<>();
-        command.add(getJavaExecutable());
-        command.add("-cp");
-        command.add(classpath.toString());
-        command.add(getGmdProcessorClassName());
-        command.add(srcDir.getCanonicalPath());
-        command.add(outputDirectory.getCanonicalPath());
-        command.add(normalizedOutputType);
+        // Execute GmdProcessor in a forked process with custom classpath. The
+        // classpath and args are passed via a @-argfile rather than directly on the
+        // command line, since a long transitive classpath can approach the ~32 KB
+        // command-line length limit on Windows.
+        File argFile = createArgFile(classpath.toString(), srcDir.getCanonicalPath(),
+            outputDirectory.getCanonicalPath(), normalizedOutputType);
+        try {
+          List<String> command = new ArrayList<>();
+          command.add(getJavaExecutable());
+          command.add("@" + argFile.getAbsolutePath());
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.inheritIO();
-        Process process = processBuilder.start();
-        int exitCode = process.waitFor();
+          ProcessBuilder processBuilder = new ProcessBuilder(command);
+          processBuilder.inheritIO();
+          Process process = processBuilder.start();
+          int exitCode = process.waitFor();
 
-        if (exitCode != 0) {
-          throw new MojoFailureException("GmdProcessor exited with code " + exitCode);
+          if (exitCode != 0) {
+            throw new MojoFailureException("GmdProcessor exited with code " + exitCode);
+          }
+        } finally {
+          Files.deleteIfExists(argFile.toPath());
         }
       } else {
         // Fall back to using GmdProcessor directly with bundled dependencies
@@ -261,6 +268,28 @@ public class GmdMavenPlugin extends AbstractMojo {
   private String getJavaExecutable() {
     String javaHome = System.getProperty("java.home");
     return javaHome + File.separator + "bin" + File.separator + "java";
+  }
+
+  /**
+   * Writes a Java {@code @}-argfile containing {@code -cp <classpath> <mainClass> <args...>},
+   * so the forked command line stays short regardless of how long the resolved classpath is.
+   */
+  private File createArgFile(String classpath, String... processorArgs) throws IOException {
+    List<String> lines = new ArrayList<>();
+    lines.add("-cp");
+    lines.add(quoteArgFileToken(classpath));
+    lines.add(getGmdProcessorClassName());
+    for (String arg : processorArgs) {
+      lines.add(quoteArgFileToken(arg));
+    }
+    File argFile = File.createTempFile("gmd-classpath", ".args");
+    Files.write(argFile.toPath(), lines, StandardCharsets.UTF_8);
+    return argFile;
+  }
+
+  private static String quoteArgFileToken(String value) {
+    String escaped = value.replace("\\", "\\\\").replace("\"", "\\\"");
+    return "\"" + escaped + "\"";
   }
 
   /**

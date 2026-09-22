@@ -206,6 +206,13 @@ class Gmd {
     htmlToPdf(mdToHtmlDoc(md), target)
   }
 
+  /**
+   * Renders HTML to PDF using the current working directory as the base URI, so
+   * relative {@code src}/{@code href} references (e.g. {@code <img src="...">})
+   * can read local files relative to the CWD. Secondary to the fact that .gmd
+   * already executes arbitrary Groovy by design, but worth knowing if you ever
+   * render untrusted .gmd/HTML.
+   */
   void htmlToPdf(String html, OutputStream target) {
     var jsDoc = Jsoup.parse(html)
     Document doc = new W3CDom().fromJsoup(jsDoc)

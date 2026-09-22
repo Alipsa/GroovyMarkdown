@@ -42,6 +42,9 @@ abstract class ProcessGmdTask extends DefaultTask {
   @org.gradle.api.tasks.Classpath
   abstract ConfigurableFileCollection getClasspath()
 
+  @Input
+  abstract org.gradle.api.provider.Property<Boolean> getTargetDirInsideBuildDir()
+
   @TaskAction
   void process() {
     File source = getSourceDir().get().asFile
@@ -63,7 +66,12 @@ abstract class ProcessGmdTask extends DefaultTask {
       throw new IllegalArgumentException("Target path ${target.canonicalPath} is a file, not a directory")
     }
     logger.info("Processing GMD in ${source} -> ${target}, type: ${output}")
-    cleanStaleGeneratedFiles(source, target, output)
+    if (getTargetDirInsideBuildDir().getOrElse(false)) {
+      cleanStaleGeneratedFiles(source, target, output)
+    } else {
+      logger.warn("targetDir ${target.canonicalPath} is outside the project build directory; " +
+          "skipping stale generated-file cleanup to avoid deleting files it did not generate")
+    }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->
       spec.classpath = getClasspath()

@@ -86,8 +86,12 @@ class GmdTestGui extends Application {
           File target = new File(filePath)
           Gmd gmd = new Gmd()
           gmd.gmdToPdf(text, target)
-          updateStatus("Opening pdf file...")
-          Desktop.desktop.open(target)
+          if (Desktop.isDesktopSupported() && Desktop.desktop.isSupported(Desktop.Action.OPEN)) {
+            updateStatus("Opening pdf file...")
+            Desktop.desktop.open(target)
+          } else {
+            updateStatus("Pdf file created at " + filePath + " (no desktop available to open it)")
+          }
         } catch (Exception e) {
           updateStatus(e.getMessage() + "; " + e.getCause())
         }
