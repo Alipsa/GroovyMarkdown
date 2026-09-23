@@ -547,13 +547,75 @@ def empData = Matrix.builder().data(
             .build()
 BarChart chart = BarChart.createVertical("Salaries", empData, "emp_name", ChartType.BASIC, "salary")
 out.println(chart)
+out.println(chart, 'Pict chart')
 ```
 '''
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split('"', 2)[0]
-    assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
+    assertTrue(md.contains('<img alt="Pict chart" src="data:image/svg+xml;base64,'), md)
+    List<String> svgs = decodeSvgImages(md, 'Chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="800"') && svgs[0].contains('height="600"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="800"') && svgs[1].contains('height="600"'), svgs[1].take(200))
+  }
+
+  @Test
+  void testCharmChart() {
+    def text = '''
+```{groovy echo=false}
+import static se.alipsa.matrix.charm.Charts.plot
+
+def chart = plot([x: [1, 2], y: [3, 4]]) {
+  mapping(x: 'x', y: 'y')
+  layers { geomPoint() }
+}.build()
+out.println(chart, 640, 480, 'Sized Charm chart', [class: 'chart'])
+out.println(chart, 'Charm chart', [class: 'chart'])
+```
+'''
+
+    String md = new Gmd().gmdToMd(text)
+
+    assertTrue(md.contains('<img alt="Charm chart" src="data:image/svg+xml;base64,'), md)
+    assertTrue(md.contains('class="chart"'), md)
+    List<String> svgs = decodeSvgImages(md, 'Charm chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="800"') && svgs[1].contains('height="600"'), svgs[1].take(200))
+  }
+
+  @Test
+  void testGgChart() {
+    def text = '''
+```{groovy echo=false}
+import static se.alipsa.matrix.gg.GgPlot.*
+import se.alipsa.matrix.core.Matrix
+
+def data = Matrix.builder().data(x: [1, 2], y: [3, 4]).types(int, int).build()
+def chart = ggplot(data, aes(x: 'x', y: 'y')) + geom_point()
+chart.width = 1200
+chart.height = 900
+out.println(chart, 640, 480, 'GG chart', [class: 'chart'])
+out.println(chart, 'GG default chart')
+```
+'''
+
+    String md = new Gmd().gmdToMd(text)
+
+    assertTrue(md.contains('<img alt="GG chart" src="data:image/svg+xml;base64,'), md)
+    assertTrue(md.contains('class="chart"'), md)
+    List<String> svgs = decodeSvgImages(md, 'GG chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="1200"') && svgs[1].contains('height="900"'), svgs[1].take(200))
+  }
+
+  private static List<String> decodeSvgImages(String markdown, String message) {
+    String marker = 'data:image/svg+xml;base64,'
+    assertTrue(markdown.contains(marker), "$message — no image in: $markdown")
+    List<String> svgs = markdown.split(java.util.regex.Pattern.quote(marker)).drop(1).collect { image ->
+      new String(Base64.decoder.decode(image.split('"', 2)[0]), StandardCharsets.UTF_8)
+    }
+    svgs.each { svg -> assertTrue(svg.contains('<svg'), message) }
+    return svgs
   }
 
   private static String chartDocument(String output) {
