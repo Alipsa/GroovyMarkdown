@@ -7,7 +7,7 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.LocalState
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -28,8 +28,8 @@ abstract class ProcessGmdTask extends DefaultTask {
     this.execOperations = execOperations
     // Fail-safe default for anyone registering this task directly instead of
     // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
-    // rather than fail validation or delete files outside the build dir.
-    targetDirInsideBuildDir.convention(false)
+    // rather than fail validation or delete files in a directory it does not own.
+    targetDirIsDefaultGmdOutput.convention(false)
   }
 
   @InputDirectory
@@ -37,7 +37,10 @@ abstract class ProcessGmdTask extends DefaultTask {
   @PathSensitive(PathSensitivity.RELATIVE)
   abstract DirectoryProperty getSourceDir()
 
-  @OutputDirectory
+  // A configurable target directory is not necessarily exclusively owned by
+  // this task. Declaring it as @OutputDirectory would let Gradle remove files
+  // from a shared custom target before this task gets a chance to run.
+  @LocalState
   abstract DirectoryProperty getTargetDir()
 
   @Input
@@ -47,7 +50,7 @@ abstract class ProcessGmdTask extends DefaultTask {
   abstract ConfigurableFileCollection getClasspath()
 
   @Input
-  abstract org.gradle.api.provider.Property<Boolean> getTargetDirInsideBuildDir()
+  abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
 
   @TaskAction
   void process() {
@@ -70,17 +73,11 @@ abstract class ProcessGmdTask extends DefaultTask {
       throw new IllegalArgumentException("Target path ${target.canonicalPath} is a file, not a directory")
     }
     logger.info("Processing GMD in ${source} -> ${target}, type: ${output}")
-    if (getTargetDirInsideBuildDir().getOrElse(false)) {
+    if (getTargetDirIsDefaultGmdOutput().getOrElse(false)) {
       cleanStaleGeneratedFiles(source, target, output)
     } else {
-      // This also fires when the task was registered directly instead of via
-      // GmdGradlePlugin (targetDirInsideBuildDir then falls back to its
-      // constructor convention of false), not only when targetDir is
-      // genuinely outside the build directory - so the wording can't assume
-      // which one it is.
-      logger.warn("Could not confirm that targetDir ${target.canonicalPath} is inside the project's build " +
-          "directory (it may be outside it, or this task may not have been configured via the GMD Gradle " +
-          "plugin); skipping stale generated-file cleanup to avoid deleting files it did not generate")
+      logger.info("Skipping stale generated-file cleanup for targetDir ${target.canonicalPath}; " +
+          "only the dedicated default build/gmd directory is cleaned automatically")
     }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->

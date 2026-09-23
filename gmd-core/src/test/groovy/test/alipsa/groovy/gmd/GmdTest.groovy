@@ -418,6 +418,22 @@ class GmdTest extends AbstractGmdTest {
   }
 
   @Test
+  void printedMatrixDoesNotSwallowFollowingMarkdown() {
+    def text = '''
+```{groovy echo=false}
+import se.alipsa.matrix.core.Matrix
+out.print(Matrix.builder().data(a: [1]).types(int).build())
+```
+The table above shows **stuff**.
+'''
+
+    String html = new Gmd().gmdToHtml(text)
+
+    assertTrue(html.contains('<p>The table above shows <strong>stuff</strong>.</p>'),
+        "Prose after a printed table must still be parsed as Markdown:\n$html")
+  }
+
+  @Test
   void gmdToHtmlDoc() {
     String text = """\
       # Test
@@ -558,7 +574,9 @@ def empData = Matrix.builder().data(
             .types(int, String, Number, LocalDate)
             .build()
 BarChart chart = BarChart.createVertical("Salaries", empData, "emp_name", ChartType.BASIC, "salary")
-out.println(chart)
+out.print("Figure: ")
+out.print(chart)
+out.print(" (source)\\n\\n")
 ```
 The chart above shows **sales** by [region](http://x).
 
@@ -566,6 +584,10 @@ Next para.
 '''
     Gmd gmd = new Gmd()
     String html = gmd.gmdToHtml(text)
+    assertTrue(html.contains('Figure: <img alt="" src="data:image/svg+xml;base64,'),
+        "A printed chart must stay in surrounding prose:\n$html")
+    assertTrue(html.contains(' />\n(source)</p>'),
+        "The chart caption must remain in the same paragraph:\n$html")
     assertTrue(html.contains('<p>The chart above shows <strong>sales</strong> by <a href="http://x">region</a>.</p>'),
         "Prose after the chart must still be parsed as Markdown:\n$html")
     assertTrue(html.contains('<p>Next para.</p>'), "Trailing paragraph must not be swallowed:\n$html")

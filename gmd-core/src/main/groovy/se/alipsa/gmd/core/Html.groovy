@@ -90,7 +90,9 @@ class Html {
       }
       sb.append('</tr>')
     }
-    sb.append('</tbody></table>')
+    // Html.add uses println. Keep one newline here so the result has the
+    // blank line CommonMark needs to terminate a table HTML block.
+    sb.append('</tbody></table>\n')
     return sb.toString()
   }
 

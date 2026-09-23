@@ -70,15 +70,15 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void targetDirInsideBuildDirHasASafeDefaultForDirectRegistration() {
+  void targetDirIsDefaultGmdOutputHasASafeDefaultForDirectRegistration() {
     // Registering the task directly (bypassing GmdGradlePlugin's afterEvaluate
-    // wiring, which is the only place targetDirInsideBuildDir is normally set)
+    // wiring, which is the only place targetDirIsDefaultGmdOutput is normally set)
     // must not leave this @Input property without a value.
     def project = ProjectBuilder.builder().build()
     ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
 
-    Assertions.assertFalse(task.targetDirInsideBuildDir.get(),
-        'targetDirInsideBuildDir should default to false when set only by convention')
+    Assertions.assertFalse(task.targetDirIsDefaultGmdOutput.get(),
+        'targetDirIsDefaultGmdOutput should default to false when set only by convention')
   }
 
   @Test
@@ -181,7 +181,8 @@ class GmdGradlePluginTest {
       assert testInlineHtml.text.contains("<h1>Inline</h1>")
       assert testInlineHtml.text.contains("Today is ")
       assert testInlineHtml.text.contains(" and the time is ")
-      Assertions.assertFalse(staleOutput.exists(), 'Stale generated output should be removed')
+      Assertions.assertTrue(staleOutput.exists(),
+          'A custom target directory must retain files that processGmd did not generate')
       // cleanup
       AntBuilder ant = new AntBuilder()
       ant.delete(dir: testProjectDir, failonerror: false)

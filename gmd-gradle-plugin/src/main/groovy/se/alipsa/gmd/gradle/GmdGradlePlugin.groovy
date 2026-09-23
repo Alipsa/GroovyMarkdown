@@ -44,8 +44,10 @@ class GmdGradlePlugin implements Plugin<Project> {
 
       File resolvedTargetDir = project.file(targetDir)
       File buildDir = project.layout.buildDirectory.get().asFile
-      boolean targetDirInsideBuildDir = resolvedTargetDir.canonicalFile.toPath()
-          .startsWith(buildDir.canonicalFile.toPath())
+      // Only the conventional build/gmd directory is owned by this task.
+      // Being somewhere under build/ does not establish ownership: build and
+      // build/docs may contain outputs from unrelated tasks.
+      boolean targetDirIsDefaultGmdOutput = resolvedTargetDir.canonicalFile == new File(buildDir, 'gmd').canonicalFile
 
       processGmdTask.configure { ProcessGmdTask task ->
         // Resolve all project values during configuration. The task action only
@@ -55,7 +57,7 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
-        task.targetDirInsideBuildDir.set(targetDirInsideBuildDir)
+        task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
       }
 
       try {
