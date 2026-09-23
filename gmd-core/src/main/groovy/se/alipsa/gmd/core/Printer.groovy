@@ -12,6 +12,9 @@ import se.alipsa.matrix.xchart.abstractions.MatrixXChart;
 
 class Printer extends PrintWriter {
 
+    private static final int DEFAULT_CHART_WIDTH = 800
+    private static final int DEFAULT_CHART_HEIGHT = 600
+
     Printer() {
         super(new StringWriter());
     }
@@ -60,7 +63,7 @@ class Printer extends PrintWriter {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             ChartToSvg.export(svg, os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+            imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
         }
     }
 
@@ -68,7 +71,7 @@ class Printer extends PrintWriter {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             x.exportSvg(os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+            imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
         }
     }
 
@@ -82,7 +85,7 @@ class Printer extends PrintWriter {
         try {
             x.width = width as int
             x.height = height as int
-            return svgToMd(x.render(), alt, attributes)
+            svgToMd(x.render(), alt, attributes)
         } finally {
             x.width = originalWidth
             x.height = originalHeight
@@ -126,35 +129,43 @@ class Printer extends PrintWriter {
         print(isAtLineStart() ? terminateHtmlBlock(html) : html)
     }
 
-    void print(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void print(Chart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         printChart(chartToMd(x, width, height, alt, attributes))
     }
 
-    void println(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void println(Chart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         println(chartToMd(x, width, height, alt, attributes))
     }
 
-    void print(CharmChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void print(CharmChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         printChart(chartToMd(x, width, height, alt, attributes))
     }
 
-    void println(CharmChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void println(CharmChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         println(chartToMd(x, width, height, alt, attributes))
     }
 
     void print(CharmChart x, String alt, Map<String, String> attributes = [:]) {
-        printChart(chartToMd(x, 800, 600, alt, attributes))
+        printChart(chartToMd(x, DEFAULT_CHART_WIDTH, DEFAULT_CHART_HEIGHT, alt, attributes))
     }
 
     void println(CharmChart x, String alt, Map<String, String> attributes = [:]) {
-        println(chartToMd(x, 800, 600, alt, attributes))
+        println(chartToMd(x, DEFAULT_CHART_WIDTH, DEFAULT_CHART_HEIGHT, alt, attributes))
+    }
+
+    void print(Chart x, String alt, Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, DEFAULT_CHART_WIDTH, DEFAULT_CHART_HEIGHT, alt, attributes))
+    }
+
+    void println(Chart x, String alt, Map<String, String> attributes = [:]) {
+        println(chartToMd(x, DEFAULT_CHART_WIDTH, DEFAULT_CHART_HEIGHT, alt, attributes))
     }
 
     /**
      * Renders a GgChart at the supplied dimensions. The chart's original
      * dimensions are restored before this method returns.
      */
-    void print(GgChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void print(GgChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         printChart(chartToMd(x, width, height, alt, attributes))
     }
 
@@ -162,16 +173,16 @@ class Printer extends PrintWriter {
      * Renders a GgChart at the supplied dimensions. The chart's original
      * dimensions are restored before this method returns.
      */
-    void println(GgChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+    void println(GgChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
         println(chartToMd(x, width, height, alt, attributes))
     }
 
     void print(GgChart x, String alt, Map<String, String> attributes = [:]) {
-        printChart(chartToMd(x, 800, 600, alt, attributes))
+        printChart(svgToMd(x.render(), alt, attributes))
     }
 
     void println(GgChart x, String alt, Map<String, String> attributes = [:]) {
-        println(chartToMd(x, 800, 600, alt, attributes))
+        println(svgToMd(x.render(), alt, attributes))
     }
 
     void print(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {

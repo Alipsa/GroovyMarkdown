@@ -547,11 +547,13 @@ def empData = Matrix.builder().data(
             .build()
 BarChart chart = BarChart.createVertical("Salaries", empData, "emp_name", ChartType.BASIC, "salary")
 out.println(chart)
+out.println(chart, 'Pict chart')
 ```
 '''
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
+    assertTrue(md.contains('<img alt="Pict chart" src="data:image/svg+xml;base64,'), md)
     assertSvgImage(md, 'Chart should be SVG-backed')
   }
 
@@ -587,10 +589,10 @@ import se.alipsa.matrix.core.Matrix
 
 def data = Matrix.builder().data(x: [1, 2], y: [3, 4]).types(int, int).build()
 def chart = ggplot(data, aes(x: 'x', y: 'y')) + geom_point()
+chart.width = 1200
+chart.height = 900
 out.println(chart, 640, 480, 'GG chart', [class: 'chart'])
 out.println(chart, 'GG default chart')
-assert chart.width == 800
-assert chart.height == 600
 ```
 '''
 
@@ -598,8 +600,9 @@ assert chart.height == 600
 
     assertTrue(md.contains('<img alt="GG chart" src="data:image/svg+xml;base64,'), md)
     assertTrue(md.contains('class="chart"'), md)
-    String svg = decodeSvgImage(md, 'GG chart should be SVG-backed')
-    assertTrue(svg.contains('width="640"') && svg.contains('height="480"'), svg.take(200))
+    List<String> svgs = decodeSvgImages(md, 'GG chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="1200"') && svgs[1].contains('height="900"'), svgs[1].take(200))
   }
 
   private static void assertSvgImage(String markdown, String message) {
@@ -607,11 +610,17 @@ assert chart.height == 600
   }
 
   private static String decodeSvgImage(String markdown, String message) {
-    assertTrue(markdown.contains('data:image/svg+xml;base64,'), "$message — no image in: $markdown")
-    String image = markdown.split("data:image/svg\\+xml;base64,", 2)[1].split('"', 2)[0]
-    String svg = new String(Base64.decoder.decode(image), StandardCharsets.UTF_8)
-    assertTrue(svg.contains('<svg'), message)
-    return svg
+    decodeSvgImages(markdown, message).first()
+  }
+
+  private static List<String> decodeSvgImages(String markdown, String message) {
+    String marker = 'data:image/svg+xml;base64,'
+    assertTrue(markdown.contains(marker), "$message — no image in: $markdown")
+    List<String> svgs = markdown.split(java.util.regex.Pattern.quote(marker)).drop(1).collect { image ->
+      new String(Base64.decoder.decode(image.split('"', 2)[0]), StandardCharsets.UTF_8)
+    }
+    svgs.each { svg -> assertTrue(svg.contains('<svg'), message) }
+    return svgs
   }
 
   private static String chartDocument(String output) {
