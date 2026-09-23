@@ -8,6 +8,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -26,6 +27,10 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Inject
   ProcessGmdTask(ExecOperations execOperations) {
     this.execOperations = execOperations
+    // Fail-safe default for anyone registering this task directly instead of
+    // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
+    // rather than fail validation or delete files in a directory it does not own.
+    targetDirIsDefaultGmdOutput.convention(false)
   }
 
   @InputDirectory
@@ -33,14 +38,46 @@ abstract class ProcessGmdTask extends DefaultTask {
   @PathSensitive(PathSensitivity.RELATIVE)
   abstract DirectoryProperty getSourceDir()
 
-  @OutputDirectory
+  @org.gradle.api.tasks.Internal
   abstract DirectoryProperty getTargetDir()
+
+  /**
+   * The default build/gmd directory is dedicated to this task, so Gradle may
+   * track the directory as a whole and remove obsolete output safely.
+   */
+  @Optional
+  @OutputDirectory
+  abstract DirectoryProperty getDedicatedOutputDir()
+
+  /**
+   * A custom target can be shared. Track only the files this task is expected
+   * to generate so Gradle retains its up-to-date checks without owning the
+   * whole directory or removing unrelated files.
+   */
+  @OutputFiles
+  Set<File> getGeneratedFiles() {
+    if (getTargetDirIsDefaultGmdOutput().getOrElse(false)
+        || !getSourceDir().isPresent() || !getTargetDir().isPresent() || !getOutputType().isPresent()) {
+      return [] as Set<File>
+    }
+    File source = getSourceDir().get().asFile
+    File target = getTargetDir().get().asFile
+    String output = getOutputType().get().trim().toLowerCase(Locale.ROOT)
+    File[] sources = source.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
+    Set<File> generated = sources == null ? [] as Set<File> : sources.collect { File file ->
+      new File(target, file.name.substring(0, file.name.length() - 4) + ".${output}")
+    } as Set<File>
+    return generated
+  }
 
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
 
   @org.gradle.api.tasks.Classpath
   abstract ConfigurableFileCollection getClasspath()
+
+  @Input
+  abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
 
   @TaskAction
   void process() {
@@ -63,7 +100,12 @@ abstract class ProcessGmdTask extends DefaultTask {
       throw new IllegalArgumentException("Target path ${target.canonicalPath} is a file, not a directory")
     }
     logger.info("Processing GMD in ${source} -> ${target}, type: ${output}")
-    cleanStaleGeneratedFiles(source, target, output)
+    if (getTargetDirIsDefaultGmdOutput().getOrElse(false)) {
+      cleanStaleGeneratedFiles(source, target, output)
+    } else {
+      logger.info("Skipping stale generated-file cleanup for targetDir ${target.canonicalPath}; " +
+          "only the dedicated default build/gmd directory is cleaned automatically")
+    }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->
       spec.classpath = getClasspath()

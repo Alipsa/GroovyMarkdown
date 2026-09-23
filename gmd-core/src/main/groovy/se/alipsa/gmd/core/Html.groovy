@@ -49,18 +49,25 @@ class Html {
     try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
       ChartToSvg.export(svg, os)
       String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-      imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+      return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
     }
   }
 
+  /**
+   * A bare <img> line starts a CommonMark HTML block, which swallows every
+   * following line verbatim until a blank line. If this Html instance is
+   * printed into a Markdown (.gmd) document, the trailing blank line here
+   * terminates that block so the rest of the document keeps parsing as
+   * Markdown.
+   */
   private static String imgToHtml(String base64String, String alt, Map<String, String> attributes) {
-    StringBuilder attr = new StringBuilder()
-    if (attributes.size() > 0) {
-      attributes.each {
-        attr.append(it.key).append('="').append(escape(it.value)).append('" ')
-      }
+    StringBuilder tag = new StringBuilder('<img alt="').append(escape(alt))
+        .append('" src="').append(escape(base64String)).append('"')
+    attributes.each {
+      tag.append(' ').append(escape(it.key)).append('="').append(escape(it.value)).append('"')
     }
-    return "<img alt=\"${escape(alt)}\" src=\"${escape(base64String)}\" ${attr.toString()} />"
+    tag.append(' />\n')
+    return tag.toString()
   }
 
   private static String tableToHtml(Matrix table, Map<String, String> htmlattr) {
@@ -83,7 +90,9 @@ class Html {
       }
       sb.append('</tr>')
     }
-    sb.append('</tbody></table>')
+    // Html.add uses println. Keep one newline here so the result has the
+    // blank line CommonMark needs to terminate a table HTML block.
+    sb.append('</tbody></table>\n')
     return sb.toString()
   }
 

@@ -26,7 +26,7 @@ interface GmdGradlePluginParams {
   Property<String> getOutputType()
 
   /**
-   * The version of Groovy to use. Default is 5.1.2
+   * The version of Groovy to use. Default is 5.1.3
    */
   Property<String> getGroovyVersion()
 

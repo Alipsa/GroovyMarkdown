@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils
 import static org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import se.alipsa.gmd.core.GmdTemplateEngine
+import se.alipsa.gmd.core.GmdException
 
 class GmdTemplateEngineTest {
 
@@ -99,6 +100,7 @@ Hello World
 
         assertEquals("""
         X = 5
+
         """.stripIndent(), GmdTemplateEngine.processCodeBlocks(text))
 
     }
@@ -301,5 +303,63 @@ Value `= x`
 unclosed
 ''')
         }
+    }
+
+    @Test
+    void aCodeSpanOnTheSameLineDoesNotCorruptTheMatch() {
+        String text = 'use `=` and `foo` in code'
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+        assertEquals(text, processed)
+    }
+
+    @Test
+    void repeatedIdenticalExpressionsEachEvaluateAndSubstituteIndependently() {
+        String text = '''
+        ```{groovy echo=false}
+        c = 0
+        ```
+        x `= c++ ` y `= c++ ` z
+        '''.stripIndent()
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('x 0 y 1 z'), processed)
+    }
+
+    @Test
+    void unterminatedCodeBlockMessageIsNotWrapped() {
+        GmdException e = assertThrows(GmdException.class) {
+            GmdTemplateEngine.processCodeBlocks('''
+```{groovy echo=false}
+out.println('missing terminator')
+''')
+        }
+        assertEquals('Unterminated Groovy code block', e.getMessage())
+    }
+
+    @Test
+    void aUserSuppliedOutBindingDoesNotClobberCodeBlockOutput() {
+        String text = '''
+```{groovy}
+out.println('x')
+```
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text, [out: 'clobbered'])
+
+        assertTrue(processed.contains('x'), processed)
+    }
+
+    @Test
+    void trailingNewlineIsPreservedWhenPresent() {
+        String text = "# Title\n\nHello `= 1+1 `\n"
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+        assertEquals("# Title\n\nHello 2\n", processed)
+    }
+
+    @Test
+    void trailingNewlineIsNotAddedWhenAbsent() {
+        String text = "# Title\n\nHello `= 1+1 `"
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+        assertEquals("# Title\n\nHello 2", processed)
     }
 }

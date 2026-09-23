@@ -1,6 +1,7 @@
 package test.alipsa.groovy.gmd
 
 import org.junit.jupiter.api.Test
+import se.alipsa.gmd.core.Gmd
 import se.alipsa.gmd.core.Html
 import se.alipsa.matrix.core.Matrix
 
@@ -47,6 +48,15 @@ class HtmlTest {
 
     assertTrue(html.contains('<td>1</td>'))
     assertTrue(html.contains('<td>y</td>'))
+  }
+
+  @Test
+  void tableDoesNotSwallowFollowingMarkdown() {
+    String markdown = new Html().add(sample()).add('The table above shows **stuff**.').toString()
+
+    String rendered = new Gmd().mdToHtml(markdown)
+
+    assertTrue(rendered.contains('<p>The table above shows <strong>stuff</strong>.</p>'), rendered)
   }
 
   @Test

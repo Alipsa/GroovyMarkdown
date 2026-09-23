@@ -30,14 +30,15 @@ class GmdTemplateEngine {
         if (text == null) {
             throw new IllegalArgumentException("The gmd text cannot be null")
         }
-        def classLoader = new GroovyClassLoader()
-        def engine = new GroovyScriptEngineImpl(classLoader)
         String codeBlock = ''
-        try (Printer out = new Printer()) {
-            engine.put("out", out)
+        try (GroovyClassLoader classLoader = new GroovyClassLoader(); Printer out = new Printer()) {
+            def engine = new GroovyScriptEngineImpl(classLoader)
             bindings.each {
                 engine.put(it.key, it.value)
             }
+            // out is reserved for capturing code block output; bind it last so it
+            // always wins over a caller-supplied binding of the same name.
+            engine.put("out", out)
             boolean shouldBeProcessed = false
             boolean codeBlockStart = false
             boolean codeBlockEnd = false
@@ -47,6 +48,7 @@ class GmdTemplateEngine {
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
             StringBuilder result = new StringBuilder()
+            boolean endsWithNewline = text.endsWith('\n')
             List<String> lines = text.readLines()
             int count = 0
             lines.each { line ->
@@ -116,7 +118,7 @@ class GmdTemplateEngine {
                     } else {
                         result.append(line)
                     }
-                    if (count < lines.size() - 1)
+                    if (count < lines.size() - 1 || endsWithNewline)
                         result.append('\n')
                 }
                 count++
@@ -132,6 +134,8 @@ class GmdTemplateEngine {
             } else {
                 return text
             }
+        } catch (GmdException e) {
+            throw e
         } catch(all) {
             String where = codeBlock.isEmpty() ? 'the gmd text' : "code block: $codeBlock"
             throw new GmdException("Failed to process $where", all)
@@ -145,23 +149,17 @@ class GmdTemplateEngine {
      * just the part to be evaluated (aVal )
      */
     static String expandInlineVars(String line, GroovyScriptEngineImpl engine) throws GmdException {
-        String expression = ''
         String val = ''
         try {
-            Matcher matcher = line =~ /`=(.+?)`/
-            String newLine = line
-            if (matcher.find()) {
-                List<List<String>> matches = matcher.findAll()
-                matches.each { expVal ->
-                    expression = expVal.get(0)
-                    val = expVal.get(1)
-                    String evaluatedVal = String.valueOf(engine.eval(val))
-                    newLine = newLine.replace(expression, evaluatedVal)
-                }
-                return newLine
-            } else {
-                return line
+            Matcher matcher = line =~ /`=([^`]+)`/
+            StringBuilder newLine = new StringBuilder()
+            while (matcher.find()) {
+                val = matcher.group(1)
+                String evaluatedVal = String.valueOf(engine.eval(val))
+                matcher.appendReplacement(newLine, Matcher.quoteReplacement(evaluatedVal))
             }
+            matcher.appendTail(newLine)
+            return newLine.toString()
         } catch (ScriptException | RuntimeException e) {
             throw new GmdException("Failed to expand inline variable (`=${val})", e)
         }

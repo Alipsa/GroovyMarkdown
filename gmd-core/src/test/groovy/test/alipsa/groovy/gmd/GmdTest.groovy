@@ -150,8 +150,9 @@ class GmdTest extends AbstractGmdTest {
         - Sunday: Sunny
         - Monday: Rainy
         - Tuesday: Cloudy
-        
+
         Now, that's something to look forward to!
+
         """.stripIndent(), md)
   }
 
@@ -413,7 +414,23 @@ class GmdTest extends AbstractGmdTest {
     '''
     html = gmd.gmdToHtml(text)
     assertTrue(html.contains('BarChart chart = BarChart.createVertical('), 'Should contain code content')
-    assertTrue(html.contains('<p><img src="data:image/svg+xml;base64,'), 'Should contain SVG image content')
+    assertTrue(html.contains('<img alt="" src="data:image/svg+xml;base64,'), 'Should contain SVG image content')
+  }
+
+  @Test
+  void printedMatrixDoesNotSwallowFollowingMarkdown() {
+    def text = '''
+```{groovy echo=false}
+import se.alipsa.matrix.core.Matrix
+out.print(Matrix.builder().data(a: [1]).types(int).build())
+```
+The table above shows **stuff**.
+'''
+
+    String html = new Gmd().gmdToHtml(text)
+
+    assertTrue(html.contains('<p>The table above shows <strong>stuff</strong>.</p>'),
+        "Prose after a printed table must still be parsed as Markdown:\n$html")
   }
 
   @Test
@@ -485,7 +502,8 @@ class GmdTest extends AbstractGmdTest {
       out.println "Today (" + dayName(now) + ") is " + now + "."
     ```
     Today (Saturday) is 2022-07-23.
-    How about that?""".stripIndent(), md)
+    How about that?
+    """.stripIndent(), md)
   }
 
   @Test
@@ -501,6 +519,7 @@ class GmdTest extends AbstractGmdTest {
 
     assertEquals("""
         X = 5
+
         """.stripIndent(), gmd.gmdToMd(text))
 
     assertEquals("""<p>X = 5</p>
@@ -533,8 +552,63 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split("\\)", 2)[0]
+    String image = md.split("data:image/svg\\+xml;base64,", 2)[1].split('"', 2)[0]
     assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
+  }
+
+  private static String chartDocument(String output) {
+    return """
+```{groovy}
+import static se.alipsa.matrix.core.ListConverter.*
+
+import se.alipsa.matrix.core.*
+import se.alipsa.matrix.pict.*
+import java.time.LocalDate
+
+def empData = Matrix.builder().data(
+            emp_id: 1..5,
+            emp_name: ["Rick","Dan","Michelle","Ryan","Gary"],
+            salary: [623.3,515.2,611.0,729.0,843.25],
+            start_date: toLocalDates("2012-01-01", "2013-09-23", "2014-11-15", "2014-05-11", "2015-03-27"))
+            .types(int, String, Number, LocalDate)
+            .build()
+BarChart chart = BarChart.createVertical("Salaries", empData, "emp_name", ChartType.BASIC, "salary")
+${output}
+```
+The chart above shows **sales** by [region](http://x).
+
+Next para.
+"""
+  }
+
+  @Test
+  void printedChartDoesNotSwallowFollowingMarkdown() {
+    String html = new Gmd().gmdToHtml(chartDocument('out.print(chart)'))
+
+    assertTrue(html.contains('<p>The chart above shows <strong>sales</strong> by <a href="http://x">region</a>.</p>'),
+        "Prose after a printed chart must still be parsed as Markdown:\n$html")
+    assertTrue(html.contains('<p>Next para.</p>'), "Trailing paragraph must not be swallowed:\n$html")
+  }
+
+  @Test
+  void printedChartKeepsCaptionInProse() {
+    String html = new Gmd().gmdToHtml(chartDocument('''out.print("Figure: ")
+out.print(chart)
+out.print(" (source)\\n\\n")'''))
+
+    assertTrue(html.contains('Figure: <img alt="" src="data:image/svg+xml;base64,'),
+        "A printed chart must stay in surrounding prose:\n$html")
+    assertTrue(html.contains(' />\n(source)</p>'),
+        "The chart caption must remain in the same paragraph:\n$html")
+  }
+
+  @Test
+  void chartImageDoesNotSwallowFollowingMarkdown() {
+    Gmd gmd = new Gmd()
+    String html = gmd.gmdToHtml(chartDocument('out.println(chart)'))
+    assertTrue(html.contains('<p>The chart above shows <strong>sales</strong> by <a href="http://x">region</a>.</p>'),
+        "Prose after the chart must still be parsed as Markdown:\n$html")
+    assertTrue(html.contains('<p>Next para.</p>'), "Trailing paragraph must not be swallowed:\n$html")
   }
 
   @Test
@@ -567,14 +641,14 @@ out.println(chart)
     Gmd gmd = new Gmd()
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
-    assertTrue(md.contains("![''](data:image/svg+xml;base64,"))
+    assertTrue(md.contains('<img alt="" src="data:image/svg+xml;base64,'))
 
     def htmlFile = new File(testOutputDir, "testXChart.html")
     gmd.gmdToHtml(text, htmlFile)
     assertTrue(htmlFile.exists())
     assertTrue(htmlFile.length() > 100, "No html content")
     assertTrue(htmlFile.text.contains('<h1>Employees</h1>'))
-    assertTrue(htmlFile.text.contains('<img src="data:image/svg+xml;base64,'), "No SVG image content")
+    assertTrue(htmlFile.text.contains('<img alt="" src="data:image/svg+xml;base64,'), "No SVG image content")
   }
 
   @Test
@@ -615,6 +689,7 @@ out.println(chart)
     ```groovy
     a = 23
     ```
-    12 + a = 35'''.stripIndent(), gmd.gmdToMd(text))
+    12 + a = 35
+    '''.stripIndent(), gmd.gmdToMd(text))
   }
 }

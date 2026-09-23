@@ -23,7 +23,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.sourceDir.convention('src/main/gmd')
     extension.targetDir.convention('build/gmd')
     extension.outputType.convention('md')
-    extension.groovyVersion.convention('5.1.2')
+    extension.groovyVersion.convention('5.1.3')
     extension.log4jVersion.convention('2.26.1')
     extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
     extension.ivyVersion.convention('2.6.0')
@@ -42,14 +42,25 @@ class GmdGradlePlugin implements Plugin<Project> {
           extension.ivyVersion.get()
       )
 
+      File resolvedTargetDir = project.file(targetDir)
+      File buildDir = project.layout.buildDirectory.get().asFile
+      // Only the conventional build/gmd directory is owned by this task.
+      // Being somewhere under build/ does not establish ownership: build and
+      // build/docs may contain outputs from unrelated tasks.
+      boolean targetDirIsDefaultGmdOutput = resolvedTargetDir.canonicalFile == new File(buildDir, 'gmd').canonicalFile
+
       processGmdTask.configure { ProcessGmdTask task ->
         // Resolve all project values during configuration. The task action only
         // uses task properties and injected services, which enables the
         // configuration cache and parallel task execution.
         task.sourceDir.set(project.file(sourceDir))
-        task.targetDir.set(project.file(targetDir))
+        task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
+        task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
+        if (targetDirIsDefaultGmdOutput) {
+          task.dedicatedOutputDir.set(resolvedTargetDir)
+        }
       }
 
       try {

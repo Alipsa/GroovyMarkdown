@@ -1,12 +1,14 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- render `Chart`/`MatrixXChart` output (and `Html`) as a raw `<img>` HTML tag instead of `![alt](data-uri){attrs}`, since CommonMark's image syntax doesn't support Pandoc-style attribute suffixes. This means `outputType=md` output can now contain raw HTML for charts instead of portable Markdown image syntax; the tag is followed by a blank line so it doesn't swallow subsequent Markdown as an HTML block.
 - restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3
 - upgrade OpenHTMLToPDF from 1.1.65 to 1.1.86
 - upgrade CommonMark from 0.29.0 to 0.30.0
 - remove obsolete JavaFX filtering from the fat jar assembly
-- upgrade groovy to 5.1.2
+- upgrade groovy to 5.1.3
+- Upgrade matrix bom to 2.6.0
 - exclude xml-apis, which bundles pre-Java-5 javax.xml.parsers classes.
   On a child-first classloader (e.g. Groovy's RootLoader / @Grab) its FactoryFinder shadows the JDK's JAXP and fails with FactoryConfigurationError looking for org.apache.xerces.jaxp.DocumentBuilderFactoryImpl. The JDK already provides these APIs.
 

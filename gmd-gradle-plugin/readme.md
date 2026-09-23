@@ -18,12 +18,15 @@ gmdPlugin {
 ```
 Possible parameters are:
 - `sourceDir` - the directory where the GMD files are located. Default is `src/main/gmd`
-- `targetDir` - the directory where the output files will be created. Default is `build/gmd`
+- `targetDir` - the directory where the output files will be created. Default is `build/gmd`. Stale generated
+  files are removed automatically only from this dedicated default directory. For a custom target directory,
+  `processGmd` leaves existing files in place so it cannot delete content owned by another task or tool; clean
+  orphaned GMD output yourself when sources are deleted, renamed, or change output type.
 - `outputType` - the type of output file to create. Possible values are `md`, `html`, `pdf`. Default is `md`
 
 `outputType=html` writes a complete decorated HTML document, including the doctype,
 embedded styles, and syntax-highlighted code blocks.
-- `groovyVersion` - the version of Groovy to use. Default is `5.1.2`
+- `groovyVersion` - the version of Groovy to use. Default is `5.1.3`
 - `gmdVersion` - the version of GMD to use. Defaults to the Gradle plugin version.
 - `log4jVersion` - the version of log4j to use. Default is `2.26.1`
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`
