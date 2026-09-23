@@ -58,6 +58,9 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.outputType.set(outputType)
         task.classpath.from(configuration)
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
+        if (targetDirIsDefaultGmdOutput) {
+          task.dedicatedOutputDir.set(resolvedTargetDir)
+        }
       }
 
       try {

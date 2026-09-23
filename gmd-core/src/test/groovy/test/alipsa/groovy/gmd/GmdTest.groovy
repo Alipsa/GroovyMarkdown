@@ -556,9 +556,8 @@ out.println(chart)
     assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
   }
 
-  @Test
-  void chartImageDoesNotSwallowFollowingMarkdown() {
-    def text = '''
+  private static String chartDocument(String output) {
+    return """
 ```{groovy}
 import static se.alipsa.matrix.core.ListConverter.*
 
@@ -574,20 +573,39 @@ def empData = Matrix.builder().data(
             .types(int, String, Number, LocalDate)
             .build()
 BarChart chart = BarChart.createVertical("Salaries", empData, "emp_name", ChartType.BASIC, "salary")
-out.print("Figure: ")
-out.print(chart)
-out.print(" (source)\\n\\n")
+${output}
 ```
 The chart above shows **sales** by [region](http://x).
 
 Next para.
-'''
-    Gmd gmd = new Gmd()
-    String html = gmd.gmdToHtml(text)
+"""
+  }
+
+  @Test
+  void printedChartDoesNotSwallowFollowingMarkdown() {
+    String html = new Gmd().gmdToHtml(chartDocument('out.print(chart)'))
+
+    assertTrue(html.contains('<p>The chart above shows <strong>sales</strong> by <a href="http://x">region</a>.</p>'),
+        "Prose after a printed chart must still be parsed as Markdown:\n$html")
+    assertTrue(html.contains('<p>Next para.</p>'), "Trailing paragraph must not be swallowed:\n$html")
+  }
+
+  @Test
+  void printedChartKeepsCaptionInProse() {
+    String html = new Gmd().gmdToHtml(chartDocument('''out.print("Figure: ")
+out.print(chart)
+out.print(" (source)\\n\\n")'''))
+
     assertTrue(html.contains('Figure: <img alt="" src="data:image/svg+xml;base64,'),
         "A printed chart must stay in surrounding prose:\n$html")
     assertTrue(html.contains(' />\n(source)</p>'),
         "The chart caption must remain in the same paragraph:\n$html")
+  }
+
+  @Test
+  void chartImageDoesNotSwallowFollowingMarkdown() {
+    Gmd gmd = new Gmd()
+    String html = gmd.gmdToHtml(chartDocument('out.println(chart)'))
     assertTrue(html.contains('<p>The chart above shows <strong>sales</strong> by <a href="http://x">region</a>.</p>'),
         "Prose after the chart must still be parsed as Markdown:\n$html")
     assertTrue(html.contains('<p>Next para.</p>'), "Trailing paragraph must not be swallowed:\n$html")

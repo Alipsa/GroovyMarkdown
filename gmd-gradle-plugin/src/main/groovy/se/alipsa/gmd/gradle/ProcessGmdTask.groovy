@@ -7,7 +7,8 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.LocalState
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -37,11 +38,37 @@ abstract class ProcessGmdTask extends DefaultTask {
   @PathSensitive(PathSensitivity.RELATIVE)
   abstract DirectoryProperty getSourceDir()
 
-  // A configurable target directory is not necessarily exclusively owned by
-  // this task. Declaring it as @OutputDirectory would let Gradle remove files
-  // from a shared custom target before this task gets a chance to run.
-  @LocalState
+  @org.gradle.api.tasks.Internal
   abstract DirectoryProperty getTargetDir()
+
+  /**
+   * The default build/gmd directory is dedicated to this task, so Gradle may
+   * track the directory as a whole and remove obsolete output safely.
+   */
+  @Optional
+  @OutputDirectory
+  abstract DirectoryProperty getDedicatedOutputDir()
+
+  /**
+   * A custom target can be shared. Track only the files this task is expected
+   * to generate so Gradle retains its up-to-date checks without owning the
+   * whole directory or removing unrelated files.
+   */
+  @OutputFiles
+  Set<File> getGeneratedFiles() {
+    if (getTargetDirIsDefaultGmdOutput().getOrElse(false)
+        || !getSourceDir().isPresent() || !getTargetDir().isPresent() || !getOutputType().isPresent()) {
+      return [] as Set<File>
+    }
+    File source = getSourceDir().get().asFile
+    File target = getTargetDir().get().asFile
+    String output = getOutputType().get().trim().toLowerCase(Locale.ROOT)
+    File[] sources = source.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
+    Set<File> generated = sources == null ? [] as Set<File> : sources.collect { File file ->
+      new File(target, file.name.substring(0, file.name.length() - 4) + ".${output}")
+    } as Set<File>
+    return generated
+  }
 
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
