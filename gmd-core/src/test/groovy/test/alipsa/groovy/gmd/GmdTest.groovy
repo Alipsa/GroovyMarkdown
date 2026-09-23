@@ -556,6 +556,52 @@ out.println(chart)
     assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), 'Chart should be SVG-backed')
   }
 
+  @Test
+  void testCharmChart() {
+    def text = '''
+```{groovy echo=false}
+import static se.alipsa.matrix.charm.Charts.plot
+
+def chart = plot([x: [1, 2], y: [3, 4]]) {
+  mapping(x: 'x', y: 'y')
+  layers { geomPoint() }
+}.build()
+out.println(chart, 640, 480, 'Charm chart', [class: 'chart'])
+```
+'''
+
+    String md = new Gmd().gmdToMd(text)
+
+    assertTrue(md.contains('<img alt="Charm chart" src="data:image/svg+xml;base64,'), md)
+    assertTrue(md.contains('class="chart"'), md)
+    assertSvgImage(md, 'Charm chart should be SVG-backed')
+  }
+
+  @Test
+  void testGgChart() {
+    def text = '''
+```{groovy echo=false}
+import static se.alipsa.matrix.gg.GgPlot.*
+import se.alipsa.matrix.core.Matrix
+
+def data = Matrix.builder().data(x: [1, 2], y: [3, 4]).types(int, int).build()
+def chart = ggplot(data, aes(x: 'x', y: 'y')) + geom_point()
+out.println(chart, 'GG chart', [class: 'chart'])
+```
+'''
+
+    String md = new Gmd().gmdToMd(text)
+
+    assertTrue(md.contains('<img alt="GG chart" src="data:image/svg+xml;base64,'), md)
+    assertTrue(md.contains('class="chart"'), md)
+    assertSvgImage(md, 'GG chart should be SVG-backed')
+  }
+
+  private static void assertSvgImage(String markdown, String message) {
+    String image = markdown.split("data:image/svg\\+xml;base64,", 2)[1].split('"', 2)[0]
+    assertTrue(new String(Base64.decoder.decode(image), StandardCharsets.UTF_8).contains('<svg'), message)
+  }
+
   private static String chartDocument(String output) {
     return """
 ```{groovy}

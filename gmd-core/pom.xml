@@ -179,6 +179,14 @@
     </dependency>
     <dependency>
       <groupId>se.alipsa.matrix</groupId>
+      <artifactId>matrix-charts</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>se.alipsa.matrix</groupId>
+      <artifactId>matrix-ggplot</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>se.alipsa.matrix</groupId>
       <artifactId>matrix-xchart</artifactId>
     </dependency>
 

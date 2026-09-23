@@ -3,6 +3,8 @@ package se.alipsa.gmd.core
 import org.jsoup.nodes.Entities
 import se.alipsa.groovy.svg.Svg
 import se.alipsa.matrix.chartexport.ChartToSvg
+import se.alipsa.matrix.charm.Chart as CharmChart
+import se.alipsa.matrix.gg.GgChart
 import se.alipsa.matrix.pict.CharmBridge;
 import se.alipsa.matrix.pict.Chart;
 import se.alipsa.matrix.core.Matrix
@@ -67,6 +69,22 @@ class Printer extends PrintWriter {
         }
     }
 
+    private static String chartToMd(CharmChart x, double width, double height, String alt, Map<String, String> attributes) {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            ChartToSvg.export(x.render(width as int, height as int), os)
+            String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
+            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+        }
+    }
+
+    private static String chartToMd(GgChart x, String alt, Map<String, String> attributes) {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            ChartToSvg.export(x.render(), os)
+            String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
+            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+        }
+    }
+
     /**
      * CommonMark's image syntax has no attribute extension, so Pandoc-style
      * {key=value} suffixes are left as literal text in the output. Emit raw
@@ -110,6 +128,22 @@ class Printer extends PrintWriter {
 
     void println(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
         println(chartToMd(x, width, height, alt, attributes))
+    }
+
+    void print(CharmChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, width, height, alt, attributes))
+    }
+
+    void println(CharmChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+        println(chartToMd(x, width, height, alt, attributes))
+    }
+
+    void print(GgChart x, String alt = '', Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, alt, attributes))
+    }
+
+    void println(GgChart x, String alt = '', Map<String, String> attributes = [:]) {
+        println(chartToMd(x, alt, attributes))
     }
 
     void print(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {
