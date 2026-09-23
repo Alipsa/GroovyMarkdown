@@ -53,7 +53,10 @@ class Printer extends PrintWriter {
 
 
     private static String chartToMd(Chart x, double width, double height, String alt, Map<String, String> attributes) {
-        Svg svg = CharmBridge.renderSvg(x, width as int, height as int)
+        svgToMd(CharmBridge.renderSvg(x, width as int, height as int), alt, attributes)
+    }
+
+    private static String svgToMd(Svg svg, String alt, Map<String, String> attributes) {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             ChartToSvg.export(svg, os)
             String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
@@ -70,18 +73,19 @@ class Printer extends PrintWriter {
     }
 
     private static String chartToMd(CharmChart x, double width, double height, String alt, Map<String, String> attributes) {
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            ChartToSvg.export(x.render(width as int, height as int), os)
-            String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
-        }
+        svgToMd(x.render(width as int, height as int), alt, attributes)
     }
 
-    private static String chartToMd(GgChart x, String alt, Map<String, String> attributes) {
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            ChartToSvg.export(x.render(), os)
-            String imgContent = Base64.getEncoder().encodeToString(os.toByteArray())
-            return imgToHtml("data:image/svg+xml;base64,${imgContent}", alt, attributes)
+    private static String chartToMd(GgChart x, double width, double height, String alt, Map<String, String> attributes) {
+        int originalWidth = x.width
+        int originalHeight = x.height
+        try {
+            x.width = width as int
+            x.height = height as int
+            return svgToMd(x.render(), alt, attributes)
+        } finally {
+            x.width = originalWidth
+            x.height = originalHeight
         }
     }
 
@@ -138,12 +142,36 @@ class Printer extends PrintWriter {
         println(chartToMd(x, width, height, alt, attributes))
     }
 
-    void print(GgChart x, String alt = '', Map<String, String> attributes = [:]) {
-        printChart(chartToMd(x, alt, attributes))
+    void print(CharmChart x, String alt, Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, 800, 600, alt, attributes))
     }
 
-    void println(GgChart x, String alt = '', Map<String, String> attributes = [:]) {
-        println(chartToMd(x, alt, attributes))
+    void println(CharmChart x, String alt, Map<String, String> attributes = [:]) {
+        println(chartToMd(x, 800, 600, alt, attributes))
+    }
+
+    /**
+     * Renders a GgChart at the supplied dimensions. The chart's original
+     * dimensions are restored before this method returns.
+     */
+    void print(GgChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, width, height, alt, attributes))
+    }
+
+    /**
+     * Renders a GgChart at the supplied dimensions. The chart's original
+     * dimensions are restored before this method returns.
+     */
+    void println(GgChart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
+        println(chartToMd(x, width, height, alt, attributes))
+    }
+
+    void print(GgChart x, String alt, Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, 800, 600, alt, attributes))
+    }
+
+    void println(GgChart x, String alt, Map<String, String> attributes = [:]) {
+        println(chartToMd(x, 800, 600, alt, attributes))
     }
 
     void print(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {

@@ -86,8 +86,13 @@ def html = gmd.gmdToHtml(text, [name: "Per"])
 gmd.htmlToPdf(html, new File("pdfFile.pdf"))
 ```
 
-GMD supports the [Matrix](https://github.com/Alipsa/matrix) library directly, i.e. Matrix, Chart and MatrixXChart 
-types can be used with the `out` PrintWriter object without needing to convert them into markdown first. 
+GMD supports the [Matrix](https://github.com/Alipsa/matrix) library directly. `Matrix`, legacy
+`se.alipsa.matrix.pict.Chart`, `se.alipsa.matrix.charm.Chart`, `se.alipsa.matrix.gg.GgChart`, and
+`MatrixXChart` types can be used with the `out` PrintWriter object without needing to convert them
+into markdown first. Charm and GG charts accept `width`, `height`, optional alt text, and optional
+HTML attributes (for example, `out.println(chart, 640, 480, 'Sales chart', [class: 'chart'])`).
+GG chart dimensions are restored after rendering. MatrixXChart accepts optional alt text and HTML
+attributes; legacy pict charts retain their existing overloads.
 Here is an example:
 ````
 # Employees
