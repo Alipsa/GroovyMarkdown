@@ -554,7 +554,9 @@ out.println(chart, 'Pict chart')
     String md = gmd.gmdToMd(text)
     assertTrue(md.contains('# Employees'))
     assertTrue(md.contains('<img alt="Pict chart" src="data:image/svg+xml;base64,'), md)
-    assertSvgImage(md, 'Chart should be SVG-backed')
+    List<String> svgs = decodeSvgImages(md, 'Chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="800"') && svgs[0].contains('height="600"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="800"') && svgs[1].contains('height="600"'), svgs[1].take(200))
   }
 
   @Test
@@ -576,8 +578,9 @@ out.println(chart, 'Charm chart', [class: 'chart'])
 
     assertTrue(md.contains('<img alt="Charm chart" src="data:image/svg+xml;base64,'), md)
     assertTrue(md.contains('class="chart"'), md)
-    String svg = decodeSvgImage(md, 'Charm chart should be SVG-backed')
-    assertTrue(svg.contains('width="640"') && svg.contains('height="480"'), svg.take(200))
+    List<String> svgs = decodeSvgImages(md, 'Charm chart should be SVG-backed')
+    assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
+    assertTrue(svgs[1].contains('width="800"') && svgs[1].contains('height="600"'), svgs[1].take(200))
   }
 
   @Test
@@ -603,14 +606,6 @@ out.println(chart, 'GG default chart')
     List<String> svgs = decodeSvgImages(md, 'GG chart should be SVG-backed')
     assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
     assertTrue(svgs[1].contains('width="1200"') && svgs[1].contains('height="900"'), svgs[1].take(200))
-  }
-
-  private static void assertSvgImage(String markdown, String message) {
-    decodeSvgImage(markdown, message)
-  }
-
-  private static String decodeSvgImage(String markdown, String message) {
-    decodeSvgImages(markdown, message).first()
   }
 
   private static List<String> decodeSvgImages(String markdown, String message) {
