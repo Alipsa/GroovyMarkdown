@@ -183,6 +183,16 @@ class GmdGradlePluginTest {
       assert testInlineHtml.text.contains(" and the time is ")
       Assertions.assertTrue(staleOutput.exists(),
           'A custom target directory must retain files that processGmd did not generate')
+      Assertions.assertTrue(testHtml.delete(), 'The generated test output should be removable for this check')
+      def restoredOutputResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      Assertions.assertEquals(SUCCESS, restoredOutputResult.task(':processGmd').outcome,
+          'A missing generated file in a custom target must rerun processGmd')
+      Assertions.assertTrue(testHtml.exists(), 'processGmd must restore a missing generated output')
     } catch (Exception e) {
       println("Files are in ${targetDir?.absolutePath}")
       throw e
@@ -194,8 +204,9 @@ class GmdGradlePluginTest {
   @Test
   void defaultTargetRemovesStaleGeneratedFiles() {
     File targetDir = null
+    File testProjectDir = new File('build/gmdPluginDefaultTargetTest')
     try {
-      File testProjectDir = new File('build/gmdPluginDefaultTargetTest')
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
       testProjectDir.mkdirs()
       File srcDir = new File(testProjectDir, 'src/test/gmd')
       srcDir.mkdirs()
@@ -203,7 +214,8 @@ class GmdGradlePluginTest {
       targetDir.mkdirs()
       File staleOutput = new File(targetDir, 'stale.html')
       staleOutput.text = 'stale generated output'
-      new File(srcDir, 'test.gmd').text = '# Greetings'
+      File gmdFile = new File(srcDir, 'test.gmd')
+      gmdFile.text = '# Greetings'
 
       new File(testProjectDir, 'build.gradle').text = '''
         plugins {
@@ -249,13 +261,24 @@ class GmdGradlePluginTest {
           .build()
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(':processGmd').outcome,
           'The default target must retain Gradle up-to-date checks')
+
+      File generatedOutput = new File(targetDir, 'test.html')
+      Assertions.assertTrue(gmdFile.delete(), 'The GMD source should be removable for this check')
+      def cleanupResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      Assertions.assertEquals(SUCCESS, cleanupResult.task(':processGmd').outcome)
+      Assertions.assertFalse(generatedOutput.exists(), 'Deleting a GMD source must remove its stale generated output')
+      Assertions.assertTrue(cleanupResult.output.contains('Removed stale generated GMD output'),
+          "processGmd must remove the orphan itself:\n${cleanupResult.output}")
     } catch (Exception e) {
       println("Files are in ${targetDir?.absolutePath}")
       throw e
     } finally {
-      if (targetDir != null) {
-        new AntBuilder().delete(dir: targetDir.parentFile.parentFile, failonerror: false)
-      }
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
     }
   }
 }
