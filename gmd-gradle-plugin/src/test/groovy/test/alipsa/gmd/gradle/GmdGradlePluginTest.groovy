@@ -84,11 +84,10 @@ class GmdGradlePluginTest {
   @Test
   void testPlugin() {
     File targetDir = null
+    File testProjectDir = new File('build/gmdPluginTest')
     try {
-      File testProjectDir = new File("build/gmdPluginTest")
-      if (!testProjectDir.exists()) {
-        testProjectDir.mkdirs()
-      }
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+      testProjectDir.mkdirs()
       File srcDir = new File(testProjectDir, 'src/test/gmd')
       srcDir.mkdirs()
       targetDir = new File(testProjectDir, 'build/target')
@@ -165,7 +164,8 @@ class GmdGradlePluginTest {
           .withPluginClasspath()
           .forwardOutput()
           .build()
-      assert cachedResult.task(":processGmd").outcome in [SUCCESS, org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE]
+      Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
+          'A custom target must retain Gradle up-to-date checks')
 
       // the directory differs on a mac even though they point to the same place so cannot include
       def expected = "Gmd files processed and written to $targetDir.canonicalPath".toString()
@@ -183,12 +183,79 @@ class GmdGradlePluginTest {
       assert testInlineHtml.text.contains(" and the time is ")
       Assertions.assertTrue(staleOutput.exists(),
           'A custom target directory must retain files that processGmd did not generate')
-      // cleanup
-      AntBuilder ant = new AntBuilder()
-      ant.delete(dir: testProjectDir, failonerror: false)
     } catch (Exception e) {
       println("Files are in ${targetDir?.absolutePath}")
       throw e
+    } finally {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+    }
+  }
+
+  @Test
+  void defaultTargetRemovesStaleGeneratedFiles() {
+    File targetDir = null
+    try {
+      File testProjectDir = new File('build/gmdPluginDefaultTargetTest')
+      testProjectDir.mkdirs()
+      File srcDir = new File(testProjectDir, 'src/test/gmd')
+      srcDir.mkdirs()
+      targetDir = new File(testProjectDir, 'build/gmd')
+      targetDir.mkdirs()
+      File staleOutput = new File(targetDir, 'stale.html')
+      staleOutput.text = 'stale generated output'
+      new File(srcDir, 'test.gmd').text = '# Greetings'
+
+      new File(testProjectDir, 'build.gradle').text = '''
+        plugins {
+            id('base')
+            id 'se.alipsa.gmd.gmd-gradle-plugin'
+        }
+        repositories {
+            mavenCentral()
+        }
+        gmdPlugin {
+            sourceDir = 'src/test/gmd'
+            outputType = 'html'
+            gmdVersion = '3.1.0'
+            runTaskBefore = 'build'
+        }
+      '''.stripIndent()
+      new File(testProjectDir, 'settings.gradle').text = '''
+        pluginManagement {
+          repositories {
+              mavenCentral()
+          }
+          plugins {
+              id 'se.alipsa.gmd.gmd-gradle-plugin' version '1.0.0'
+          }
+        }
+      '''.stripIndent()
+
+      def result = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      Assertions.assertEquals(SUCCESS, result.task(':processGmd').outcome)
+      Assertions.assertFalse(staleOutput.exists(), 'The default dedicated target should remove stale GMD output')
+      Assertions.assertTrue(new File(targetDir, 'test.html').exists(), 'The GMD source should be processed')
+
+      def cachedResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(':processGmd').outcome,
+          'The default target must retain Gradle up-to-date checks')
+    } catch (Exception e) {
+      println("Files are in ${targetDir?.absolutePath}")
+      throw e
+    } finally {
+      if (targetDir != null) {
+        new AntBuilder().delete(dir: targetDir.parentFile.parentFile, failonerror: false)
+      }
     }
   }
 }

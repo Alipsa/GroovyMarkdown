@@ -37,7 +37,8 @@ class Printer extends PrintWriter {
     }
 
     void println(Matrix x, Map<String,String> tableAttributes) {
-        println(x.toHtml(tableAttributes))
+        print(terminateHtmlBlock(x.toHtml(tableAttributes)))
+        println()
     }
 
     void print(Matrix x) {
@@ -72,10 +73,9 @@ class Printer extends PrintWriter {
      * <img> HTML instead, which CommonMark passes through unchanged.
      *
      * A bare <img> line starts a CommonMark HTML block, which swallows every
-     * following line verbatim until a blank line. println adds the second
-     * newline needed to terminate such a block. print deliberately preserves
-     * the single trailing newline so a chart can remain part of surrounding
-     * prose.
+     * following line verbatim until a blank line. print adds that terminating
+     * newline only when the image starts a line; an image printed after prose
+     * remains inline. println always adds its own line separator.
      */
     private static String imgToHtml(String src, String alt, Map<String, String> attributes) {
         StringBuilder tag = new StringBuilder('<img alt="').append(escape(alt))
@@ -95,8 +95,17 @@ class Printer extends PrintWriter {
         return html.endsWith('\n') ? html + '\n' : html + '\n\n'
     }
 
+    private boolean isAtLineStart() {
+        String content = toString()
+        return content.isEmpty() || content.endsWith('\n') || content.endsWith('\r')
+    }
+
+    private void printChart(String html) {
+        print(isAtLineStart() ? terminateHtmlBlock(html) : html)
+    }
+
     void print(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
-        print(chartToMd(x, width, height, alt, attributes))
+        printChart(chartToMd(x, width, height, alt, attributes))
     }
 
     void println(Chart x, double width = 800, double height = 600, String alt = '', Map<String, String> attributes = [:]) {
@@ -104,7 +113,7 @@ class Printer extends PrintWriter {
     }
 
     void print(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {
-        print(chartToMd(x, alt, attributes))
+        printChart(chartToMd(x, alt, attributes))
     }
 
     void println(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {
