@@ -1,6 +1,11 @@
 # GMD Gradle Plugin release history
 
 ## v3.2.0, unreleased
+- **Breaking:** `GmdGradlePlugin.hasRepository(Project, MavenArtifactRepository)` is removed.
+  It was public static API on the plugin class; nothing in the repo called it. The plugin now
+  checks for an existing Maven Central declaration itself before adding one, and also detects
+  when repositories are settings-managed (`PREFER_SETTINGS` or `FAIL_ON_PROJECT_REPOS`) so it
+  never adds a project-level repository Gradle would ignore or reject.
 - derive the default GMD core version from a generated plugin-version resource populated from the root Maven revision, failing clearly if metadata is unavailable
 - derive the development artifact version from the root Maven revision and require an explicit version when publishing
 - upgrade the Gradle Versions Plugin from 0.58.0 to 0.61.0
@@ -8,6 +13,7 @@
 - validate the Gradle Plugin Portal publication before uploading the plugin
 - upgrade groovy to 5.1.3
 - clean stale generated files only from the dedicated default `build/gmd` output directory; custom target directories retain pre-existing and orphaned GMD output when sources are deleted, renamed, or change output type, while Gradle tracks their expected generated files individually for up-to-date checks
+- track the actual GMD processor runtime classpath for up-to-date checks, including changed dynamic or transitive dependencies; avoid resolving it when no `.gmd` source exists so the no-op and stale-output cleanup paths remain dependency-free
 
 ## v3.1.1, in progress
 - replace the deprecated `Project.getProperties()` calls used by signing configuration with `findProperty`, keeping the plugin compatible with Gradle 10

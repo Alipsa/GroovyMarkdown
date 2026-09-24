@@ -1,6 +1,22 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- **Breaking:** the `print(GgChart, double)` / `println(GgChart, double)` width-only
+  overload that Groovy default arguments generated is removed. Pass explicit width and
+  height, or omit both and let the chart's own dimensions apply.
+- Output from a Groovy code block that does not end in a newline now gains one, so
+  `out.print('x')` no longer glues the next source line onto the output. Visible change:
+  `out.print('Hello ')` followed by prose now yields `Hello \nworld` instead of
+  `Hello world` in the Markdown (rendered identically by CommonMark).
+- Inline `= expr ` is no longer expanded inside CommonMark indented code blocks (a line
+  indented four or more spaces beyond the document's own base indent). Indent is measured
+  relative to the indent of the document's first non-blank line, so a .gmd written inside an
+  indented Groovy string is unaffected. Lazy paragraph continuations and list-item
+  continuations still expand.
+- Indented ```{groovy} fences now execute with their body dedented by the fence's own
+  indent, and the echoed fence and body line up. Visible change: a multi-line string
+  literal whose continuation lines sit below the fence indent loses those spaces in the
+  evaluated source as well as the echo.
 - render `Chart`/`MatrixXChart` output (and `Html`) as a raw `<img>` HTML tag instead of `![alt](data-uri){attrs}`, since CommonMark's image syntax doesn't support Pandoc-style attribute suffixes. This means `outputType=md` output can now contain raw HTML for charts instead of portable Markdown image syntax; the tag is followed by a blank line so it doesn't swallow subsequent Markdown as an HTML block.
 - restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3

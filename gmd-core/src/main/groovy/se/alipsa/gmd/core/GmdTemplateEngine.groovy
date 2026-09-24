@@ -23,6 +23,20 @@ class GmdTemplateEngine {
      * ```
      * Hello World
      *
+     * Indentation is lenient by design: a ```{groovy} fence is recognised at any
+     * indent, so a .gmd document written inside an indented Groovy string still
+     * works. The body is dedented by the fence's own indent so the two line up.
+     * The consequence is that an indented block cannot be used to *show* GMD
+     * syntax without running it - wrap such an example in a longer plain fence
+     * (````) instead. Only spaces are counted; a tab-indented fence is treated
+     * as column 0. The echoed fence is always emitted at column 0, so a Groovy
+     * block written inside a list item does not stay inside that item - the
+     * emitted block ends the list and the next item starts a new one.
+     * For inline-variable expansion, the document base is the first non-blank
+     * line's indent. That is an invariant, not a global minimum: if the first
+     * line is shallower than a body indented four or more spaces beyond it, the
+     * body is treated as literal and does not expand. Put the first non-blank
+     * line at the document's own indent.
      * @param text the gmd text to process
      * @return the gmd text with code blocks "expanded"
      */
@@ -45,11 +59,17 @@ class GmdTemplateEngine {
             boolean echo = true
             Character plainFenceChar = null
             int plainFenceLength = 0
+            int codeBlockIndent = 0
+            boolean inIndentedCode = false
+            boolean previousLineWasParagraph = false
+            boolean previousLineWasBlockQuote = false
+            int listContentColumn = -1
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
             StringBuilder result = new StringBuilder()
             boolean endsWithNewline = text.endsWith('\n')
             List<String> lines = text.readLines()
+            int documentIndent = baseIndent(lines)
             int count = 0
             lines.each { line ->
                 noSpaceLine = fenceCandidate(line)
@@ -66,6 +86,7 @@ class GmdTemplateEngine {
                     shouldBeProcessed = true
                     codeBlockStart = true
                     codeBlockEnd = false
+                    codeBlockIndent = leadingSpaces(line)
                     // echo is a property of one block, not of the entire document.
                     echo = true
                     if (noSpaceLine.toLowerCase().contains("echo=false")) {
@@ -88,7 +109,7 @@ class GmdTemplateEngine {
                 }
 
                 if (codeBlockStart) {
-                    codeBlockText.append(line).append('\n')
+                    codeBlockText.append(dedent(line, codeBlockIndent)).append('\n')
                 }
 
                 if (codeBlockEnd) {
@@ -105,14 +126,82 @@ class GmdTemplateEngine {
                     //println("evaluating code block: $codeBlock")
                     engine.eval(codeBlock + '\n""')
                     def output = out.toString()
+                    boolean emittedMarkdown = echo
                     if (output.length() > 0) {
                         result.append(output)
+                        if (!output.endsWith('\n')) {
+                            result.append('\n')
+                        }
+                        emittedMarkdown = true
                     }
                     out.clear()
                     codeBlockText.setLength(0)
                     codeBlockEnd = false
+                    if (emittedMarkdown) {
+                        inIndentedCode = false
+                        previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
+                        listContentColumn = -1
+                    }
                 } else if (!codeBlockStart) {
-                    if (plainFenceChar == null && line.contains('`=')) {
+                    if (plainFenceChar != null || startsPlainFence) {
+                        inIndentedCode = false
+                        previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
+                        listContentColumn = -1
+                    } else if (line.isBlank()) {
+                        previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
+                    } else {
+                        String contentLine = withoutDocumentAndBlockQuotePrefixes(line, documentIndent)
+                        boolean isBlockQuote = contentLine != withoutDocumentIndent(line, documentIndent)
+                        if (contentLine.isBlank()) {
+                            // A block-quote line with no content (">" or "> ") is a blank
+                            // line in CommonMark; classify it as one so a following
+                            // indented line still counts as a code block, not a
+                            // paragraph continuation.
+                            previousLineWasParagraph = false
+                            previousLineWasBlockQuote = isBlockQuote
+                        } else {
+                            if (isBlockQuote && !previousLineWasBlockQuote) {
+                                previousLineWasParagraph = false
+                                listContentColumn = -1
+                            }
+                            int relativeIndent = leadingSpaces(contentLine)
+                            def listMarker = contentLine =~ /^\s*([-*+]|\d+[.)])\s+/
+                            boolean isLeafBlock = isNonParagraphLeafBlock(contentLine)
+                            if (isLeafBlock) {
+                                // CommonMark gives thematic breaks precedence over list markers
+                                // such as the leading "* " in "* * *".
+                                inIndentedCode = false
+                                // A thematic break dedented past the list content column ends
+                                // the list; one aligned with it (like "  --- " in a list item)
+                                // keeps the list context for the lines that follow.
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                                    listContentColumn = -1
+                                }
+                            } else if (relativeIndent < 4 && listMarker.find()) {
+                                listContentColumn = listMarker.end()
+                                inIndentedCode = false
+                            } else {
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                                    listContentColumn = -1
+                                }
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn + 4) {
+                                    inIndentedCode = false
+                                } else {
+                                    if (relativeIndent < 4) {
+                                        inIndentedCode = false
+                                    } else if (!previousLineWasParagraph) {
+                                        inIndentedCode = true
+                                    }
+                                }
+                            }
+                            previousLineWasParagraph = !inIndentedCode && !isLeafBlock
+                            previousLineWasBlockQuote = isBlockQuote
+                        }
+                    }
+                    if (plainFenceChar == null && !inIndentedCode && line.contains('`=')) {
                         shouldBeProcessed = true
                         result.append(expandInlineVars(line, engine))
                     } else {
@@ -172,6 +261,75 @@ class GmdTemplateEngine {
             indent++
         }
         return line.substring(indent)
+    }
+
+    /** Number of leading space characters. Tabs are not counted; see processCodeBlocks. */
+    private static int leadingSpaces(String line) {
+        int i = 0
+        while (i < line.length() && line.charAt(i) == ' ') {
+            i++
+        }
+        return i
+    }
+
+    /** Remove the document's base indent without treating a shallower line as negative. */
+    private static String withoutDocumentIndent(String line, int documentIndent) {
+        return line.substring(Math.min(documentIndent, leadingSpaces(line)))
+    }
+
+    /**
+     * Remove block-quote container markers before measuring content indentation.
+     * A block quote may itself be indented by the document's base indent.
+     */
+    private static String withoutDocumentAndBlockQuotePrefixes(String line, int documentIndent) {
+        String content = withoutDocumentIndent(line, documentIndent)
+        while (true) {
+            Matcher marker = content =~ /^ {0,3}>[ \t]?/
+            if (!marker.find()) {
+                return content
+            }
+            content = content.substring(marker.end())
+        }
+    }
+
+    /** Headings and rules are leaf blocks, so following indented lines start code blocks. */
+    private static boolean isNonParagraphLeafBlock(String line) {
+        if (line ==~ /^ {0,3}#{1,6}(?:[ \t]+.*)?$/ || line ==~ /^ {0,3}[=-]+[ \t]*$/) {
+            return true
+        }
+        String marker = line.trim().replaceAll(/[ \t]/, '')
+        return marker.length() >= 3 && (marker ==~ /\*+/ || marker ==~ /_+/ || marker ==~ /-+/)
+    }
+
+    /**
+     * The indent the document sits at: the indent of its first non-blank line.
+     * Indented code blocks are recognised relative to this, so a .gmd written
+     * inside an indented Groovy string behaves the same as one written at
+     * column 0.
+     *
+     * Anchored on the first line deliberately: a global minimum could be
+     * collapsed by a column-0 line inside a code block or a stray column-0
+     * prose line (HTML block, table row), reclassifying the whole document.
+     * The first line is therefore the invariant: when it is shallower than
+     * the body, body lines four or more spaces beyond it are literal. Authors
+     * must start a document at its own indent.
+     */
+    private static int baseIndent(List<String> lines) {
+        for (String line in lines) {
+            if (!line.isBlank()) {
+                return leadingSpaces(line)
+            }
+        }
+        return 0
+    }
+
+    /** Removes up to {@code width} leading spaces. Shorter indents are left untouched. */
+    private static String dedent(String line, int width) {
+        int i = 0
+        while (i < width && i < line.length() && line.charAt(i) == ' ') {
+            i++
+        }
+        return line.substring(i)
     }
 
     /** Length of the leading run of marker characters, i.e. the fence width. */

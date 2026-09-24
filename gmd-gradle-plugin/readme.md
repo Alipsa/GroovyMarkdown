@@ -32,6 +32,20 @@ embedded styles, and syntax-highlighted code blocks.
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`
 - `runTaskBefore` - the task that the gmd plugin should run before. Default is 'test'
 
+### Repositories
+
+The plugin resolves `gmd-core` and Groovy through its named `gmdProcessorRuntime` project
+configuration, which uses the project's repositories. If the project has not declared Maven
+Central, the plugin adds it.
+If it has — under either `repo.maven.apache.org` or `repo1.maven.org` — nothing is added.
+A project that resolves only through a private mirror should declare that mirror in
+`dependencyResolutionManagement` in `settings.gradle` with `repositoriesMode` set to
+`RepositoriesMode.PREFER_SETTINGS` or `FAIL_ON_PROJECT_REPOS`, so the plugin has no reason
+to add Central to the project itself — the plugin detects either mode and skips the add.
+Declaring the mirror alone, without one of those modes, is not enough: Gradle's default
+`PREFER_PROJECT` mode still lets a project-level repository (including the one this plugin
+would add) take precedence over the settings-declared mirror.
+
 The target task is called `processGmd` so it can be invoked from the command line as follows:
 
 ```bash
@@ -46,7 +60,7 @@ plugins {
     id('se.alipsa.gmd.gmd-gradle-plugin')
 }
 group = 'my.group'
-version = '3.1.0'
+version = '3.2.0'
 
 gmdPlugin {
     sourceDir = 'src/test/gmd'

@@ -91,8 +91,9 @@ GMD supports the [Matrix](https://github.com/Alipsa/matrix) library directly. `M
 `MatrixXChart` types can be used with the `out` PrintWriter object without needing to convert them
 into markdown first. Pict, Charm, and GG charts accept `width`, `height`, optional alt text, and
 optional HTML attributes (for example, `out.println(chart, 640, 480, 'Sales chart', [class: 'chart'])`).
-They also accept alt text and attributes without explicit dimensions. Alt-only GG printing honors
-the dimensions configured on the chart; explicit GG dimensions are restored after rendering.
+They also accept alt text and attributes without explicit dimensions. Pict and Charm charts then
+render at 800x600. GG charts always honor the `width` and `height` configured on the chart unless
+you pass explicit dimensions, which are restored after rendering.
 MatrixXChart accepts optional alt text and HTML attributes.
 Here is an example:
 ````
@@ -173,8 +174,8 @@ The library, which requires Java 21 or later, is available from maven central:
 
 Gradle: 
 ```groovy
-def groovyVersion = '5.1.1' // any 4.x version should work
-implementation "se.alipsa.gmd:gmd-core:3.1.0"
+def groovyVersion = '5.1.3' // any 5.x version should work
+implementation "se.alipsa.gmd:gmd-core:3.2.0"
 implementation "org.apache.groovy:groovy:${groovyVersion}"
 implementation "org.apache.groovy:groovy-templates:${groovyVersion}"
 implementation "org.apache.groovy:groovy-jsr223:${groovyVersion}"
@@ -188,22 +189,22 @@ Maven:
     <dependency>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-core</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>5.1.1</version>
+      <version>5.1.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-templates</artifactId>
-      <version>5.1.1</version>
+      <version>5.1.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-jsr223</artifactId>
-      <version>5.1.1</version>
+      <version>5.1.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.ivy</groupId>

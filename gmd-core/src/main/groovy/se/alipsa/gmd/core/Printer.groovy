@@ -161,20 +161,14 @@ class Printer extends PrintWriter {
         println(chartToMd(x, DEFAULT_CHART_WIDTH, DEFAULT_CHART_HEIGHT, alt, attributes))
     }
 
-    /**
-     * Renders a GgChart at the supplied dimensions. The chart's original
-     * dimensions are restored before this method returns.
-     */
-    void print(GgChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
-        printChart(chartToMd(x, width, height, alt, attributes))
+    /** Renders a GgChart at the dimensions configured on the chart itself. */
+    void print(GgChart x) {
+        printChart(svgToMd(x.render(), '', [:]))
     }
 
-    /**
-     * Renders a GgChart at the supplied dimensions. The chart's original
-     * dimensions are restored before this method returns.
-     */
-    void println(GgChart x, double width = DEFAULT_CHART_WIDTH, double height = DEFAULT_CHART_HEIGHT, String alt = '', Map<String, String> attributes = [:]) {
-        println(chartToMd(x, width, height, alt, attributes))
+    /** @see #print(GgChart) */
+    void println(GgChart x) {
+        println(svgToMd(x.render(), '', [:]))
     }
 
     void print(GgChart x, String alt, Map<String, String> attributes = [:]) {
@@ -183,6 +177,16 @@ class Printer extends PrintWriter {
 
     void println(GgChart x, String alt, Map<String, String> attributes = [:]) {
         println(svgToMd(x.render(), alt, attributes))
+    }
+
+    /** Renders a GgChart at supplied dimensions, restoring its own afterwards. */
+    void print(GgChart x, double width, double height, String alt = '', Map<String, String> attributes = [:]) {
+        printChart(chartToMd(x, width, height, alt, attributes))
+    }
+
+    /** @see #print(GgChart, double, double, String, Map) */
+    void println(GgChart x, double width, double height, String alt = '', Map<String, String> attributes = [:]) {
+        println(chartToMd(x, width, height, alt, attributes))
     }
 
     void print(MatrixXChart x, String alt = '', Map<String, String> attributes = [:]) {
