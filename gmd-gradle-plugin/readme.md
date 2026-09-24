@@ -34,8 +34,9 @@ embedded styles, and syntax-highlighted code blocks.
 
 ### Repositories
 
-The plugin resolves `gmd-core` and Groovy through a detached configuration, which uses the
-project's repositories. If the project has not declared Maven Central, the plugin adds it.
+The plugin resolves `gmd-core` and Groovy through its named `gmdProcessorRuntime` project
+configuration, which uses the project's repositories. If the project has not declared Maven
+Central, the plugin adds it.
 If it has — under either `repo.maven.apache.org` or `repo1.maven.org` — nothing is added.
 A project that resolves only through a private mirror should declare that mirror in
 `dependencyResolutionManagement` in `settings.gradle` with `repositoriesMode` set to
