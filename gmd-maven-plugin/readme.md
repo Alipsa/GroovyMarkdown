@@ -82,7 +82,7 @@ You can override the versions of dependencies used by the plugin by specifying t
         <outputType>html</outputType>
         <groovyVersion>5.1.3</groovyVersion>
         <log4jVersion>2.26.1</log4jVersion>
-        <gmdVersion>3.1.0</gmdVersion>
+        <gmdVersion>3.2.0</gmdVersion>
       </configuration>
     </plugin>
   </plugins>
