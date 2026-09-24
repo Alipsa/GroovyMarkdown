@@ -133,7 +133,10 @@ public class GmdMavenPluginTest {
     setField(plugin, "outputType", "html");
 
     MojoFailureException exception = assertThrows(MojoFailureException.class, plugin::execute);
-    assertTrue(exception.getMessage().contains("GmdProcessor exited with code"));
+    assertTrue(exception.getMessage().startsWith("GmdProcessor exited with code"),
+        "The plugin's own failure must not be rewrapped: " + exception.getMessage());
+    assertFalse(exception.getMessage().contains("Failed to process gmd files in"),
+        "The plugin's own failure must not be rewrapped: " + exception.getMessage());
   }
 
   private static void deleteDirectory(File directory) throws IOException {
