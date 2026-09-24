@@ -141,11 +141,8 @@ end
         String text = "```{groovy echo=false}\nout.print('X')\n```\n# Heading\n"
 
         assertEquals("X\n# Heading\n", GmdTemplateEngine.processCodeBlocks(text))
-    }
 
-    @Test
-    void alreadyTerminatedOutputGainsNoExtraNewline() {
-        String text = "```{groovy echo=false}\nout.println('X')\n```\n# Heading\n"
+        text = "```{groovy echo=false}\nout.println('X')\n```\n# Heading\n"
 
         assertEquals("X\n# Heading\n", GmdTemplateEngine.processCodeBlocks(text))
     }
