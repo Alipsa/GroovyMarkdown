@@ -1,6 +1,6 @@
 # Gmd Release History
 
-## v3.2.0, unreleased
+## v3.2.0, 2026-09-24
 - **Breaking:** the `print(GgChart, double)` / `println(GgChart, double)` width-only
   overload that Groovy default arguments generated is removed. Pass explicit width and
   height, or omit both and let the chart's own dimensions apply.
