@@ -80,6 +80,18 @@ abstract class ProcessGmdTask extends DefaultTask {
   abstract ConfigurableFileCollection getClasspath()
 
   @Input
+  abstract org.gradle.api.provider.Property<String> getGroovyVersion()
+
+  @Input
+  abstract org.gradle.api.provider.Property<String> getLog4jVersion()
+
+  @Input
+  abstract org.gradle.api.provider.Property<String> getGmdVersion()
+
+  @Input
+  abstract org.gradle.api.provider.Property<String> getIvyVersion()
+
+  @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
 
   @TaskAction
@@ -95,7 +107,11 @@ abstract class ProcessGmdTask extends DefaultTask {
       logger.warn("Source directory ${source.canonicalPath} does not exist, nothing to do")
       return
     }
-    if (gmdFilesIn(source).length == 0) {
+    File[] sourceFiles = gmdFilesIn(source)
+    if (sourceFiles.length == 0) {
+      if (getTargetDirIsDefaultGmdOutput().getOrElse(false) && target.isDirectory()) {
+        cleanStaleGeneratedFiles(source, target, output)
+      }
       logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
       return
     }

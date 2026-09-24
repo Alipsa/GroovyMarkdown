@@ -199,10 +199,14 @@ public class GmdMavenPlugin extends AbstractMojo {
             process.destroy();
             try {
               if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                destroyForciblyAndAwaitTermination(process);
+                if (!destroyForciblyAndAwaitTermination(process)) {
+                  getLog().warn("GMD processor did not terminate within 30 seconds after forced termination");
+                }
               }
             } catch (InterruptedException swallowed) {
-              destroyForciblyAndAwaitTermination(process);
+              if (!destroyForciblyAndAwaitTermination(process)) {
+                getLog().warn("GMD processor did not terminate within 30 seconds after forced termination");
+              }
             }
             interrupted = true;
             throw new MojoExecutionException("Interrupted while waiting for the GMD processor", e);
@@ -253,24 +257,17 @@ public class GmdMavenPlugin extends AbstractMojo {
 
   /**
    * {@link Process#destroyForcibly()} is asynchronous, so a caller that returns right
-   * after calling it can race the forked JVM's actual exit. This blocks until the
-   * process has really terminated, retrying {@link Process#waitFor()} if the wait
-   * itself is interrupted again rather than giving up and restoring that second
-   * interrupt on the calling thread once termination is confirmed.
+   * after calling it can race the forked JVM's actual exit. Wait for a bounded
+   * period so cancellation remains able to return if the forked JVM survives the
+   * forced termination. A second interrupt is restored before returning.
    */
-  private static void destroyForciblyAndAwaitTermination(Process process) {
+  private static boolean destroyForciblyAndAwaitTermination(Process process) {
     process.destroyForcibly();
-    boolean interruptedAgain = false;
-    while (true) {
-      try {
-        process.waitFor();
-        break;
-      } catch (InterruptedException e) {
-        interruptedAgain = true;
-      }
-    }
-    if (interruptedAgain) {
+    try {
+      return process.waitFor(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
+      return false;
     }
   }
 

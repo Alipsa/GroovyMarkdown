@@ -62,6 +62,10 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
+        task.groovyVersion.set(extension.groovyVersion.get())
+        task.log4jVersion.set(extension.log4jVersion.get())
+        task.gmdVersion.set(extension.gmdVersion.get())
+        task.ivyVersion.set(extension.ivyVersion.get())
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
         if (targetDirIsDefaultGmdOutput) {
           task.dedicatedOutputDir.set(resolvedTargetDir)

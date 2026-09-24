@@ -82,6 +82,20 @@ class GmdGradlePluginTest {
   }
 
   @Test
+  void runtimeVersionsAreTrackedAsTaskInputs() {
+    def project = ProjectBuilder.builder().build()
+    ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
+    task.groovyVersion.set('5.1.3')
+    task.log4jVersion.set('2.26.1')
+    task.gmdVersion.set('3.1.0')
+    task.ivyVersion.set('2.6.0')
+
+    Assertions.assertTrue(task.inputs.properties.keySet().containsAll(
+        ['groovyVersion', 'log4jVersion', 'gmdVersion', 'ivyVersion'] as Set),
+        'Every runtime dependency version must invalidate processGmd when changed')
+  }
+
+  @Test
   void mavenCentralIsAddedOnlyWhenTheProjectHasNone() {
     def project = ProjectBuilder.builder().build()
     Assertions.assertEquals(0, project.repositories.size())
@@ -354,6 +368,16 @@ class GmdGradlePluginTest {
           .build()
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
           'A custom target must retain Gradle up-to-date checks')
+
+      buildFile.text = buildFile.text.replace("gmdVersion = '3.1.0'", "gmdVersion = '3.0.1'")
+      def changedVersionResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', '--configuration-cache', '--parallel')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+      Assertions.assertEquals(SUCCESS, changedVersionResult.task(':processGmd').outcome,
+          'Changing a runtime dependency version must rerun processGmd')
 
       // the directory differs on a mac even though they point to the same place so cannot include
       def expected = "Gmd files processed and written to $targetDir.canonicalPath".toString()

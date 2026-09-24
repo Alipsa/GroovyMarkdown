@@ -159,7 +159,13 @@ class GmdTemplateEngine {
                         }
                         int relativeIndent = leadingSpaces(contentLine)
                         def listMarker = contentLine =~ /^\s*([-*+]|\d+[.)])\s+/
-                        if (relativeIndent < 4 && listMarker.find()) {
+                        boolean isLeafBlock = isNonParagraphLeafBlock(contentLine)
+                        if (isLeafBlock) {
+                            // CommonMark gives thematic breaks precedence over list markers
+                            // such as the leading "* " in "* * *".
+                            inIndentedCode = false
+                            listContentColumn = -1
+                        } else if (relativeIndent < 4 && listMarker.find()) {
                             listContentColumn = listMarker.end()
                             inIndentedCode = false
                         } else {
@@ -176,7 +182,7 @@ class GmdTemplateEngine {
                                 }
                             }
                         }
-                        previousLineWasParagraph = !inIndentedCode && !isNonParagraphLeafBlock(contentLine)
+                        previousLineWasParagraph = !inIndentedCode && !isLeafBlock
                         previousLineWasBlockQuote = isBlockQuote
                     }
                     if (plainFenceChar == null && !inIndentedCode && line.contains('`=')) {

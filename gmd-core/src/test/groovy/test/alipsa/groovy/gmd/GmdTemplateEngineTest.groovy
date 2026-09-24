@@ -375,7 +375,7 @@ Some prose
 
     @Test
     void indentedCodeAfterLeafBlocksIsLeftAlone() {
-        ['# Heading', 'Title\n=====', '---'].each { leafBlock ->
+        ['# Heading', 'Title\n=====', '---', '* * *', '- - -'].each { leafBlock ->
             String text = "```{groovy echo=false}\nx = 5\n```\n${leafBlock}\n    literal `= x ` here\n"
 
             String processed = GmdTemplateEngine.processCodeBlocks(text)

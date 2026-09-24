@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -146,37 +147,46 @@ public class GmdMavenPluginTest {
     // right after calling it can race the forked JVM's actual exit. Verify the helper
     // actually blocks on waitFor() after the forced kill instead of just firing it.
     Process process = Mockito.mock(Process.class);
-    when(process.waitFor()).thenReturn(1);
+    when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(true);
 
-    invokeDestroyForciblyAndAwaitTermination(process);
+    assertTrue(invokeDestroyForciblyAndAwaitTermination(process));
 
     Mockito.verify(process).destroyForcibly();
-    Mockito.verify(process).waitFor();
+    Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
   }
 
   @Test
-  public void destroyForciblyAndAwaitTerminationRetriesAndRestoresASecondInterrupt() throws Exception {
-    // A second interrupt arriving while waiting out the forced kill must not be lost:
-    // the wait is retried until termination is confirmed, then the interrupt is
-    // restored on the calling thread.
+  public void destroyForciblyAndAwaitTerminationRestoresASecondInterruptWithoutWaitingForever() throws Exception {
+    // A second interrupt must remain a cancellation escape hatch rather than being
+    // swallowed by an unbounded retry loop.
     Process process = Mockito.mock(Process.class);
-    when(process.waitFor())
-        .thenThrow(new InterruptedException("interrupted while awaiting forced termination"))
-        .thenReturn(1);
+    when(process.waitFor(30, TimeUnit.SECONDS))
+        .thenThrow(new InterruptedException("interrupted while awaiting forced termination"));
 
     Thread.interrupted(); // clear any stray flag left over from another test
-    invokeDestroyForciblyAndAwaitTermination(process);
+    assertFalse(invokeDestroyForciblyAndAwaitTermination(process));
 
     assertTrue(Thread.interrupted(),
         "A second interrupt during the forced-kill wait must be restored on the caller's thread");
     Mockito.verify(process, Mockito.times(1)).destroyForcibly();
-    Mockito.verify(process, Mockito.times(2)).waitFor();
+    Mockito.verify(process, Mockito.times(1)).waitFor(30, TimeUnit.SECONDS);
   }
 
-  private static void invokeDestroyForciblyAndAwaitTermination(Process process) throws Exception {
+  @Test
+  public void destroyForciblyAndAwaitTerminationReturnsAfterTheBoundedWait() throws Exception {
+    Process process = Mockito.mock(Process.class);
+    when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(false);
+
+    assertFalse(invokeDestroyForciblyAndAwaitTermination(process));
+
+    Mockito.verify(process).destroyForcibly();
+    Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
+  }
+
+  private static boolean invokeDestroyForciblyAndAwaitTermination(Process process) throws Exception {
     Method method = GmdMavenPlugin.class.getDeclaredMethod("destroyForciblyAndAwaitTermination", Process.class);
     method.setAccessible(true);
-    method.invoke(null, process);
+    return (boolean) method.invoke(null, process);
   }
 
   private static void deleteDirectory(File directory) throws IOException {
