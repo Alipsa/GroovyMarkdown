@@ -1,9 +1,11 @@
 package se.alipsa.gmd.gradle
 
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
@@ -31,6 +33,42 @@ abstract class ProcessGmdTask extends DefaultTask {
     // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
     // rather than fail validation or delete files in a directory it does not own.
     targetDirIsDefaultGmdOutput.convention(false)
+  }
+
+  /**
+   * The gmd-core version matching this plugin, from the generated
+   * gmd-version.properties resource. Fails clearly when the resource is
+   * missing or unexpanded.
+   */
+  @PackageScope
+  static String defaultGmdVersion() {
+    InputStream stream = ProcessGmdTask.class.getResourceAsStream('/gmd-version.properties')
+    if (stream == null) {
+      throw new IllegalStateException(
+          'GMD core version metadata is missing from the Gradle plugin; set gmdPlugin.gmdVersion explicitly'
+      )
+    }
+    try {
+      Properties properties = new Properties()
+      properties.load(stream)
+      String version = properties.getProperty('gmd.version')
+      String normalizedVersion = version == null ? null : version.trim()
+      if (normalizedVersion == null || normalizedVersion.isEmpty()
+          || normalizedVersion.contains('$') || normalizedVersion.contains('{')) {
+        throw new IllegalStateException(
+            'GMD core version metadata is invalid; set gmdPlugin.gmdVersion explicitly'
+        )
+      }
+      return normalizedVersion
+    } catch (IOException e) {
+      throw new IllegalStateException('Could not read GMD core version metadata', e)
+    } finally {
+      try {
+        stream.close()
+      } catch (IOException ignored) {
+        // Ignore cleanup failures while resolving the version resource.
+      }
+    }
   }
 
   @InputDirectory
@@ -73,8 +111,23 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
 
-  @org.gradle.api.tasks.Classpath
-  abstract ConfigurableFileCollection getClasspath()
+  /**
+   * The actual runtime classpath used to fork GmdProcessor. When there is no
+   * .gmd source, its provider supplies an empty collection so Gradle can run the
+   * no-op and stale-output cleanup paths without resolving processor dependencies.
+   */
+  @Classpath
+  abstract ConfigurableFileCollection getRuntimeClasspath()
+
+  /**
+   * @deprecated Use {@link #getRuntimeClasspath()}. This alias returns the
+   * same collection for compatibility with directly registered tasks.
+   */
+  @Deprecated
+  @org.gradle.api.tasks.Internal
+  ConfigurableFileCollection getClasspath() {
+    return getRuntimeClasspath()
+  }
 
   @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
@@ -90,6 +143,14 @@ abstract class ProcessGmdTask extends DefaultTask {
 
     if (!source.exists()) {
       logger.warn("Source directory ${source.canonicalPath} does not exist, nothing to do")
+      return
+    }
+    File[] sourceFiles = gmdFilesIn(source)
+    if (sourceFiles.length == 0) {
+      if (getTargetDirIsDefaultGmdOutput().getOrElse(false) && target.isDirectory()) {
+        cleanStaleGeneratedFiles(source, target, output)
+      }
+      logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
       return
     }
     if (!target.exists()) {
@@ -108,20 +169,15 @@ abstract class ProcessGmdTask extends DefaultTask {
     }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->
-      spec.classpath = getClasspath()
+      spec.classpath = getRuntimeClasspath()
       spec.mainClass.set('se.alipsa.gmd.core.GmdProcessor')
       spec.args = [source.canonicalPath, target.canonicalPath, output]
     }
     result.assertNormalExitValue()
-    File[] sourceFiles = gmdFilesIn(source)
-    if (sourceFiles.length > 0) {
-      if (target.exists()) {
-        logger.quiet("Gmd files processed and written to ${target.canonicalPath}")
-      } else {
-        logger.warn("${target.canonicalPath} should exists but does not, something is probably wrong")
-      }
+    if (target.exists()) {
+      logger.quiet("Gmd files processed and written to ${target.canonicalPath}")
     } else {
-      logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
+      logger.warn("${target.canonicalPath} should exists but does not, something is probably wrong")
     }
   }
 

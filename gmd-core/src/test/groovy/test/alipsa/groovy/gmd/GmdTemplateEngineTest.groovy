@@ -374,6 +374,68 @@ Some prose
     }
 
     @Test
+    void indentedCodeAfterLeafBlocksIsLeftAlone() {
+        ['# Heading', 'Title\n=====', '---', '* * *', '- - -'].each { leafBlock ->
+            String text = "```{groovy echo=false}\nx = 5\n```\n${leafBlock}\n    literal `= x ` here\n"
+
+            String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+            assertTrue(processed.contains('literal `= x ` here'), processed)
+            assertFalse(processed.contains('literal 5'), processed)
+        }
+    }
+
+    @Test
+    void indentedCodeInsideABlockQuoteIsLeftAlone() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+>     literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+        assertFalse(processed.contains('literal 5'), processed)
+    }
+
+    @Test
+    void aPlainFenceResetsBlockQuoteAndListContext() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+> - item
+```text
+plain
+```
+>
+>     literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+        assertFalse(processed.contains('literal 5 here'), processed)
+    }
+
+    @Test
+    void anEmptyEchoFalseBlockPreservesThePreviousParagraph() {
+        String text = '''
+prose line
+```{groovy echo=false}
+x = 5
+```
+    continued `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('continued 5 here'), processed)
+    }
+
+    @Test
     void aBlankLineDoesNotEndAnIndentedCodeBlock() {
         String text = '''
 ```{groovy echo=false}
@@ -454,6 +516,61 @@ x = 5
         String processed = GmdTemplateEngine.processCodeBlocks(text)
 
         assertTrue(processed.contains('continued 5'), processed)
+    }
+
+    @Test
+    void aThematicBreakInsideAListItemKeepsTheListContext() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+- item
+
+  ---
+
+  para `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('para 5 here'),
+            "A thematic break aligned with the list content column must not end the list:\n$processed")
+    }
+
+    @Test
+    void aThematicBreakDedentPastTheListContentColumnEndsTheList() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+- item
+
+---
+
+      literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'),
+            "A thematic break dedented past the list content column ends the list:\n$processed")
+    }
+
+    @Test
+    void aBlankBlockQuoteLineDoesNotStartAParagraph() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+> para
+>
+>     literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'),
+            "An indented line after a blank block-quote line is a code block:\n$processed")
     }
 
     @Test

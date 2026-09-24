@@ -9,16 +9,15 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.initialization.resolve.RepositoriesMode
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.tasks.TaskProvider
-
-import java.io.IOException
-import java.io.InputStream
-import java.util.Properties
 
 @CompileStatic
 class GmdGradlePlugin implements Plugin<Project> {
 
   private static final List<String> MAVEN_CENTRAL_HOSTS = ['repo.maven.apache.org', 'repo1.maven.org']
+  private static final String GMD_PROCESSOR_RUNTIME_CONFIGURATION = 'gmdProcessorRuntime'
 
   @Override
   void apply(Project project) {
@@ -28,7 +27,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.outputType.convention('md')
     extension.groovyVersion.convention('5.1.3')
     extension.log4jVersion.convention('2.26.1')
-    extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
+    extension.gmdVersion.convention(project.providers.provider { ProcessGmdTask.defaultGmdVersion() })
     extension.ivyVersion.convention('2.6.0')
     extension.runTaskBefore.convention('test')
 
@@ -38,11 +37,12 @@ class GmdGradlePlugin implements Plugin<Project> {
       String sourceDir = extension.sourceDir.get()
       String targetDir = extension.targetDir.get()
       String outputType = extension.outputType.get()
+      String groovyVersion = extension.groovyVersion.get()
+      String log4jVersion = extension.log4jVersion.get()
+      String gmdVersion = extension.gmdVersion.get()
+      String ivyVersion = extension.ivyVersion.get()
       Configuration configuration = addDependencies(project,
-          extension.groovyVersion.get(),
-          extension.log4jVersion.get(),
-          extension.gmdVersion.get(),
-          extension.ivyVersion.get()
+          groovyVersion, log4jVersion, gmdVersion, ivyVersion
       )
 
       File resolvedTargetDir = project.file(targetDir)
@@ -59,7 +59,10 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.sourceDir.set(project.file(sourceDir))
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
-        task.classpath.from(configuration)
+        File configuredSourceDir = project.file(sourceDir)
+        task.runtimeClasspath.from(project.providers.provider {
+          hasGmdFiles(configuredSourceDir) ? configuration : project.files()
+        })
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
         if (targetDirIsDefaultGmdOutput) {
           task.dedicatedOutputDir.set(resolvedTargetDir)
@@ -77,40 +80,10 @@ class GmdGradlePlugin implements Plugin<Project> {
     }
   }
 
-  private static String defaultGmdVersion() {
-    InputStream stream = GmdGradlePlugin.class.getResourceAsStream('/gmd-version.properties')
-    if (stream == null) {
-      throw new IllegalStateException(
-          'GMD core version metadata is missing from the Gradle plugin; set gmdPlugin.gmdVersion explicitly'
-      )
-    }
-    try {
-      Properties properties = new Properties()
-      properties.load(stream)
-      String version = properties.getProperty('gmd.version')
-      String normalizedVersion = version == null ? null : version.trim()
-      if (normalizedVersion == null || normalizedVersion.isEmpty()
-          || normalizedVersion.contains('$') || normalizedVersion.contains('{')) {
-        throw new IllegalStateException(
-            'GMD core version metadata is invalid; set gmdPlugin.gmdVersion explicitly'
-        )
-      }
-      return normalizedVersion
-    } catch (IOException e) {
-      throw new IllegalStateException('Could not read GMD core version metadata', e)
-    } finally {
-      try {
-        stream.close()
-      } catch (IOException ignored) {
-        // Ignore cleanup failures while resolving the version resource.
-      }
-    }
-  }
-
   static Configuration addDependencies(Project project,
                                        String groovyVersion, String log4jVersion, String gmdVersion,
                                        String ivyVersion) {
-    if (!hasMavenCentral(project)) {
+    if (!isRepositoriesModeSettingsManaged(project) && !hasMavenCentral(project)) {
       try {
         project.repositories.mavenCentral()
       } catch (InvalidUserCodeException e) {
@@ -128,13 +101,48 @@ class GmdGradlePlugin implements Plugin<Project> {
         project.dependencies.create("se.alipsa.gmd:gmd-core:${gmdVersion}")
     ]
 
-    return project.configurations.detachedConfiguration(dependencies.toArray(new Dependency[0]))
+    Configuration configuration = project.configurations.maybeCreate(GMD_PROCESSOR_RUNTIME_CONFIGURATION)
+    configuration.canBeConsumed = false
+    configuration.canBeResolved = true
+    configuration.visible = false
+    configuration.dependencies.addAll(dependencies)
+    return configuration
   }
 
   static boolean hasMavenCentral(Project project) {
     return project.repositories.any { ArtifactRepository repository ->
       repository instanceof MavenArtifactRepository &&
           MAVEN_CENTRAL_HOSTS.contains(((MavenArtifactRepository) repository).url?.host)
+    }
+  }
+
+  private static boolean hasGmdFiles(File directory) {
+    File[] files = directory.listFiles({ File file ->
+      file.isFile() && file.name.endsWith('.gmd')
+    } as FileFilter)
+    return files != null && files.length > 0
+  }
+
+  /**
+   * Under {@code PREFER_SETTINGS}, Gradle does not reject a project-declared repository
+   * with {@link InvalidUserCodeException} the way it does under {@code FAIL_ON_PROJECT_REPOS};
+   * it silently accepts (and deprecates) it instead. That leaves the {@code hasMavenCentral}
+   * check blind - project.repositories still reports zero entries beforehand - so without this
+   * check the plugin would add, and permanently mutate every consumer's project.repositories
+   * with, a repository that dependency resolution ignores anyway. There is no public API for a
+   * project plugin to read the resolved repositories mode, so this reaches into Gradle's
+   * internal API (bundled by gradleApi(), verified on Gradle 9.7.1). If that internal API is
+   * ever unavailable, this falls back to false and the InvalidUserCodeException guard in
+   * addDependencies still handles FAIL_ON_PROJECT_REPOS as before.
+   */
+  private static boolean isRepositoriesModeSettingsManaged(Project project) {
+    try {
+      GradleInternal gradleInternal = (GradleInternal) project.gradle
+      RepositoriesMode mode = gradleInternal.settings.dependencyResolutionManagement.repositoriesMode
+          .getOrElse(RepositoriesMode.PREFER_PROJECT)
+      return mode != RepositoriesMode.PREFER_PROJECT
+    } catch (Throwable ignored) {
+      return false
     }
   }
 }

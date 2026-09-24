@@ -1,10 +1,11 @@
 # GMD Maven Plugin release history
 
-## v3.2.0, unreleased
+## v3.2.0, 2026-09-24
 - make the default GMD core version follow the Maven plugin version to prevent release drift
 - validate Maven Central release artifacts before publishing
 - publish source and Javadoc artifacts as part of the release workflow
 - replace deprecated Maven `@Component` injection with JSR-330 `@Inject`
+- wait up to 30 seconds after forcibly stopping an interrupted GMD processor, while preserving a subsequent interrupt so Maven cancellation cannot hang indefinitely
 - upgrade groovy to 5.1.3
 
 ## v3.1.0, 2026-08-02

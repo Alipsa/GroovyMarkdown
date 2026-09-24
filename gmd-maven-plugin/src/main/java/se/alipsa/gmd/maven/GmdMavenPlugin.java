@@ -64,6 +64,12 @@ public class GmdMavenPlugin extends AbstractMojo {
   private RepositorySystem repositorySystem;
 
   /**
+   * Bounded wait after {@link Process#destroyForcibly()} so cancelling the build
+   * cannot hang forever on a forked JVM that survives the forced kill.
+   */
+  private static final int FORCED_TERMINATION_TIMEOUT_SECONDS = 30;
+
+  /**
    * Default constructor.
    */
   public GmdMavenPlugin() {
@@ -199,10 +205,10 @@ public class GmdMavenPlugin extends AbstractMojo {
             process.destroy();
             try {
               if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
+                warnOnIncompleteForcedTermination(process);
               }
             } catch (InterruptedException swallowed) {
-              process.destroyForcibly();
+              warnOnIncompleteForcedTermination(process);
             }
             interrupted = true;
             throw new MojoExecutionException("Interrupted while waiting for the GMD processor", e);
@@ -249,6 +255,50 @@ public class GmdMavenPlugin extends AbstractMojo {
       }
       throw new MojoFailureException(message, e);
     }
+  }
+
+  /**
+   * {@link Process#destroyForcibly()} is asynchronous, so a caller that returns right
+   * after calling it can race the forked JVM's actual exit. Wait for a bounded
+   * period so cancellation remains able to return if the forked JVM survives the
+   * forced termination. A second interrupt is restored before returning.
+   */
+  private static ForcedTerminationAwait destroyForciblyAndAwaitTermination(Process process) {
+    process.destroyForcibly();
+    try {
+      return process.waitFor(FORCED_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+          ? ForcedTerminationAwait.TERMINATED : ForcedTerminationAwait.TIMED_OUT;
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      return ForcedTerminationAwait.INTERRUPTED;
+    }
+  }
+
+  /**
+   * Both callers of {@link #destroyForciblyAndAwaitTermination(Process)} report the
+   * outcome, but a timeout and a second interrupt need different diagnostics: the
+   * process may have exited microseconds after the interrupt, so claiming it survived
+   * the forced kill would be misleading.
+   */
+  private void warnOnIncompleteForcedTermination(Process process) {
+    switch (destroyForciblyAndAwaitTermination(process)) {
+      case TIMED_OUT ->
+          getLog().warn("GMD processor did not terminate within "
+              + FORCED_TERMINATION_TIMEOUT_SECONDS + " seconds after forced termination");
+      case INTERRUPTED ->
+          getLog().warn("Interrupted again while awaiting the GMD processor's termination "
+              + "after forced termination; its exit status is unknown");
+      case TERMINATED -> {
+        // Nothing to report.
+      }
+    }
+  }
+
+  /** Outcome of awaiting a forcibly destroyed process, so callers can report it accurately. */
+  private enum ForcedTerminationAwait {
+    TERMINATED,
+    TIMED_OUT,
+    INTERRUPTED
   }
 
   private List<File> resolveDependencies() throws DependencyResolutionException {

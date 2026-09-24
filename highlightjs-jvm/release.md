@@ -1,6 +1,6 @@
 # Highlight.js JVM release history
 
-## v3.2.0, unreleased
+## v3.2.0, 2026-09-24
 - upgrade the JUnit BOM used by module tests to 6.1.3
 - require Node 22 for bundle generation and verify the generated bundle in CI
 - add Maven publication metadata and attach source and Javadoc artifacts
