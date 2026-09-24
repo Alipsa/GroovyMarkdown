@@ -199,10 +199,10 @@ public class GmdMavenPlugin extends AbstractMojo {
             process.destroy();
             try {
               if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
+                destroyForciblyAndAwaitTermination(process);
               }
             } catch (InterruptedException swallowed) {
-              process.destroyForcibly();
+              destroyForciblyAndAwaitTermination(process);
             }
             interrupted = true;
             throw new MojoExecutionException("Interrupted while waiting for the GMD processor", e);
@@ -248,6 +248,29 @@ public class GmdMavenPlugin extends AbstractMojo {
         message += ": " + e.getMessage();
       }
       throw new MojoFailureException(message, e);
+    }
+  }
+
+  /**
+   * {@link Process#destroyForcibly()} is asynchronous, so a caller that returns right
+   * after calling it can race the forked JVM's actual exit. This blocks until the
+   * process has really terminated, retrying {@link Process#waitFor()} if the wait
+   * itself is interrupted again rather than giving up and restoring that second
+   * interrupt on the calling thread once termination is confirmed.
+   */
+  private static void destroyForciblyAndAwaitTermination(Process process) {
+    process.destroyForcibly();
+    boolean interruptedAgain = false;
+    while (true) {
+      try {
+        process.waitFor();
+        break;
+      } catch (InterruptedException e) {
+        interruptedAgain = true;
+      }
+    }
+    if (interruptedAgain) {
+      Thread.currentThread().interrupt();
     }
   }
 

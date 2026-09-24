@@ -148,7 +148,7 @@ class GmdGradlePluginTest {
           sourceDir = 'src/test/gmd'
           targetDir = 'build/target'
           outputType = 'html'
-          gmdVersion = 'not-a-real-gmd-version'
+          gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
           runTaskBefore = 'build'
       }
       '''.stripIndent()
@@ -158,6 +158,72 @@ class GmdGradlePluginTest {
 
       Assertions.assertEquals(SUCCESS, result.task(':processGmd').outcome, result.output)
       Assertions.assertTrue(new File(testProjectDir, 'build/target/test.html').exists())
+    } finally {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+    }
+  }
+
+  @Test
+  void preferSettingsRepositoriesAreNotMutatedByTheProject() {
+    // Copilot review on PR #11: under PREFER_SETTINGS, project.repositories.mavenCentral()
+    // is not rejected with InvalidUserCodeException the way it is under
+    // FAIL_ON_PROJECT_REPOS - Gradle silently accepts (and deprecates) it instead. Verify
+    // the plugin detects PREFER_SETTINGS up front and never adds to project.repositories,
+    // so the build carries no deprecation warning and the settings repositories are what
+    // actually resolve gmd-core. ProjectBuilder cannot model dependencyResolutionManagement,
+    // so this is a TestKit test.
+    File testProjectDir = new File('build/gmdPreferSettingsReposTest')
+    try {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+      File srcDir = new File(testProjectDir, 'src/test/gmd')
+      srcDir.mkdirs()
+      new File(srcDir, 'test.gmd').text = '# Greetings\n'
+
+      new File(testProjectDir, 'settings.gradle').text = '''
+      pluginManagement {
+          repositories { mavenCentral() }
+          plugins { id 'se.alipsa.gmd.gmd-gradle-plugin' version '1.0.0' }
+      }
+      dependencyResolutionManagement {
+          repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+          repositories { mavenCentral() }
+      }
+      '''.stripIndent()
+
+      // Deliberately no project-level repositories block.
+      new File(testProjectDir, 'build.gradle').text = '''
+      plugins {
+          id('base')
+          id 'se.alipsa.gmd.gmd-gradle-plugin'
+      }
+      gmdPlugin {
+          sourceDir = 'src/test/gmd'
+          targetDir = 'build/target'
+          outputType = 'html'
+          gmdVersion = '3.1.0'
+          runTaskBefore = 'build'
+      }
+      tasks.register('printRepoCount') {
+          doLast { println "repoCount=" + project.repositories.size() }
+      }
+      '''.stripIndent()
+
+      def result = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('processGmd', 'printRepoCount')
+          .withPluginClasspath()
+          .forwardOutput()
+          .build()
+
+      Assertions.assertEquals(SUCCESS, result.task(':processGmd').outcome,
+          "PREFER_SETTINGS must not break the plugin:\n${result.output}")
+      Assertions.assertTrue(new File(testProjectDir, 'build/target/test.html').exists(),
+          'The detached configuration must still resolve through the settings repositories')
+      Assertions.assertTrue(result.output.contains('repoCount=0'),
+          "The plugin must not add to project.repositories under PREFER_SETTINGS:\n${result.output}")
+      Assertions.assertFalse(
+          result.output.contains('prefer settings repositories over project repositories'),
+          "The plugin must not trigger Gradle's PREFER_SETTINGS deprecation warning:\n${result.output}")
     } finally {
       new AntBuilder().delete(dir: testProjectDir, failonerror: false)
     }

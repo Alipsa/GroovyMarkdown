@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -137,6 +138,45 @@ public class GmdMavenPluginTest {
         "The plugin's own failure must not be rewrapped: " + exception.getMessage());
     assertFalse(exception.getMessage().contains("Failed to process gmd files in"),
         "The plugin's own failure must not be rewrapped: " + exception.getMessage());
+  }
+
+  @Test
+  public void destroyForciblyAndAwaitTerminationWaitsForRealTermination() throws Exception {
+    // Copilot review on PR #11: Process.destroyForcibly() is asynchronous, so returning
+    // right after calling it can race the forked JVM's actual exit. Verify the helper
+    // actually blocks on waitFor() after the forced kill instead of just firing it.
+    Process process = Mockito.mock(Process.class);
+    when(process.waitFor()).thenReturn(1);
+
+    invokeDestroyForciblyAndAwaitTermination(process);
+
+    Mockito.verify(process).destroyForcibly();
+    Mockito.verify(process).waitFor();
+  }
+
+  @Test
+  public void destroyForciblyAndAwaitTerminationRetriesAndRestoresASecondInterrupt() throws Exception {
+    // A second interrupt arriving while waiting out the forced kill must not be lost:
+    // the wait is retried until termination is confirmed, then the interrupt is
+    // restored on the calling thread.
+    Process process = Mockito.mock(Process.class);
+    when(process.waitFor())
+        .thenThrow(new InterruptedException("interrupted while awaiting forced termination"))
+        .thenReturn(1);
+
+    Thread.interrupted(); // clear any stray flag left over from another test
+    invokeDestroyForciblyAndAwaitTermination(process);
+
+    assertTrue(Thread.interrupted(),
+        "A second interrupt during the forced-kill wait must be restored on the caller's thread");
+    Mockito.verify(process, Mockito.times(1)).destroyForcibly();
+    Mockito.verify(process, Mockito.times(2)).waitFor();
+  }
+
+  private static void invokeDestroyForciblyAndAwaitTermination(Process process) throws Exception {
+    Method method = GmdMavenPlugin.class.getDeclaredMethod("destroyForciblyAndAwaitTermination", Process.class);
+    method.setAccessible(true);
+    method.invoke(null, process);
   }
 
   private static void deleteDirectory(File directory) throws IOException {

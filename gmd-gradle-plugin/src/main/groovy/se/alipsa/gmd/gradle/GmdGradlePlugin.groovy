@@ -9,6 +9,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
+import org.gradle.api.initialization.resolve.RepositoriesMode
+import org.gradle.api.internal.GradleInternal
 import org.gradle.api.tasks.TaskProvider
 
 import java.io.IOException
@@ -110,7 +112,7 @@ class GmdGradlePlugin implements Plugin<Project> {
   static Configuration addDependencies(Project project,
                                        String groovyVersion, String log4jVersion, String gmdVersion,
                                        String ivyVersion) {
-    if (!hasMavenCentral(project)) {
+    if (!isRepositoriesModeSettingsManaged(project) && !hasMavenCentral(project)) {
       try {
         project.repositories.mavenCentral()
       } catch (InvalidUserCodeException e) {
@@ -135,6 +137,29 @@ class GmdGradlePlugin implements Plugin<Project> {
     return project.repositories.any { ArtifactRepository repository ->
       repository instanceof MavenArtifactRepository &&
           MAVEN_CENTRAL_HOSTS.contains(((MavenArtifactRepository) repository).url?.host)
+    }
+  }
+
+  /**
+   * Under {@code PREFER_SETTINGS}, Gradle does not reject a project-declared repository
+   * with {@link InvalidUserCodeException} the way it does under {@code FAIL_ON_PROJECT_REPOS};
+   * it silently accepts (and deprecates) it instead. That leaves the {@code hasMavenCentral}
+   * check blind - project.repositories still reports zero entries beforehand - so without this
+   * check the plugin would add, and permanently mutate every consumer's project.repositories
+   * with, a repository that dependency resolution ignores anyway. There is no public API for a
+   * project plugin to read the resolved repositories mode, so this reaches into Gradle's
+   * internal API (bundled by gradleApi(), verified on Gradle 9.7.1). If that internal API is
+   * ever unavailable, this falls back to false and the InvalidUserCodeException guard in
+   * addDependencies still handles FAIL_ON_PROJECT_REPOS as before.
+   */
+  private static boolean isRepositoriesModeSettingsManaged(Project project) {
+    try {
+      GradleInternal gradleInternal = (GradleInternal) project.gradle
+      RepositoriesMode mode = gradleInternal.settings.dependencyResolutionManagement.repositoriesMode
+          .getOrElse(RepositoriesMode.PREFER_PROJECT)
+      return mode != RepositoriesMode.PREFER_PROJECT
+    } catch (Throwable ignored) {
+      return false
     }
   }
 }
