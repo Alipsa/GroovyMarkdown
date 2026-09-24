@@ -82,6 +82,88 @@ class GmdGradlePluginTest {
   }
 
   @Test
+  void mavenCentralIsAddedOnlyWhenTheProjectHasNone() {
+    def project = ProjectBuilder.builder().build()
+    Assertions.assertEquals(0, project.repositories.size())
+
+    GmdGradlePlugin.addDependencies(project, '5.1.3', '2.26.1', '3.1.0', '2.6.0')
+
+    Assertions.assertEquals(1, project.repositories.size())
+  }
+
+  @Test
+  void anExistingMavenCentralIsNotDuplicated() {
+    def project = ProjectBuilder.builder().build()
+    project.repositories.mavenCentral()
+
+    GmdGradlePlugin.addDependencies(project, '5.1.3', '2.26.1', '3.1.0', '2.6.0')
+
+    Assertions.assertEquals(1, project.repositories.size())
+  }
+
+  @Test
+  void mavenCentralIsRecognisedUnderItsOtherHost() {
+    def project = ProjectBuilder.builder().build()
+    project.repositories.maven { it.setUrl('https://repo1.maven.org/maven2') }
+
+    GmdGradlePlugin.addDependencies(project, '5.1.3', '2.26.1', '3.1.0', '2.6.0')
+
+    Assertions.assertEquals(1, project.repositories.size())
+  }
+
+  @Test
+  void aPrivateMirrorStillGetsMavenCentralAdded() {
+    def project = ProjectBuilder.builder().build()
+    project.repositories.maven { it.setUrl('https://nexus.example.com/repository/maven-public') }
+
+    GmdGradlePlugin.addDependencies(project, '5.1.3', '2.26.1', '3.1.0', '2.6.0')
+
+    Assertions.assertEquals(2, project.repositories.size())
+  }
+
+  @Test
+  void settingsManagedRepositoriesDoNotBreakTheBuild() {
+    File testProjectDir = new File('build/gmdSettingsReposTest')
+    try {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+      File srcDir = new File(testProjectDir, 'src/test/gmd')
+      srcDir.mkdirs()
+      new File(srcDir, 'test.gmd').text = '# Greetings\n'
+      new File(testProjectDir, 'settings.gradle').text = '''
+      pluginManagement {
+          repositories { mavenCentral() }
+          plugins { id 'se.alipsa.gmd.gmd-gradle-plugin' version '1.0.0' }
+      }
+      dependencyResolutionManagement {
+          repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+          repositories { mavenCentral() }
+      }
+      '''.stripIndent()
+      new File(testProjectDir, 'build.gradle').text = '''
+      plugins {
+          id('base')
+          id 'se.alipsa.gmd.gmd-gradle-plugin'
+      }
+      gmdPlugin {
+          sourceDir = 'src/test/gmd'
+          targetDir = 'build/target'
+          outputType = 'html'
+          gmdVersion = '3.1.0'
+          runTaskBefore = 'build'
+      }
+      '''.stripIndent()
+
+      def result = GradleRunner.create().withProjectDir(testProjectDir)
+          .withArguments('processGmd').withPluginClasspath().forwardOutput().build()
+
+      Assertions.assertEquals(SUCCESS, result.task(':processGmd').outcome, result.output)
+      Assertions.assertTrue(new File(testProjectDir, 'build/target/test.html').exists())
+    } finally {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+    }
+  }
+
+  @Test
   void testPlugin() {
     File targetDir = null
     File testProjectDir = new File('build/gmdPluginTest')

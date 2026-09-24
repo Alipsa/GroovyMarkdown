@@ -1,6 +1,9 @@
 # GMD Gradle Plugin release history
 
 ## v3.2.0, unreleased
+- **Breaking:** `GmdGradlePlugin.hasRepository(Project, MavenArtifactRepository)` is removed.
+  It was public static API on the plugin class; nothing in the repo called it. The plugin now
+  checks for an existing Maven Central declaration itself before adding one.
 - derive the default GMD core version from a generated plugin-version resource populated from the root Maven revision, failing clearly if metadata is unavailable
 - derive the development artifact version from the root Maven revision and require an explicit version when publishing
 - upgrade the Gradle Versions Plugin from 0.58.0 to 0.61.0

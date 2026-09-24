@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.repositories.ArtifactRepository
@@ -16,6 +17,8 @@ import java.util.Properties
 
 @CompileStatic
 class GmdGradlePlugin implements Plugin<Project> {
+
+  private static final List<String> MAVEN_CENTRAL_HOSTS = ['repo.maven.apache.org', 'repo1.maven.org']
 
   @Override
   void apply(Project project) {
@@ -107,9 +110,13 @@ class GmdGradlePlugin implements Plugin<Project> {
   static Configuration addDependencies(Project project,
                                        String groovyVersion, String log4jVersion, String gmdVersion,
                                        String ivyVersion) {
-    MavenArtifactRepository mavenCentral = project.repositories.mavenCentral()
-    if (!hasRepository(project, mavenCentral)) {
-      project.repositories.add(mavenCentral)
+    if (!hasMavenCentral(project)) {
+      try {
+        project.repositories.mavenCentral()
+      } catch (InvalidUserCodeException e) {
+        project.logger.info('Project repositories are managed in settings.gradle; ' +
+            'resolving gmd-core through the settings repositories instead: ' + e.message)
+      }
     }
 
     List<Dependency> dependencies = [
@@ -124,9 +131,10 @@ class GmdGradlePlugin implements Plugin<Project> {
     return project.configurations.detachedConfiguration(dependencies.toArray(new Dependency[0]))
   }
 
-  static boolean hasRepository(Project project, MavenArtifactRepository repo) {
-    return project.repositories.find {
-      it instanceof MavenArtifactRepository && it.url == repo.url
-    } != null
+  static boolean hasMavenCentral(Project project) {
+    return project.repositories.any { ArtifactRepository repository ->
+      repository instanceof MavenArtifactRepository &&
+          MAVEN_CENTRAL_HOSTS.contains(((MavenArtifactRepository) repository).url?.host)
+    }
   }
 }

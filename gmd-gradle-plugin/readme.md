@@ -32,6 +32,15 @@ embedded styles, and syntax-highlighted code blocks.
 - `ivyVersion` - the version of ivy to use. Default is `2.6.0`
 - `runTaskBefore` - the task that the gmd plugin should run before. Default is 'test'
 
+### Repositories
+
+The plugin resolves `gmd-core` and Groovy through a detached configuration, which uses the
+project's repositories. If the project has not declared Maven Central, the plugin adds it.
+If it has — under either `repo.maven.apache.org` or `repo1.maven.org` — nothing is added.
+A project that resolves only through a private mirror should declare that mirror in
+`dependencyResolutionManagement` in `settings.gradle` so the plugin has no reason to add
+Central to the project itself.
+
 The target task is called `processGmd` so it can be invoked from the command line as follows:
 
 ```bash
