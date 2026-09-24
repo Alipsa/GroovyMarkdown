@@ -127,6 +127,9 @@ class GmdTemplateEngine {
                     def output = out.toString()
                     if (output.length() > 0) {
                         result.append(output)
+                        if (!output.endsWith('\n')) {
+                            result.append('\n')
+                        }
                     }
                     out.clear()
                     codeBlockText.setLength(0)

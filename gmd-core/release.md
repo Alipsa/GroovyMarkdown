@@ -1,6 +1,10 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- Output from a Groovy code block that does not end in a newline now gains one, so
+  `out.print('x')` no longer glues the next source line onto the output. Visible change:
+  `out.print('Hello ')` followed by prose now yields `Hello \nworld` instead of
+  `Hello world` in the Markdown (rendered identically by CommonMark).
 - Inline `= expr ` is no longer expanded inside CommonMark indented code blocks (a line
   indented four or more spaces beyond the document's own base indent). Indent is measured
   relative to the indent of the document's first non-blank line, so a .gmd written inside an

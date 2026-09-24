@@ -137,6 +137,27 @@ end
     }
 
     @Test
+    void unterminatedCodeBlockOutputDoesNotSwallowTheNextLine() {
+        String text = "```{groovy echo=false}\nout.print('X')\n```\n# Heading\n"
+
+        assertEquals("X\n# Heading\n", GmdTemplateEngine.processCodeBlocks(text))
+    }
+
+    @Test
+    void alreadyTerminatedOutputGainsNoExtraNewline() {
+        String text = "```{groovy echo=false}\nout.println('X')\n```\n# Heading\n"
+
+        assertEquals("X\n# Heading\n", GmdTemplateEngine.processCodeBlocks(text))
+    }
+
+    @Test
+    void inlineOutPrintIsTerminatedBeforeTheNextLine() {
+        String text = "```{groovy echo=false}\nout.print('Hello ')\n```\nworld\n"
+
+        assertEquals("Hello \nworld\n", GmdTemplateEngine.processCodeBlocks(text))
+    }
+
+    @Test
     void testInlineVars() {
         def text = """
         ```{groovy echo=false}
