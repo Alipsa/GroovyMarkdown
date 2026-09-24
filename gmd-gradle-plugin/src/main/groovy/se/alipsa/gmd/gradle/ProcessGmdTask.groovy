@@ -25,16 +25,6 @@ abstract class ProcessGmdTask extends DefaultTask {
 
   private final ExecOperations execOperations
 
-  // Defaults for the version @Input conventions below. Package-scoped so they
-  // do not become public static API on this published class; GmdGradlePlugin
-  // (same package) reuses them for its extension conventions.
-  @PackageScope
-  static final String DEFAULT_GROOVY_VERSION = '5.1.3'
-  @PackageScope
-  static final String DEFAULT_LOG4J_VERSION = '2.26.1'
-  @PackageScope
-  static final String DEFAULT_IVY_VERSION = '2.6.0'
-
   @Inject
   ProcessGmdTask(ExecOperations execOperations) {
     this.execOperations = execOperations
@@ -42,16 +32,6 @@ abstract class ProcessGmdTask extends DefaultTask {
     // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
     // rather than fail validation or delete files in a directory it does not own.
     targetDirIsDefaultGmdOutput.convention(false)
-    // Fail-safe defaults mirroring GmdGradlePlugin's extension conventions, so
-    // direct registration passes @Input validation and the task stays runnable.
-    // These constants never reflect a real classpath: they exist for runnability,
-    // not correctness. Up-to-date checks are silently wrong when a direct
-    // registrant leaves them (and the unwired classpathIdentity) in place — see
-    // classpathIdentity for the property that restores correct invalidation.
-    groovyVersion.convention(DEFAULT_GROOVY_VERSION)
-    log4jVersion.convention(DEFAULT_LOG4J_VERSION)
-    gmdVersion.convention(project.provider { defaultGmdVersion() })
-    ivyVersion.convention(DEFAULT_IVY_VERSION)
   }
 
   /**
@@ -59,6 +39,7 @@ abstract class ProcessGmdTask extends DefaultTask {
    * gmd-version.properties resource. Fails clearly when the resource is
    * missing or unexpanded.
    */
+  @PackageScope
   static String defaultGmdVersion() {
     InputStream stream = ProcessGmdTask.class.getResourceAsStream('/gmd-version.properties')
     if (stream == null) {
@@ -136,29 +117,21 @@ abstract class ProcessGmdTask extends DefaultTask {
   abstract ConfigurableFileCollection getClasspath()
 
   /**
-   * Fingerprint of the runtime classpath used to fork GmdProcessor. The
-   * classpath itself is {@code @Internal} (see above), so this property is
-   * what invalidates up-to-date checks when the runtime changes.
-   * GmdGradlePlugin derives it from its four version inputs; anyone
-   * registering this task directly must wire it from their own configuration
-   * (e.g. resolved file names or coordinates). It deliberately has no
-   * convention: an unwired value fails validation loudly instead of letting a
-   * classpath swap pass up-to-date checks silently.
+   * Stable identity for the runtime classpath selection used to fork
+   * GmdProcessor. The classpath itself is {@code @Internal} (see above), so
+   * this property invalidates up-to-date checks when that selection changes.
+   * GmdGradlePlugin derives it from its declared dependency versions. Anyone
+   * registering this task directly must wire it from their configuration
+   * without resolving it during configuration, for example
+   * {@code cfg.allDependencies.collect { "$it.group:$it.name:$it.version" }.sort().join(',')}.
+   * It deliberately has no convention: an unwired value fails validation
+   * loudly instead of letting a classpath swap pass up-to-date checks silently.
+   * This is an identity of declared runtime inputs, not a fingerprint of the
+   * fully resolved classpath; direct registrants must update it whenever their
+   * runtime selection changes.
    */
   @Input
   abstract org.gradle.api.provider.Property<String> getClasspathIdentity()
-
-  @Input
-  abstract org.gradle.api.provider.Property<String> getGroovyVersion()
-
-  @Input
-  abstract org.gradle.api.provider.Property<String> getLog4jVersion()
-
-  @Input
-  abstract org.gradle.api.provider.Property<String> getGmdVersion()
-
-  @Input
-  abstract org.gradle.api.provider.Property<String> getIvyVersion()
 
   @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
@@ -183,6 +156,9 @@ abstract class ProcessGmdTask extends DefaultTask {
       }
       logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
       return
+    }
+    if (getClasspathIdentity().get().trim().isEmpty()) {
+      throw new IllegalArgumentException('classpathIdentity must not be blank')
     }
     if (!target.exists()) {
       if (!target.mkdirs() && !target.isDirectory()) {

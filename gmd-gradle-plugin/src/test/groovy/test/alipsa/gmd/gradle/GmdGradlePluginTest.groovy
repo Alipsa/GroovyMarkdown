@@ -82,32 +82,16 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void runtimeVersionsAreTrackedAsTaskInputs() {
+  void classpathIdentityIsTheOnlyRuntimeSelectionInput() {
     def project = ProjectBuilder.builder().build()
     ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
-    task.groovyVersion.set('5.1.3')
-    task.log4jVersion.set('2.26.1')
-    task.gmdVersion.set('3.1.0')
-    task.ivyVersion.set('2.6.0')
+    task.classpathIdentity.set('declared-runtime-dependencies')
 
-    Assertions.assertTrue(task.inputs.properties.keySet().containsAll(
-        ['groovyVersion', 'log4jVersion', 'gmdVersion', 'ivyVersion'] as Set),
-        'Every runtime dependency version must invalidate processGmd when changed')
-  }
-
-  @Test
-  void directlyRegisteredTaskHasVersionInputDefaults() {
-    // Registering the task directly (bypassing GmdGradlePlugin's afterEvaluate wiring)
-    // must not leave the @Input version properties without values; Gradle would reject
-    // the task with "property 'groovyVersion' doesn't have a configured value".
-    // The literals duplicate ProcessGmdTask's package-scoped DEFAULT_* constants.
-    def project = ProjectBuilder.builder().build()
-    ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
-
-    Assertions.assertEquals('5.1.3', task.groovyVersion.get())
-    Assertions.assertEquals('2.26.1', task.log4jVersion.get())
-    Assertions.assertEquals('2.6.0', task.ivyVersion.get())
-    Assertions.assertFalse(task.gmdVersion.get().isBlank())
+    Set<String> inputs = task.inputs.properties.keySet()
+    Assertions.assertTrue(inputs.contains('classpathIdentity'))
+    Assertions.assertTrue(inputs.intersect(
+        ['groovyVersion', 'log4jVersion', 'gmdVersion', 'ivyVersion'] as Set).isEmpty(),
+        'classpathIdentity must be the sole runtime-selection task input')
   }
 
   @Test
@@ -311,11 +295,9 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void directlyRegisteredTaskWithoutClasspathIdentityFailsLoudly() {
-    // PR #11 review: the version @Input conventions make a directly registered
-    // task validate, but with classpath @Internal nothing tracks a classpath
-    // swap. classpathIdentity is the required fingerprint; leaving it unwired
-    // must fail validation instead of going silently stale.
+  void directlyRegisteredTaskWithoutUsableClasspathIdentityFailsLoudly() {
+    // classpathIdentity is the required task input; leaving it unwired must
+    // fail validation, while setting it blank must fail in the task action.
     File testProjectDir = new File('build/gmdDirectTaskMissingIdentityTest')
     try {
       new AntBuilder().delete(dir: testProjectDir, failonerror: false)
@@ -325,7 +307,8 @@ class GmdGradlePluginTest {
       // Own settings file: the test project lives under this build's directory,
       // so without one Gradle would adopt the plugin build's settings.gradle.
       new File(testProjectDir, 'settings.gradle').text = "rootProject.name = 'gmd-direct-task-missing-identity'\n"
-      new File(testProjectDir, 'build.gradle').text = '''
+      File buildFile = new File(testProjectDir, 'build.gradle')
+      String buildScript = '''
       import se.alipsa.gmd.gradle.ProcessGmdTask
 
       plugins {
@@ -348,6 +331,7 @@ class GmdGradlePluginTest {
           classpath.from(gmdRuntime)
       }
       '''.stripIndent()
+      buildFile.text = buildScript
 
       def result = GradleRunner.create()
           .withProjectDir(testProjectDir)
@@ -359,6 +343,17 @@ class GmdGradlePluginTest {
       Assertions.assertTrue(result.output.contains(
           "property 'classpathIdentity' doesn't have a configured value"),
           "An unwired classpathIdentity must fail loudly:\n${result.output}")
+
+      buildFile.text = buildScript.replace(
+          'classpath.from(gmdRuntime)', "classpath.from(gmdRuntime)\n          classpathIdentity = ''")
+      def blankResult = GradleRunner.create()
+          .withProjectDir(testProjectDir)
+          .withArguments('directGmd')
+          .withPluginClasspath()
+          .forwardOutput()
+          .buildAndFail()
+      Assertions.assertTrue(blankResult.output.contains('classpathIdentity must not be blank'),
+          "A blank classpathIdentity must fail loudly:\n${blankResult.output}")
     } finally {
       new AntBuilder().delete(dir: testProjectDir, failonerror: false)
     }
@@ -367,8 +362,8 @@ class GmdGradlePluginTest {
   @Test
   void directlyRegisteredTaskInvalidatesWhenItsWiredClasspathIdentityChanges() {
     // End-to-end proof of the fix for silent stale up-to-date checks on a
-    // directly registered task: wiring classpathIdentity from the resolved
-    // runtime must invalidate the task when that runtime changes. The swap
+    // directly registered task: wiring classpathIdentity from declared runtime
+    // dependencies must invalidate the task when that selection changes. The swap
     // changes only log4j-core so the runnable gmd-core:3.1.0 stays in place
     // (pre-3.1.0 gmd-core releases carry a JavaFX dependency graph).
     File testProjectDir = new File('build/gmdDirectTaskIdentityTest')
@@ -410,9 +405,11 @@ class GmdGradlePluginTest {
           targetDir = file('build/target')
           outputType = 'html'
           classpath.from(gmdRuntime)
-          // The supported direct-registration contract: wire the identity from
-          // the actual resolved runtime so a classpath swap invalidates the task.
-          classpathIdentity = gmdRuntime.resolve().collect { "${it.name}-${it.length()}" }.join(',')
+          // The supported direct-registration contract: derive the identity from
+          // declared dependencies, without resolving the configuration eagerly.
+          classpathIdentity = gmdRuntime.allDependencies.collect {
+              "${it.group}:${it.name}:${it.version}"
+          }.sort().join(',')
       }
       '''.stripIndent()
 
@@ -504,8 +501,7 @@ class GmdGradlePluginTest {
             targetDir = 'build/target'
             outputType = 'html'
             gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
-            log4jVersion = '2.26.1' // set explicitly so the invalidation check below can swap it;
-            // note this duplicates ProcessGmdTask's package-scoped default log4j version
+            log4jVersion = '2.26.1' // set explicitly so the invalidation check below can swap it
             runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning
         }
         """.stripIndent()
@@ -539,11 +535,8 @@ class GmdGradlePluginTest {
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
           'A custom target must retain Gradle up-to-date checks')
 
-      // This proves end-to-end that a version @Input invalidates the task, but only
-      // for log4jVersion; the runtimeVersionsAreTrackedAsTaskInputs unit test above
-      // asserts all four version properties (groovyVersion, log4jVersion, gmdVersion,
-      // ivyVersion) are registered as inputs. The two tests are coupled on purpose —
-      // do not delete the unit test as redundant; together they cover every version.
+      // This proves end-to-end that classpathIdentity invalidates the task when
+      // the plugin changes a declared runtime dependency version.
       buildFile.text = buildFile.text.replace("log4jVersion = '2.26.1'", "log4jVersion = '2.25.1'")
       def changedVersionResult = GradleRunner.create()
           .withProjectDir(testProjectDir)

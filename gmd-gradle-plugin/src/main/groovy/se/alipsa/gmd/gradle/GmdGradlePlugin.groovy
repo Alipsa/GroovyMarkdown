@@ -24,10 +24,10 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.sourceDir.convention('src/main/gmd')
     extension.targetDir.convention('build/gmd')
     extension.outputType.convention('md')
-    extension.groovyVersion.convention(ProcessGmdTask.DEFAULT_GROOVY_VERSION)
-    extension.log4jVersion.convention(ProcessGmdTask.DEFAULT_LOG4J_VERSION)
+    extension.groovyVersion.convention('5.1.3')
+    extension.log4jVersion.convention('2.26.1')
     extension.gmdVersion.convention(project.providers.provider { ProcessGmdTask.defaultGmdVersion() })
-    extension.ivyVersion.convention(ProcessGmdTask.DEFAULT_IVY_VERSION)
+    extension.ivyVersion.convention('2.6.0')
     extension.runTaskBefore.convention('test')
 
     TaskProvider<ProcessGmdTask> processGmdTask = project.tasks.register('processGmd', ProcessGmdTask)
@@ -59,13 +59,10 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
-        task.groovyVersion.set(groovyVersion)
-        task.log4jVersion.set(log4jVersion)
-        task.gmdVersion.set(gmdVersion)
-        task.ivyVersion.set(ivyVersion)
         // The classpath itself is @Internal (resolving it during input
         // snapshotting would defeat the deferred no-op check), so this
-        // identity string is what tracks the runtime for up-to-date checks.
+        // declared dependency identity is what tracks the runtime selection
+        // for up-to-date checks.
         task.classpathIdentity.set(
             "groovy=${groovyVersion}, gmd=${gmdVersion}, ivy=${ivyVersion}, log4j=${log4jVersion}".toString())
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
