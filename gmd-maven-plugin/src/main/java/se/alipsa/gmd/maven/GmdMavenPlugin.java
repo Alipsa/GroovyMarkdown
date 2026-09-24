@@ -64,6 +64,12 @@ public class GmdMavenPlugin extends AbstractMojo {
   private RepositorySystem repositorySystem;
 
   /**
+   * Bounded wait after {@link Process#destroyForcibly()} so cancelling the build
+   * cannot hang forever on a forked JVM that survives the forced kill.
+   */
+  private static final int FORCED_TERMINATION_TIMEOUT_SECONDS = 30;
+
+  /**
    * Default constructor.
    */
   public GmdMavenPlugin() {
@@ -251,8 +257,6 @@ public class GmdMavenPlugin extends AbstractMojo {
     }
   }
 
-  private static final int FORCED_TERMINATION_TIMEOUT_SECONDS = 30;
-
   /**
    * {@link Process#destroyForcibly()} is asynchronous, so a caller that returns right
    * after calling it can race the forked JVM's actual exit. Wait for a bounded
@@ -284,8 +288,8 @@ public class GmdMavenPlugin extends AbstractMojo {
       case INTERRUPTED ->
           getLog().warn("Interrupted again while awaiting the GMD processor's termination "
               + "after forced termination; its exit status is unknown");
-      default -> {
-        // Terminated; nothing to report.
+      case TERMINATED -> {
+        // Nothing to report.
       }
     }
   }

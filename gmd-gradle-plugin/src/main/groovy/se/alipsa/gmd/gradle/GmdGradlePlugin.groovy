@@ -13,20 +13,10 @@ import org.gradle.api.initialization.resolve.RepositoriesMode
 import org.gradle.api.internal.GradleInternal
 import org.gradle.api.tasks.TaskProvider
 
-import java.io.IOException
-import java.io.InputStream
-import java.util.Properties
-
 @CompileStatic
 class GmdGradlePlugin implements Plugin<Project> {
 
   private static final List<String> MAVEN_CENTRAL_HOSTS = ['repo.maven.apache.org', 'repo1.maven.org']
-
-  // Shared with ProcessGmdTask's fail-safe conventions for direct task registration,
-  // so the two cannot silently diverge.
-  static final String DEFAULT_GROOVY_VERSION = '5.1.3'
-  static final String DEFAULT_LOG4J_VERSION = '2.26.1'
-  static final String DEFAULT_IVY_VERSION = '2.6.0'
 
   @Override
   void apply(Project project) {
@@ -34,10 +24,10 @@ class GmdGradlePlugin implements Plugin<Project> {
     extension.sourceDir.convention('src/main/gmd')
     extension.targetDir.convention('build/gmd')
     extension.outputType.convention('md')
-    extension.groovyVersion.convention(DEFAULT_GROOVY_VERSION)
-    extension.log4jVersion.convention(DEFAULT_LOG4J_VERSION)
-    extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
-    extension.ivyVersion.convention(DEFAULT_IVY_VERSION)
+    extension.groovyVersion.convention(ProcessGmdTask.DEFAULT_GROOVY_VERSION)
+    extension.log4jVersion.convention(ProcessGmdTask.DEFAULT_LOG4J_VERSION)
+    extension.gmdVersion.convention(project.providers.provider { ProcessGmdTask.defaultGmdVersion() })
+    extension.ivyVersion.convention(ProcessGmdTask.DEFAULT_IVY_VERSION)
     extension.runTaskBefore.convention('test')
 
     TaskProvider<ProcessGmdTask> processGmdTask = project.tasks.register('processGmd', ProcessGmdTask)
@@ -46,11 +36,12 @@ class GmdGradlePlugin implements Plugin<Project> {
       String sourceDir = extension.sourceDir.get()
       String targetDir = extension.targetDir.get()
       String outputType = extension.outputType.get()
+      String groovyVersion = extension.groovyVersion.get()
+      String log4jVersion = extension.log4jVersion.get()
+      String gmdVersion = extension.gmdVersion.get()
+      String ivyVersion = extension.ivyVersion.get()
       Configuration configuration = addDependencies(project,
-          extension.groovyVersion.get(),
-          extension.log4jVersion.get(),
-          extension.gmdVersion.get(),
-          extension.ivyVersion.get()
+          groovyVersion, log4jVersion, gmdVersion, ivyVersion
       )
 
       File resolvedTargetDir = project.file(targetDir)
@@ -68,10 +59,15 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
-        task.groovyVersion.set(extension.groovyVersion.get())
-        task.log4jVersion.set(extension.log4jVersion.get())
-        task.gmdVersion.set(extension.gmdVersion.get())
-        task.ivyVersion.set(extension.ivyVersion.get())
+        task.groovyVersion.set(groovyVersion)
+        task.log4jVersion.set(log4jVersion)
+        task.gmdVersion.set(gmdVersion)
+        task.ivyVersion.set(ivyVersion)
+        // The classpath itself is @Internal (resolving it during input
+        // snapshotting would defeat the deferred no-op check), so this
+        // identity string is what tracks the runtime for up-to-date checks.
+        task.classpathIdentity.set(
+            "groovy=${groovyVersion}, gmd=${gmdVersion}, ivy=${ivyVersion}, log4j=${log4jVersion}".toString())
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
         if (targetDirIsDefaultGmdOutput) {
           task.dedicatedOutputDir.set(resolvedTargetDir)
@@ -85,36 +81,6 @@ class GmdGradlePlugin implements Plugin<Project> {
         }
       } catch (Exception e) {
         project.logger.warn("Could not add processGmd task before the test task: ${e.message}")
-      }
-    }
-  }
-
-  static String defaultGmdVersion() {
-    InputStream stream = GmdGradlePlugin.class.getResourceAsStream('/gmd-version.properties')
-    if (stream == null) {
-      throw new IllegalStateException(
-          'GMD core version metadata is missing from the Gradle plugin; set gmdPlugin.gmdVersion explicitly'
-      )
-    }
-    try {
-      Properties properties = new Properties()
-      properties.load(stream)
-      String version = properties.getProperty('gmd.version')
-      String normalizedVersion = version == null ? null : version.trim()
-      if (normalizedVersion == null || normalizedVersion.isEmpty()
-          || normalizedVersion.contains('$') || normalizedVersion.contains('{')) {
-        throw new IllegalStateException(
-            'GMD core version metadata is invalid; set gmdPlugin.gmdVersion explicitly'
-        )
-      }
-      return normalizedVersion
-    } catch (IOException e) {
-      throw new IllegalStateException('Could not read GMD core version metadata', e)
-    } finally {
-      try {
-        stream.close()
-      } catch (IOException ignored) {
-        // Ignore cleanup failures while resolving the version resource.
       }
     }
   }

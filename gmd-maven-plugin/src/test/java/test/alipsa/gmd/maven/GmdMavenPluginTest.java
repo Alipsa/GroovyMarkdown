@@ -147,12 +147,12 @@ public class GmdMavenPluginTest {
     // right after calling it can race the forked JVM's actual exit. Verify the helper
     // actually blocks on waitFor() after the forced kill instead of just firing it.
     Process process = Mockito.mock(Process.class);
-    when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(true);
+    when(process.waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS)).thenReturn(true);
 
     assertEquals("TERMINATED", invokeDestroyForciblyAndAwaitTermination(process).name());
 
     Mockito.verify(process).destroyForcibly();
-    Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
+    Mockito.verify(process).waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS);
   }
 
   @Test
@@ -160,7 +160,7 @@ public class GmdMavenPluginTest {
     // A second interrupt must remain a cancellation escape hatch rather than being
     // swallowed by an unbounded retry loop.
     Process process = Mockito.mock(Process.class);
-    when(process.waitFor(30, TimeUnit.SECONDS))
+    when(process.waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS))
         .thenThrow(new InterruptedException("interrupted while awaiting forced termination"));
 
     Thread.interrupted(); // clear any stray flag left over from another test
@@ -169,18 +169,24 @@ public class GmdMavenPluginTest {
     assertTrue(Thread.interrupted(),
         "A second interrupt during the forced-kill wait must be restored on the caller's thread");
     Mockito.verify(process, Mockito.times(1)).destroyForcibly();
-    Mockito.verify(process, Mockito.times(1)).waitFor(30, TimeUnit.SECONDS);
+    Mockito.verify(process, Mockito.times(1)).waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS);
   }
 
   @Test
   public void destroyForciblyAndAwaitTerminationReturnsAfterTheBoundedWait() throws Exception {
     Process process = Mockito.mock(Process.class);
-    when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(false);
+    when(process.waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS)).thenReturn(false);
 
     assertEquals("TIMED_OUT", invokeDestroyForciblyAndAwaitTermination(process).name());
 
     Mockito.verify(process).destroyForcibly();
-    Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
+    Mockito.verify(process).waitFor(forcedTerminationTimeoutSeconds(), TimeUnit.SECONDS);
+  }
+
+  private static long forcedTerminationTimeoutSeconds() throws Exception {
+    Field timeout = GmdMavenPlugin.class.getDeclaredField("FORCED_TERMINATION_TIMEOUT_SECONDS");
+    timeout.setAccessible(true);
+    return timeout.getLong(null);
   }
 
   @SuppressWarnings("rawtypes")

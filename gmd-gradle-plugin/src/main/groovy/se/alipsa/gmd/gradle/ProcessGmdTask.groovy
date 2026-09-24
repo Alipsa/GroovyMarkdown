@@ -1,6 +1,7 @@
 package se.alipsa.gmd.gradle
 
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
@@ -24,6 +25,16 @@ abstract class ProcessGmdTask extends DefaultTask {
 
   private final ExecOperations execOperations
 
+  // Defaults for the version @Input conventions below. Package-scoped so they
+  // do not become public static API on this published class; GmdGradlePlugin
+  // (same package) reuses them for its extension conventions.
+  @PackageScope
+  static final String DEFAULT_GROOVY_VERSION = '5.1.3'
+  @PackageScope
+  static final String DEFAULT_LOG4J_VERSION = '2.26.1'
+  @PackageScope
+  static final String DEFAULT_IVY_VERSION = '2.6.0'
+
   @Inject
   ProcessGmdTask(ExecOperations execOperations) {
     this.execOperations = execOperations
@@ -32,13 +43,50 @@ abstract class ProcessGmdTask extends DefaultTask {
     // rather than fail validation or delete files in a directory it does not own.
     targetDirIsDefaultGmdOutput.convention(false)
     // Fail-safe defaults mirroring GmdGradlePlugin's extension conventions, so
-    // direct registration also passes @Input validation. A direct registrant
-    // with a custom classpath should set these to its actual resolved versions
-    // to keep up-to-date checks accurate (classpath itself is @Internal).
-    groovyVersion.convention(GmdGradlePlugin.DEFAULT_GROOVY_VERSION)
-    log4jVersion.convention(GmdGradlePlugin.DEFAULT_LOG4J_VERSION)
-    gmdVersion.convention(project.provider { GmdGradlePlugin.defaultGmdVersion() })
-    ivyVersion.convention(GmdGradlePlugin.DEFAULT_IVY_VERSION)
+    // direct registration passes @Input validation and the task stays runnable.
+    // These constants never reflect a real classpath: they exist for runnability,
+    // not correctness. Up-to-date checks are silently wrong when a direct
+    // registrant leaves them (and the unwired classpathIdentity) in place — see
+    // classpathIdentity for the property that restores correct invalidation.
+    groovyVersion.convention(DEFAULT_GROOVY_VERSION)
+    log4jVersion.convention(DEFAULT_LOG4J_VERSION)
+    gmdVersion.convention(project.provider { defaultGmdVersion() })
+    ivyVersion.convention(DEFAULT_IVY_VERSION)
+  }
+
+  /**
+   * The gmd-core version matching this plugin, from the generated
+   * gmd-version.properties resource. Fails clearly when the resource is
+   * missing or unexpanded.
+   */
+  static String defaultGmdVersion() {
+    InputStream stream = ProcessGmdTask.class.getResourceAsStream('/gmd-version.properties')
+    if (stream == null) {
+      throw new IllegalStateException(
+          'GMD core version metadata is missing from the Gradle plugin; set gmdPlugin.gmdVersion explicitly'
+      )
+    }
+    try {
+      Properties properties = new Properties()
+      properties.load(stream)
+      String version = properties.getProperty('gmd.version')
+      String normalizedVersion = version == null ? null : version.trim()
+      if (normalizedVersion == null || normalizedVersion.isEmpty()
+          || normalizedVersion.contains('$') || normalizedVersion.contains('{')) {
+        throw new IllegalStateException(
+            'GMD core version metadata is invalid; set gmdPlugin.gmdVersion explicitly'
+        )
+      }
+      return normalizedVersion
+    } catch (IOException e) {
+      throw new IllegalStateException('Could not read GMD core version metadata', e)
+    } finally {
+      try {
+        stream.close()
+      } catch (IOException ignored) {
+        // Ignore cleanup failures while resolving the version resource.
+      }
+    }
   }
 
   @InputDirectory
@@ -86,6 +134,19 @@ abstract class ProcessGmdTask extends DefaultTask {
   // snapshots task inputs, before that no-op check can run.
   @org.gradle.api.tasks.Internal
   abstract ConfigurableFileCollection getClasspath()
+
+  /**
+   * Fingerprint of the runtime classpath used to fork GmdProcessor. The
+   * classpath itself is {@code @Internal} (see above), so this property is
+   * what invalidates up-to-date checks when the runtime changes.
+   * GmdGradlePlugin derives it from its four version inputs; anyone
+   * registering this task directly must wire it from their own configuration
+   * (e.g. resolved file names or coordinates). It deliberately has no
+   * convention: an unwired value fails validation loudly instead of letting a
+   * classpath swap pass up-to-date checks silently.
+   */
+  @Input
+  abstract org.gradle.api.provider.Property<String> getClasspathIdentity()
 
   @Input
   abstract org.gradle.api.provider.Property<String> getGroovyVersion()
