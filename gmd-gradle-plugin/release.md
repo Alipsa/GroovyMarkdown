@@ -14,6 +14,7 @@
 - upgrade groovy to 5.1.3
 - clean stale generated files only from the dedicated default `build/gmd` output directory; custom target directories retain pre-existing and orphaned GMD output when sources are deleted, renamed, or change output type, while Gradle tracks their expected generated files individually for up-to-date checks
 - track the actual GMD processor runtime classpath for up-to-date checks, including changed dynamic or transitive dependencies; avoid resolving it when no `.gmd` source exists so the no-op and stale-output cleanup paths remain dependency-free
+- expose that runtime through `ProcessGmdTask.runtimeClasspath`; the established `classpath` property remains as a deprecated compatibility alias for directly registered tasks
 
 ## v3.1.1, in progress
 - replace the deprecated `Project.getProperties()` calls used by signing configuration with `findProperty`, keeping the plugin compatible with Gradle 10
