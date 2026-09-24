@@ -73,7 +73,10 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
 
-  @org.gradle.api.tasks.Classpath
+  // Resolving this detached configuration is deferred until process() knows
+  // there is a .gmd file to process. @Classpath would resolve it while Gradle
+  // snapshots task inputs, before that no-op check can run.
+  @org.gradle.api.tasks.Internal
   abstract ConfigurableFileCollection getClasspath()
 
   @Input
@@ -90,6 +93,10 @@ abstract class ProcessGmdTask extends DefaultTask {
 
     if (!source.exists()) {
       logger.warn("Source directory ${source.canonicalPath} does not exist, nothing to do")
+      return
+    }
+    if (gmdFilesIn(source).length == 0) {
+      logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
       return
     }
     if (!target.exists()) {
@@ -113,15 +120,10 @@ abstract class ProcessGmdTask extends DefaultTask {
       spec.args = [source.canonicalPath, target.canonicalPath, output]
     }
     result.assertNormalExitValue()
-    File[] sourceFiles = gmdFilesIn(source)
-    if (sourceFiles.length > 0) {
-      if (target.exists()) {
-        logger.quiet("Gmd files processed and written to ${target.canonicalPath}")
-      } else {
-        logger.warn("${target.canonicalPath} should exists but does not, something is probably wrong")
-      }
+    if (target.exists()) {
+      logger.quiet("Gmd files processed and written to ${target.canonicalPath}")
     } else {
-      logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
+      logger.warn("${target.canonicalPath} should exists but does not, something is probably wrong")
     }
   }
 

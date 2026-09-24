@@ -148,7 +148,7 @@ class GmdGradlePluginTest {
           sourceDir = 'src/test/gmd'
           targetDir = 'build/target'
           outputType = 'html'
-          gmdVersion = '3.1.0'
+          gmdVersion = 'not-a-real-gmd-version'
           runTaskBefore = 'build'
       }
       '''.stripIndent()
@@ -187,7 +187,7 @@ class GmdGradlePluginTest {
           sourceDir = 'src/test/gmd'
           targetDir = 'build/target'
           outputType = 'html'
-          gmdVersion = '3.1.0'
+          gmdVersion = 'not-a-real-gmd-version'
           runTaskBefore = 'build'
       }
       '''.stripIndent()
@@ -197,6 +197,7 @@ class GmdGradlePluginTest {
 
       Assertions.assertTrue(result.output.contains('No gmd files found in'), result.output)
       Assertions.assertFalse(result.output.contains('Gmd files processed and written to'), result.output)
+      Assertions.assertFalse(new File(testProjectDir, 'build/target').exists(), result.output)
     } finally {
       new AntBuilder().delete(dir: testProjectDir, failonerror: false)
     }

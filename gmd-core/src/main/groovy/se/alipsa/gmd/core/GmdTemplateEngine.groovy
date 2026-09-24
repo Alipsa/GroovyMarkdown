@@ -62,6 +62,7 @@ class GmdTemplateEngine {
             int codeBlockIndent = 0
             boolean inIndentedCode = false
             boolean previousLineWasParagraph = false
+            boolean previousLineWasBlockQuote = false
             int listContentColumn = -1
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
@@ -125,29 +126,41 @@ class GmdTemplateEngine {
                     //println("evaluating code block: $codeBlock")
                     engine.eval(codeBlock + '\n""')
                     def output = out.toString()
+                    boolean emittedMarkdown = echo
                     if (output.length() > 0) {
                         result.append(output)
                         if (!output.endsWith('\n')) {
                             result.append('\n')
                         }
+                        emittedMarkdown = true
                     }
                     out.clear()
                     codeBlockText.setLength(0)
                     codeBlockEnd = false
-                    inIndentedCode = false
-                    previousLineWasParagraph = false
-                    listContentColumn = -1
+                    if (emittedMarkdown) {
+                        inIndentedCode = false
+                        previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
+                        listContentColumn = -1
+                    }
                 } else if (!codeBlockStart) {
                     if (plainFenceChar != null || startsPlainFence) {
                         inIndentedCode = false
                         previousLineWasParagraph = false
                     } else if (line.isBlank()) {
                         previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
                     } else {
-                        int relativeIndent = leadingSpaces(line) - documentIndent
-                        def listMarker = line =~ /^\s*([-*+]|\d+[.)])\s+/
+                        String contentLine = withoutDocumentAndBlockQuotePrefixes(line, documentIndent)
+                        boolean isBlockQuote = contentLine != withoutDocumentIndent(line, documentIndent)
+                        if (isBlockQuote && !previousLineWasBlockQuote) {
+                            previousLineWasParagraph = false
+                            listContentColumn = -1
+                        }
+                        int relativeIndent = leadingSpaces(contentLine)
+                        def listMarker = contentLine =~ /^\s*([-*+]|\d+[.)])\s+/
                         if (relativeIndent < 4 && listMarker.find()) {
-                            listContentColumn = listMarker.end() - documentIndent
+                            listContentColumn = listMarker.end()
                             inIndentedCode = false
                         } else {
                             if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
@@ -163,7 +176,8 @@ class GmdTemplateEngine {
                                 }
                             }
                         }
-                        previousLineWasParagraph = !inIndentedCode
+                        previousLineWasParagraph = !inIndentedCode && !isNonParagraphLeafBlock(contentLine)
+                        previousLineWasBlockQuote = isBlockQuote
                     }
                     if (plainFenceChar == null && !inIndentedCode && line.contains('`=')) {
                         shouldBeProcessed = true
@@ -234,6 +248,35 @@ class GmdTemplateEngine {
             i++
         }
         return i
+    }
+
+    /** Remove the document's base indent without treating a shallower line as negative. */
+    private static String withoutDocumentIndent(String line, int documentIndent) {
+        return line.substring(Math.min(documentIndent, leadingSpaces(line)))
+    }
+
+    /**
+     * Remove block-quote container markers before measuring content indentation.
+     * A block quote may itself be indented by the document's base indent.
+     */
+    private static String withoutDocumentAndBlockQuotePrefixes(String line, int documentIndent) {
+        String content = withoutDocumentIndent(line, documentIndent)
+        while (true) {
+            Matcher marker = content =~ /^ {0,3}>[ \t]?/
+            if (!marker.find()) {
+                return content
+            }
+            content = content.substring(marker.end())
+        }
+    }
+
+    /** Headings and rules are leaf blocks, so following indented lines start code blocks. */
+    private static boolean isNonParagraphLeafBlock(String line) {
+        if (line ==~ /^ {0,3}#{1,6}(?:[ \t]+.*)?$/ || line ==~ /^ {0,3}[=-]+[ \t]*$/) {
+            return true
+        }
+        String marker = line.trim().replaceAll(/[ \t]/, '')
+        return marker.length() >= 3 && (marker ==~ /\*+/ || marker ==~ /_+/ || marker ==~ /-+/)
     }
 
     /**

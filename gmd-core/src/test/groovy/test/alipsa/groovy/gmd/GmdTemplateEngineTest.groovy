@@ -374,6 +374,48 @@ Some prose
     }
 
     @Test
+    void indentedCodeAfterLeafBlocksIsLeftAlone() {
+        ['# Heading', 'Title\n=====', '---'].each { leafBlock ->
+            String text = "```{groovy echo=false}\nx = 5\n```\n${leafBlock}\n    literal `= x ` here\n"
+
+            String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+            assertTrue(processed.contains('literal `= x ` here'), processed)
+            assertFalse(processed.contains('literal 5'), processed)
+        }
+    }
+
+    @Test
+    void indentedCodeInsideABlockQuoteIsLeftAlone() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+>     literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+        assertFalse(processed.contains('literal 5'), processed)
+    }
+
+    @Test
+    void anEmptyEchoFalseBlockPreservesThePreviousParagraph() {
+        String text = '''
+prose line
+```{groovy echo=false}
+x = 5
+```
+    continued `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('continued 5 here'), processed)
+    }
+
+    @Test
     void aBlankLineDoesNotEndAnIndentedCodeBlock() {
         String text = '''
 ```{groovy echo=false}
