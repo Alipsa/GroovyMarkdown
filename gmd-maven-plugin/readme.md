@@ -9,7 +9,7 @@ Usage is as follows:
       <plugin>
         <groupId>se.alipsa.gmd</groupId>
         <artifactId>gmd-maven-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
         <goals><goal>processGmd</goal></goals>
         <configuration>
           <sourceDir>src/test/gmd</sourceDir>
@@ -44,7 +44,7 @@ If you don't want to run the plugin explicitly, you can add it to an existing li
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <executions>
         <execution>
           <phase>compile</phase>
@@ -75,14 +75,14 @@ You can override the versions of dependencies used by the plugin by specifying t
     <plugin>
       <groupId>se.alipsa.gmd</groupId>
       <artifactId>gmd-maven-plugin</artifactId>
-      <version>3.1.0</version>
+      <version>3.2.0</version>
       <configuration>
         <sourceDir>src/test/gmd</sourceDir>
         <targetDir>target/gmd</targetDir>
         <outputType>html</outputType>
-        <groovyVersion>5.0.3</groovyVersion>
+        <groovyVersion>5.1.3</groovyVersion>
         <log4jVersion>2.26.1</log4jVersion>
-        <gmdVersion>3.0.1</gmdVersion>
+        <gmdVersion>3.1.0</gmdVersion>
       </configuration>
     </plugin>
   </plugins>
