@@ -1,6 +1,6 @@
 # GMD Maven Plugin release history
 
-## v3.2.0, unreleased
+## v3.2.0, 2026-09-24
 - make the default GMD core version follow the Maven plugin version to prevent release drift
 - validate Maven Central release artifacts before publishing
 - publish source and Javadoc artifacts as part of the release workflow

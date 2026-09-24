@@ -1,6 +1,6 @@
 # GMD Gradle Plugin release history
 
-## v3.2.0, unreleased
+## v3.2.0, 2026-09-24
 - **Breaking:** `GmdGradlePlugin.hasRepository(Project, MavenArtifactRepository)` is removed.
   It was public static API on the plugin class; nothing in the repo called it. The plugin now
   checks for an existing Maven Central declaration itself before adding one, and also detects
