@@ -63,8 +63,8 @@ abstract class ProcessGmdTask extends DefaultTask {
     File source = getSourceDir().get().asFile
     File target = getTargetDir().get().asFile
     String output = getOutputType().get().trim().toLowerCase(Locale.ROOT)
-    File[] sources = source.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
-    Set<File> generated = sources == null ? [] as Set<File> : sources.collect { File file ->
+    File[] sources = gmdFilesIn(source)
+    Set<File> generated = sources.collect { File file ->
       new File(target, file.name.substring(0, file.name.length() - 4) + ".${output}")
     } as Set<File>
     return generated
@@ -113,8 +113,8 @@ abstract class ProcessGmdTask extends DefaultTask {
       spec.args = [source.canonicalPath, target.canonicalPath, output]
     }
     result.assertNormalExitValue()
-    File[] sourceFiles = source.listFiles()
-    if (sourceFiles != null && sourceFiles.size() > 0) {
+    File[] sourceFiles = gmdFilesIn(source)
+    if (sourceFiles.length > 0) {
       if (target.exists()) {
         logger.quiet("Gmd files processed and written to ${target.canonicalPath}")
       } else {
@@ -127,12 +127,9 @@ abstract class ProcessGmdTask extends DefaultTask {
 
   private void cleanStaleGeneratedFiles(File sourceDir, File targetDir, String outputType) {
     Set<String> expected = [] as Set
-    File[] sources = sourceDir.listFiles({ File file -> file.isFile() && file.name.endsWith('.gmd') } as FileFilter)
-    if (sources != null) {
-      sources.each { file ->
-        String base = file.name.substring(0, file.name.length() - 4)
-        expected.add("${base}.${outputType}".toString())
-      }
+    gmdFilesIn(sourceDir).each { file ->
+      String base = file.name.substring(0, file.name.length() - 4)
+      expected.add("${base}.${outputType}".toString())
     }
     File[] generated = targetDir.listFiles({ File file ->
       file.isFile() && (file.name.endsWith('.md') || file.name.endsWith('.html') || file.name.endsWith('.pdf'))
@@ -146,5 +143,13 @@ abstract class ProcessGmdTask extends DefaultTask {
         }
       }
     }
+  }
+
+  /** The .gmd files in a directory, or an empty array when it cannot be read. */
+  private static File[] gmdFilesIn(File directory) {
+    File[] files = directory.listFiles({ File file ->
+      file.isFile() && file.name.endsWith('.gmd')
+    } as FileFilter)
+    return files == null ? new File[0] : files
   }
 }

@@ -164,6 +164,45 @@ class GmdGradlePluginTest {
   }
 
   @Test
+  void aSourceDirWithoutGmdFilesReportsNothingToDo() {
+    File testProjectDir = new File('build/gmdNoGmdFilesTest')
+    try {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+      File srcDir = new File(testProjectDir, 'src/test/gmd')
+      srcDir.mkdirs()
+      new File(srcDir, 'readme.txt').text = 'not a gmd file'
+      new File(testProjectDir, 'settings.gradle').text = '''
+      pluginManagement {
+          repositories { mavenCentral() }
+          plugins { id 'se.alipsa.gmd.gmd-gradle-plugin' version '1.0.0' }
+      }
+      '''.stripIndent()
+      new File(testProjectDir, 'build.gradle').text = '''
+      plugins {
+          id('base')
+          id 'se.alipsa.gmd.gmd-gradle-plugin'
+      }
+      repositories { mavenCentral() }
+      gmdPlugin {
+          sourceDir = 'src/test/gmd'
+          targetDir = 'build/target'
+          outputType = 'html'
+          gmdVersion = '3.1.0'
+          runTaskBefore = 'build'
+      }
+      '''.stripIndent()
+
+      def result = GradleRunner.create().withProjectDir(testProjectDir)
+          .withArguments('processGmd').withPluginClasspath().forwardOutput().build()
+
+      Assertions.assertTrue(result.output.contains('No gmd files found in'), result.output)
+      Assertions.assertFalse(result.output.contains('Gmd files processed and written to'), result.output)
+    } finally {
+      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
+    }
+  }
+
+  @Test
   void testPlugin() {
     File targetDir = null
     File testProjectDir = new File('build/gmdPluginTest')
