@@ -127,8 +127,11 @@ abstract class ProcessGmdTask extends DefaultTask {
    * It deliberately has no convention: an unwired value fails validation
    * loudly instead of letting a classpath swap pass up-to-date checks silently.
    * This is an identity of declared runtime inputs, not a fingerprint of the
-   * fully resolved classpath; direct registrants must update it whenever their
-   * runtime selection changes.
+   * fully resolved classpath. Therefore, a changed transitive resolution can
+   * leave the task up-to-date when its declared dependencies are unchanged.
+   * The example updates automatically as declared dependencies change;
+   * registrants using a hard-coded identity must keep it in sync with their
+   * runtime selection.
    */
   @Input
   abstract org.gradle.api.provider.Property<String> getClasspathIdentity()

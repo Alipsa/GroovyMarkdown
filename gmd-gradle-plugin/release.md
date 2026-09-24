@@ -13,7 +13,7 @@
 - validate the Gradle Plugin Portal publication before uploading the plugin
 - upgrade groovy to 5.1.3
 - clean stale generated files only from the dedicated default `build/gmd` output directory; custom target directories retain pre-existing and orphaned GMD output when sources are deleted, renamed, or change output type, while Gradle tracks their expected generated files individually for up-to-date checks
-- add a required, non-blank `classpathIdentity` `@Input` to `ProcessGmdTask` so a directly registered task's declared runtime selection invalidates up-to-date checks; `GmdGradlePlugin` derives it from its dependency versions, and direct registrants must wire it from their own configuration or the build fails validation
+- add a required `classpathIdentity` `@Input` to `ProcessGmdTask` so a directly registered task's declared runtime selection invalidates up-to-date checks; `GmdGradlePlugin` derives it from its dependency versions, direct registrants must wire it from their own configuration or the build fails validation, and blank values are rejected when the task processes GMD files
 
 ## v3.1.1, in progress
 - replace the deprecated `Project.getProperties()` calls used by signing configuration with `findProperty`, keeping the plugin compatible with Gradle 10
