@@ -1,6 +1,10 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- Indented ```{groovy} fences now execute with their body dedented by the fence's own
+  indent, and the echoed fence and body line up. Visible change: a multi-line string
+  literal whose continuation lines sit below the fence indent loses those spaces in the
+  evaluated source as well as the echo.
 - render `Chart`/`MatrixXChart` output (and `Html`) as a raw `<img>` HTML tag instead of `![alt](data-uri){attrs}`, since CommonMark's image syntax doesn't support Pandoc-style attribute suffixes. This means `outputType=md` output can now contain raw HTML for charts instead of portable Markdown image syntax; the tag is followed by a blank line so it doesn't swallow subsequent Markdown as an HTML block.
 - restore the `HtmlDecorator.BOOTSTRAP_CSS` and `HIGHLIGHT_JS_CSS` compatibility constants
 - upgrade the JUnit BOM from 6.1.2 to 6.1.3

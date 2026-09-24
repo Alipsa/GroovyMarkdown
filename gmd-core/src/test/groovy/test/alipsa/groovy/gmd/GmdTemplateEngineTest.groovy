@@ -69,13 +69,71 @@ Hello World
         assertEquals("""
             Before
 ```groovy
-            // just some Groovy code
-            def x = 5
-            out.println('Hello World')  
+// just some Groovy code
+def x = 5
+out.println('Hello World')  
 ```
 Hello World
             After
         """, GmdTemplateEngine.processCodeBlocks(text))
+    }
+
+    @Test
+    void anIndentedGroovyFenceDedentsItsBody() {
+        String text = '''
+Example:
+
+    ```{groovy}
+    out.println('EXECUTED')
+    ```
+
+end
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains("```groovy\nout.println('EXECUTED')\n```"),
+            "The echoed body must line up with the fence that wraps it:\n$processed")
+        assertTrue(processed.contains('EXECUTED\n'), processed)
+    }
+
+    @Test
+    void dedentOnlyRemovesTheFenceIndent() {
+        String text = '''
+    ```{groovy}
+        out.println('deep')
+    ```
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains("```groovy\n    out.println('deep')\n```"),
+            "Indentation beyond the fence indent must be preserved:\n$processed")
+    }
+
+    @Test
+    void aColumnZeroFenceLeavesItsBodyAlone() {
+        String text = '''
+```{groovy}
+    out.println('indented body')
+```
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains("```groovy\n    out.println('indented body')\n```"),
+            "A fence at column 0 dedents by 0:\n$processed")
+    }
+
+    @Test
+    void dedentAppliesToTheEvaluatedSource() {
+        String text = '''
+    ```{groovy echo=false}
+    out.print("""a
+  b""")
+    ```
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('a\nb'),
+            "The dedent applies to the evaluated source too:\n$processed")
     }
 
     @Test

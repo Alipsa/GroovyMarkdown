@@ -23,6 +23,15 @@ class GmdTemplateEngine {
      * ```
      * Hello World
      *
+     * Indentation is lenient by design: a ```{groovy} fence is recognised at any
+     * indent, so a .gmd document written inside an indented Groovy string still
+     * works. The body is dedented by the fence's own indent so the two line up.
+     * The consequence is that an indented block cannot be used to *show* GMD
+     * syntax without running it - wrap such an example in a longer plain fence
+     * (````) instead. Only spaces are counted; a tab-indented fence is treated
+     * as column 0. The echoed fence is always emitted at column 0, so a Groovy
+     * block written inside a list item does not stay inside that item - the
+     * emitted block ends the list and the next item starts a new one.
      * @param text the gmd text to process
      * @return the gmd text with code blocks "expanded"
      */
@@ -45,6 +54,7 @@ class GmdTemplateEngine {
             boolean echo = true
             Character plainFenceChar = null
             int plainFenceLength = 0
+            int codeBlockIndent = 0
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
             StringBuilder result = new StringBuilder()
@@ -66,6 +76,7 @@ class GmdTemplateEngine {
                     shouldBeProcessed = true
                     codeBlockStart = true
                     codeBlockEnd = false
+                    codeBlockIndent = leadingSpaces(line)
                     // echo is a property of one block, not of the entire document.
                     echo = true
                     if (noSpaceLine.toLowerCase().contains("echo=false")) {
@@ -88,7 +99,7 @@ class GmdTemplateEngine {
                 }
 
                 if (codeBlockStart) {
-                    codeBlockText.append(line).append('\n')
+                    codeBlockText.append(dedent(line, codeBlockIndent)).append('\n')
                 }
 
                 if (codeBlockEnd) {
@@ -172,6 +183,24 @@ class GmdTemplateEngine {
             indent++
         }
         return line.substring(indent)
+    }
+
+    /** Number of leading space characters. Tabs are not counted; see processCodeBlocks. */
+    private static int leadingSpaces(String line) {
+        int i = 0
+        while (i < line.length() && line.charAt(i) == ' ') {
+            i++
+        }
+        return i
+    }
+
+    /** Removes up to {@code width} leading spaces. Shorter indents are left untouched. */
+    private static String dedent(String line, int width) {
+        int i = 0
+        while (i < width && i < line.length() && line.charAt(i) == ' ') {
+            i++
+        }
+        return line.substring(i)
     }
 
     /** Length of the leading run of marker characters, i.e. the fence width. */
