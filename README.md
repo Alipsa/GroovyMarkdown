@@ -91,8 +91,9 @@ GMD supports the [Matrix](https://github.com/Alipsa/matrix) library directly. `M
 `MatrixXChart` types can be used with the `out` PrintWriter object without needing to convert them
 into markdown first. Pict, Charm, and GG charts accept `width`, `height`, optional alt text, and
 optional HTML attributes (for example, `out.println(chart, 640, 480, 'Sales chart', [class: 'chart'])`).
-They also accept alt text and attributes without explicit dimensions. Alt-only GG printing honors
-the dimensions configured on the chart; explicit GG dimensions are restored after rendering.
+They also accept alt text and attributes without explicit dimensions. Pict and Charm charts then
+render at 800x600. GG charts always honor the `width` and `height` configured on the chart unless
+you pass explicit dimensions, which are restored after rendering.
 MatrixXChart accepts optional alt text and HTML attributes.
 Here is an example:
 ````

@@ -1,6 +1,9 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- **Breaking:** the `print(GgChart, double)` / `println(GgChart, double)` width-only
+  overload that Groovy default arguments generated is removed. Pass explicit width and
+  height, or omit both and let the chart's own dimensions apply.
 - Output from a Groovy code block that does not end in a newline now gains one, so
   `out.print('x')` no longer glues the next source line onto the output. Visible change:
   `out.print('Hello ')` followed by prose now yields `Hello \nworld` instead of

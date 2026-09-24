@@ -596,6 +596,8 @@ chart.width = 1200
 chart.height = 900
 out.println(chart, 640, 480, 'GG chart', [class: 'chart'])
 out.println(chart, 'GG default chart')
+out.println(chart)
+out.println(chart, 640.5, 480.5, 'GG BigDecimal dims')
 ```
 '''
 
@@ -606,6 +608,29 @@ out.println(chart, 'GG default chart')
     List<String> svgs = decodeSvgImages(md, 'GG chart should be SVG-backed')
     assertTrue(svgs[0].contains('width="640"') && svgs[0].contains('height="480"'), svgs[0].take(200))
     assertTrue(svgs[1].contains('width="1200"') && svgs[1].contains('height="900"'), svgs[1].take(200))
+    assertTrue(svgs[2].contains('width="1200"') && svgs[2].contains('height="900"'),
+        "print(GgChart) with no arguments must honour the chart's own dimensions: ${svgs[2].take(200)}")
+    assertTrue(svgs[3].contains('width="640"') && svgs[3].contains('height="480"'),
+        "double dimensions must accept Groovy's default decimal type (BigDecimal): ${svgs[3].take(200)}")
+  }
+
+  @Test
+  void aGgChartWithNoConfiguredSizeRendersAtTheLibraryDefault() {
+    def text = '''
+```{groovy echo=false}
+import static se.alipsa.matrix.gg.GgPlot.*
+import se.alipsa.matrix.core.Matrix
+
+def data = Matrix.builder().data(x: [1, 2], y: [3, 4]).types(int, int).build()
+out.println(ggplot(data, aes(x: 'x', y: 'y')) + geom_point())
+```
+'''
+
+    List<String> svgs = decodeSvgImages(new Gmd().gmdToMd(text), 'An unsized GG chart should still render')
+
+    assertTrue(svgs[0].contains('<svg'), svgs[0].take(200))
+    assertFalse(svgs[0].contains('width="0"'), svgs[0].take(200))
+    assertFalse(svgs[0].contains('height="0"'), svgs[0].take(200))
   }
 
   private static List<String> decodeSvgImages(String markdown, String message) {
