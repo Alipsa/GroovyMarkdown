@@ -26,9 +26,8 @@ class GmdCommandLine {
   static Closure toHtml(String from, String to) {
     return {
       Gmd gmd = new Gmd()
-      def html = gmdFileToHtml(from, gmd)
       File toFile = new File(to)
-      Files.writeString(toFile.toPath(), html, StandardCharsets.UTF_8)
+      gmd.gmdToHtml(readGmd(from), toFile)
       println "Wrote $toFile.absolutePath"
     }
   }

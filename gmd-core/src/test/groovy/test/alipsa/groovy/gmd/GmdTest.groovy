@@ -764,6 +764,29 @@ out.println(chart)
   }
 
   @Test
+  void commandLineToHtmlCreatesMissingParentDirectories() {
+    String file = getClass().getResource('/test.gmd').getFile()
+    File htmlFile = new File(testOutputDir, 'nested/output/dir/cli.html')
+    assertFalse(htmlFile.parentFile.exists(), 'The parent directory must not exist yet')
+
+    Gmd.main('toHtml', file, htmlFile.absolutePath)
+
+    assertTrue(htmlFile.exists(), 'toHtml must create the parent directories, as toPdf does')
+    assertTrue(htmlFile.length() > 100, 'No html content')
+  }
+
+  @Test
+  void commandLineToPdfCreatesMissingParentDirectories() {
+    String file = getClass().getResource('/test.gmd').getFile()
+    File pdfFile = new File(testOutputDir, 'nested/pdf/dir/cli.pdf')
+
+    Gmd.main('toPdf', file, pdfFile.absolutePath)
+
+    assertTrue(pdfFile.exists())
+    assertTrue(pdfFile.length() > 100, 'No pdf content')
+  }
+
+  @Test
   void testEnsureResultDoesNotPrint() {
     String text = """
     ```{groovy}
