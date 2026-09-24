@@ -1,6 +1,11 @@
 # Gmd Release History
 
 ## v3.2.0, unreleased
+- Inline `= expr ` is no longer expanded inside CommonMark indented code blocks (a line
+  indented four or more spaces beyond the document's own base indent). Indent is measured
+  relative to the indent of the document's first non-blank line, so a .gmd written inside an
+  indented Groovy string is unaffected. Lazy paragraph continuations and list-item
+  continuations still expand.
 - Indented ```{groovy} fences now execute with their body dedented by the fence's own
   indent, and the echoed fence and body line up. Visible change: a multi-line string
   literal whose continuation lines sit below the fence indent loses those spaces in the

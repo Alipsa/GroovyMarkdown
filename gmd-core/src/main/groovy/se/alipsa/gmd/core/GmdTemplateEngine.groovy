@@ -32,6 +32,11 @@ class GmdTemplateEngine {
      * as column 0. The echoed fence is always emitted at column 0, so a Groovy
      * block written inside a list item does not stay inside that item - the
      * emitted block ends the list and the next item starts a new one.
+     * For inline-variable expansion, the document base is the first non-blank
+     * line's indent. That is an invariant, not a global minimum: if the first
+     * line is shallower than a body indented four or more spaces beyond it, the
+     * body is treated as literal and does not expand. Put the first non-blank
+     * line at the document's own indent.
      * @param text the gmd text to process
      * @return the gmd text with code blocks "expanded"
      */
@@ -55,11 +60,15 @@ class GmdTemplateEngine {
             Character plainFenceChar = null
             int plainFenceLength = 0
             int codeBlockIndent = 0
+            boolean inIndentedCode = false
+            boolean previousLineWasParagraph = false
+            int listContentColumn = -1
             String noSpaceLine
             StringBuilder codeBlockText = new StringBuilder()
             StringBuilder result = new StringBuilder()
             boolean endsWithNewline = text.endsWith('\n')
             List<String> lines = text.readLines()
+            int documentIndent = baseIndent(lines)
             int count = 0
             lines.each { line ->
                 noSpaceLine = fenceCandidate(line)
@@ -122,8 +131,38 @@ class GmdTemplateEngine {
                     out.clear()
                     codeBlockText.setLength(0)
                     codeBlockEnd = false
+                    inIndentedCode = false
+                    previousLineWasParagraph = false
+                    listContentColumn = -1
                 } else if (!codeBlockStart) {
-                    if (plainFenceChar == null && line.contains('`=')) {
+                    if (plainFenceChar != null || startsPlainFence) {
+                        inIndentedCode = false
+                        previousLineWasParagraph = false
+                    } else if (line.isBlank()) {
+                        previousLineWasParagraph = false
+                    } else {
+                        int relativeIndent = leadingSpaces(line) - documentIndent
+                        def listMarker = line =~ /^\s*([-*+]|\d+[.)])\s+/
+                        if (relativeIndent < 4 && listMarker.find()) {
+                            listContentColumn = listMarker.end() - documentIndent
+                            inIndentedCode = false
+                        } else {
+                            if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                                listContentColumn = -1
+                            }
+                            if (listContentColumn >= 0 && relativeIndent < listContentColumn + 4) {
+                                inIndentedCode = false
+                            } else {
+                                if (relativeIndent < 4) {
+                                    inIndentedCode = false
+                                } else if (!previousLineWasParagraph) {
+                                    inIndentedCode = true
+                                }
+                            }
+                        }
+                        previousLineWasParagraph = !inIndentedCode
+                    }
+                    if (plainFenceChar == null && !inIndentedCode && line.contains('`=')) {
                         shouldBeProcessed = true
                         result.append(expandInlineVars(line, engine))
                     } else {
@@ -192,6 +231,28 @@ class GmdTemplateEngine {
             i++
         }
         return i
+    }
+
+    /**
+     * The indent the document sits at: the indent of its first non-blank line.
+     * Indented code blocks are recognised relative to this, so a .gmd written
+     * inside an indented Groovy string behaves the same as one written at
+     * column 0.
+     *
+     * Anchored on the first line deliberately: a global minimum could be
+     * collapsed by a column-0 line inside a code block or a stray column-0
+     * prose line (HTML block, table row), reclassifying the whole document.
+     * The first line is therefore the invariant: when it is shallower than
+     * the body, body lines four or more spaces beyond it are literal. Authors
+     * must start a document at its own indent.
+     */
+    private static int baseIndent(List<String> lines) {
+        for (String line in lines) {
+            if (!line.isBlank()) {
+                return leadingSpaces(line)
+            }
+        }
+        return 0
     }
 
     /** Removes up to {@code width} leading spaces. Shorter indents are left untouched. */

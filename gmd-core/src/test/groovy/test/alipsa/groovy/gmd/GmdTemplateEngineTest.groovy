@@ -310,17 +310,152 @@ After
     }
 
     @Test
-    void indentedCodeBlocksAreAKnownGap() {
+    void indentedCodeBlocksAreLeftAlone() {
         String text = '''
 ```{groovy echo=false}
 x = 5
 ```
-    literal `= x` is expanded here
+    literal `= x ` is not expanded here
 '''
         String processed = GmdTemplateEngine.processCodeBlocks(text)
 
-        assertTrue(processed.contains('literal 5 is expanded here'),
-            "Known gap: indented code blocks are not protected:\n$processed")
+        assertTrue(processed.contains('literal `= x ` is not expanded here'),
+            "An indented code block is literal:\n$processed")
+        assertFalse(processed.contains('literal 5'), processed)
+    }
+
+    @Test
+    void indentIsRelativeToTheDocumentBaseIndent() {
+        String text = """
+        ```{groovy echo=false}
+        x = 5
+        ```
+        expanded `= x ` here
+
+            literal `= x ` here
+        """
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('expanded 5 here'), processed)
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+    }
+
+    @Test
+    void anIndentedLineContinuingAParagraphIsStillExpanded() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+Some prose
+    continues here with `= x `
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('continues here with 5'), processed)
+    }
+
+    @Test
+    void aBlankLineDoesNotEndAnIndentedCodeBlock() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+    first `= x ` literal
+
+    second `= x ` literal
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('first `= x ` literal'), processed)
+        assertTrue(processed.contains('second `= x ` literal'), processed)
+    }
+
+    @Test
+    void aTabIndentedLineIsNotTreatedAsACodeBlock() {
+        String text = "```{groovy echo=false}\nx = 5\n```\n\tliteral `= x ` here\n"
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal 5 here'),
+            "Known limitation: tabs are not counted as indentation:\n$processed")
+    }
+
+    @Test
+    void crlfLinesAreClassifiedCorrectly() {
+        String text = "```{groovy echo=false}\r\nx = 5\r\n```\r\n    literal `= x ` here\r\n   \r\n"
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+    }
+
+    @Test
+    void baseIndentIgnoresCodeBlockBodies() {
+        String text = """
+        ```{groovy echo=false}
+        x = 5
+        multi = '''line one
+line two'''
+        ```
+        Value `= x `
+        """
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('Value 5'),
+            "A column-0 line inside a code block must not change the document's base indent:\n$processed")
+    }
+
+    @Test
+    void aStrayColumnZeroLineDoesNotCollapseTheBaseIndent() {
+        String text = """
+        ```{groovy echo=false}
+        x = 5
+        ```
+<table><tr><td>html at column 0</td></tr></table>
+        expanded `= x ` here
+        """
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('expanded 5 here'),
+            "A column-0 line must not collapse the base indent:\n$processed")
+    }
+
+    @Test
+    void aListItemContinuationStillExpands() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+1. item
+
+    continued `= x `
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('continued 5'), processed)
+    }
+
+    @Test
+    void indentedCodeAfterAListIsLeftAlone() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+
+- item
+
+text
+
+    literal `= x ` here
+'''
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'),
+            "An indented code block after an ended list is literal:\n$processed")
+        assertFalse(processed.contains('literal 5'), processed)
     }
 
     @Test
