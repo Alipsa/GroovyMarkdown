@@ -92,7 +92,7 @@ class GmdGradlePluginTest {
     runtimeJar.parentFile.mkdirs()
     runtimeJar.createNewFile()
     task.sourceDir.set(sourceDir)
-    task.classpath.from(runtimeJar)
+    task.runtimeClasspath.from(runtimeJar)
 
     Assertions.assertTrue(task.inputs.files.files.contains(runtimeJar),
         'The resolved processor runtime must participate in up-to-date checks')
@@ -237,7 +237,7 @@ class GmdGradlePluginTest {
       Assertions.assertEquals(SUCCESS, result.task(':processGmd').outcome,
           "PREFER_SETTINGS must not break the plugin:\n${result.output}")
       Assertions.assertTrue(new File(testProjectDir, 'build/target/test.html').exists(),
-          'The detached configuration must still resolve through the settings repositories')
+          'The processor runtime must still resolve through the settings repositories')
       Assertions.assertTrue(result.output.contains('repoCount=0'),
           "The plugin must not add to project.repositories under PREFER_SETTINGS:\n${result.output}")
       Assertions.assertFalse(
@@ -249,7 +249,7 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void aSourceDirWithoutGmdFilesReportsNothingToDo() {
+  void aSourceDirWithoutGmdFilesDoesNotResolveTheRuntime() {
     File testProjectDir = new File('build/gmdNoGmdFilesTest')
     try {
       new AntBuilder().delete(dir: testProjectDir, failonerror: false)
@@ -277,8 +277,16 @@ class GmdGradlePluginTest {
       }
       '''.stripIndent()
 
+      def helpResult = GradleRunner.create().withProjectDir(testProjectDir)
+          .withArguments('help', '--configuration-cache', '--offline')
+          .withPluginClasspath().forwardOutput().build()
+
+      Assertions.assertEquals(SUCCESS, helpResult.task(':help').outcome,
+          "Configuration-cache storage must not resolve the unavailable runtime:\n${helpResult.output}")
+
       def result = GradleRunner.create().withProjectDir(testProjectDir)
-          .withArguments('processGmd').withPluginClasspath().forwardOutput().build()
+          .withArguments('processGmd', '--configuration-cache', '--offline')
+          .withPluginClasspath().forwardOutput().build()
 
       Assertions.assertTrue(result.output.contains('No gmd files found in'), result.output)
       Assertions.assertFalse(result.output.contains('Gmd files processed and written to'), result.output)
@@ -320,20 +328,23 @@ class GmdGradlePluginTest {
       def log4jVersion = '2.26.1'
       // Mirror the runtime GmdGradlePlugin assembles: gmd-core's published POM
       // does not bring Groovy transitively.
-      def gmdRuntime = configurations.detachedConfiguration(
+      def gmdRuntime = configurations.create('directGmdRuntime')
+      gmdRuntime.canBeConsumed = false
+      gmdRuntime.canBeResolved = true
+      gmdRuntime.dependencies.addAll([
           dependencies.create('se.alipsa.gmd:gmd-core:3.1.0'),
           dependencies.create('org.apache.groovy:groovy:5.1.3'),
           dependencies.create('org.apache.groovy:groovy-templates:5.1.3'),
           dependencies.create('org.apache.groovy:groovy-jsr223:5.1.3'),
           dependencies.create('org.apache.ivy:ivy:2.6.0'),
           dependencies.create("org.apache.logging.log4j:log4j-core:${log4jVersion}")
-      )
+      ])
 
       tasks.register('directGmd', ProcessGmdTask) {
           sourceDir = file('src/test/gmd')
           targetDir = file('build/target')
           outputType = 'html'
-          classpath.from(gmdRuntime)
+          runtimeClasspath.from(gmdRuntime)
       }
       '''.stripIndent()
 

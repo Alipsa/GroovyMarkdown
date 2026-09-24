@@ -17,6 +17,7 @@ import org.gradle.api.tasks.TaskProvider
 class GmdGradlePlugin implements Plugin<Project> {
 
   private static final List<String> MAVEN_CENTRAL_HOSTS = ['repo.maven.apache.org', 'repo1.maven.org']
+  private static final String GMD_PROCESSOR_RUNTIME_CONFIGURATION = 'gmdProcessorRuntime'
 
   @Override
   void apply(Project project) {
@@ -58,7 +59,10 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.sourceDir.set(project.file(sourceDir))
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
-        task.classpath.from(configuration)
+        File configuredSourceDir = project.file(sourceDir)
+        task.runtimeClasspath.from(project.providers.provider {
+          hasGmdFiles(configuredSourceDir) ? configuration : project.files()
+        })
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
         if (targetDirIsDefaultGmdOutput) {
           task.dedicatedOutputDir.set(resolvedTargetDir)
@@ -97,7 +101,12 @@ class GmdGradlePlugin implements Plugin<Project> {
         project.dependencies.create("se.alipsa.gmd:gmd-core:${gmdVersion}")
     ]
 
-    return project.configurations.detachedConfiguration(dependencies.toArray(new Dependency[0]))
+    Configuration configuration = project.configurations.maybeCreate(GMD_PROCESSOR_RUNTIME_CONFIGURATION)
+    configuration.canBeConsumed = false
+    configuration.canBeResolved = true
+    configuration.visible = false
+    configuration.dependencies.addAll(dependencies)
+    return configuration
   }
 
   static boolean hasMavenCentral(Project project) {
@@ -105,6 +114,13 @@ class GmdGradlePlugin implements Plugin<Project> {
       repository instanceof MavenArtifactRepository &&
           MAVEN_CENTRAL_HOSTS.contains(((MavenArtifactRepository) repository).url?.host)
     }
+  }
+
+  private static boolean hasGmdFiles(File directory) {
+    File[] files = directory.listFiles({ File file ->
+      file.isFile() && file.name.endsWith('.gmd')
+    } as FileFilter)
+    return files != null && files.length > 0
   }
 
   /**

@@ -3,9 +3,8 @@ package se.alipsa.gmd.gradle
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
@@ -112,23 +111,13 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
 
-  // Used only by the task action. getTrackedClasspath() exposes this runtime
-  // to Gradle's input snapshotter when there is a .gmd file to process.
-  @org.gradle.api.tasks.Internal
-  abstract ConfigurableFileCollection getClasspath()
-
   /**
    * The actual runtime classpath used to fork GmdProcessor. When there is no
-   * .gmd source, returns an empty collection so Gradle can run the no-op and
-   * stale-output cleanup paths without resolving detached dependencies.
+   * .gmd source, its provider supplies an empty collection so Gradle can run the
+   * no-op and stale-output cleanup paths without resolving processor dependencies.
    */
   @Classpath
-  FileCollection getTrackedClasspath() {
-    if (!getSourceDir().isPresent() || gmdFilesIn(getSourceDir().get().asFile).length == 0) {
-      return project.files()
-    }
-    return getClasspath()
-  }
+  abstract ConfigurableFileCollection getRuntimeClasspath()
 
   @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
@@ -170,7 +159,7 @@ abstract class ProcessGmdTask extends DefaultTask {
     }
 
     def result = execOperations.javaexec { JavaExecSpec spec ->
-      spec.classpath = getClasspath()
+      spec.classpath = getRuntimeClasspath()
       spec.mainClass.set('se.alipsa.gmd.core.GmdProcessor')
       spec.args = [source.canonicalPath, target.canonicalPath, output]
     }
