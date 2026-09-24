@@ -119,6 +119,16 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Classpath
   abstract ConfigurableFileCollection getRuntimeClasspath()
 
+  /**
+   * @deprecated Use {@link #getRuntimeClasspath()}. This alias returns the
+   * same collection for compatibility with directly registered tasks.
+   */
+  @Deprecated
+  @org.gradle.api.tasks.Internal
+  ConfigurableFileCollection getClasspath() {
+    return getRuntimeClasspath()
+  }
+
   @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
 

@@ -94,6 +94,8 @@ class GmdGradlePluginTest {
     task.sourceDir.set(sourceDir)
     task.runtimeClasspath.from(runtimeJar)
 
+    Assertions.assertSame(task.runtimeClasspath, task.classpath,
+        'The deprecated classpath alias must delegate to runtimeClasspath')
     Assertions.assertTrue(task.inputs.files.files.contains(runtimeJar),
         'The resolved processor runtime must participate in up-to-date checks')
     Assertions.assertFalse(task.inputs.properties.containsKey('classpathIdentity'),
@@ -344,7 +346,9 @@ class GmdGradlePluginTest {
           sourceDir = file('src/test/gmd')
           targetDir = file('build/target')
           outputType = 'html'
-          runtimeClasspath.from(gmdRuntime)
+          // Legacy direct registrations used this property before
+          // runtimeClasspath was introduced.
+          classpath.from(gmdRuntime)
       }
       '''.stripIndent()
 
