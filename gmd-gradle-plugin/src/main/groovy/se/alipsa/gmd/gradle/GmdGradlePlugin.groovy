@@ -59,12 +59,6 @@ class GmdGradlePlugin implements Plugin<Project> {
         task.targetDir.set(resolvedTargetDir)
         task.outputType.set(outputType)
         task.classpath.from(configuration)
-        // The classpath itself is @Internal (resolving it during input
-        // snapshotting would defeat the deferred no-op check), so this
-        // declared dependency identity is what tracks the runtime selection
-        // for up-to-date checks.
-        task.classpathIdentity.set(
-            "groovy=${groovyVersion}, gmd=${gmdVersion}, ivy=${ivyVersion}, log4j=${log4jVersion}".toString())
         task.targetDirIsDefaultGmdOutput.set(targetDirIsDefaultGmdOutput)
         if (targetDirIsDefaultGmdOutput) {
           task.dedicatedOutputDir.set(resolvedTargetDir)

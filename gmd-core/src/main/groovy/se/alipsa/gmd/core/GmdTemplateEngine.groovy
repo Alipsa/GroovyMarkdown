@@ -147,6 +147,8 @@ class GmdTemplateEngine {
                     if (plainFenceChar != null || startsPlainFence) {
                         inIndentedCode = false
                         previousLineWasParagraph = false
+                        previousLineWasBlockQuote = false
+                        listContentColumn = -1
                     } else if (line.isBlank()) {
                         previousLineWasParagraph = false
                         previousLineWasBlockQuote = false

@@ -401,6 +401,26 @@ x = 5
     }
 
     @Test
+    void aPlainFenceResetsBlockQuoteAndListContext() {
+        String text = '''
+```{groovy echo=false}
+x = 5
+```
+> - item
+```text
+plain
+```
+>
+>     literal `= x ` here
+'''
+
+        String processed = GmdTemplateEngine.processCodeBlocks(text)
+
+        assertTrue(processed.contains('literal `= x ` here'), processed)
+        assertFalse(processed.contains('literal 5 here'), processed)
+    }
+
+    @Test
     void anEmptyEchoFalseBlockPreservesThePreviousParagraph() {
         String text = '''
 prose line

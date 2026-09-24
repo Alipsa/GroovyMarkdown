@@ -5,6 +5,8 @@ import groovy.transform.PackageScope
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
@@ -110,31 +112,23 @@ abstract class ProcessGmdTask extends DefaultTask {
   @Input
   abstract org.gradle.api.provider.Property<String> getOutputType()
 
-  // Resolving this detached configuration is deferred until process() knows
-  // there is a .gmd file to process. @Classpath would resolve it while Gradle
-  // snapshots task inputs, before that no-op check can run.
+  // Used only by the task action. getTrackedClasspath() exposes this runtime
+  // to Gradle's input snapshotter when there is a .gmd file to process.
   @org.gradle.api.tasks.Internal
   abstract ConfigurableFileCollection getClasspath()
 
   /**
-   * Stable identity for the runtime classpath selection used to fork
-   * GmdProcessor. The classpath itself is {@code @Internal} (see above), so
-   * this property invalidates up-to-date checks when that selection changes.
-   * GmdGradlePlugin derives it from its declared dependency versions. Anyone
-   * registering this task directly must wire it from their configuration
-   * without resolving it during configuration, for example
-   * {@code cfg.allDependencies.collect { "$it.group:$it.name:$it.version" }.sort().join(',')}.
-   * It deliberately has no convention: an unwired value fails validation
-   * loudly instead of letting a classpath swap pass up-to-date checks silently.
-   * This is an identity of declared runtime inputs, not a fingerprint of the
-   * fully resolved classpath. Therefore, a changed transitive resolution can
-   * leave the task up-to-date when its declared dependencies are unchanged.
-   * The example updates automatically as declared dependencies change;
-   * registrants using a hard-coded identity must keep it in sync with their
-   * runtime selection.
+   * The actual runtime classpath used to fork GmdProcessor. When there is no
+   * .gmd source, returns an empty collection so Gradle can run the no-op and
+   * stale-output cleanup paths without resolving detached dependencies.
    */
-  @Input
-  abstract org.gradle.api.provider.Property<String> getClasspathIdentity()
+  @Classpath
+  FileCollection getTrackedClasspath() {
+    if (!getSourceDir().isPresent() || gmdFilesIn(getSourceDir().get().asFile).length == 0) {
+      return project.files()
+    }
+    return getClasspath()
+  }
 
   @Input
   abstract org.gradle.api.provider.Property<Boolean> getTargetDirIsDefaultGmdOutput()
@@ -159,9 +153,6 @@ abstract class ProcessGmdTask extends DefaultTask {
       }
       logger.quiet("No gmd files found in ${source.canonicalPath}, nothing to do")
       return
-    }
-    if (getClasspathIdentity().get().trim().isEmpty()) {
-      throw new IllegalArgumentException('classpathIdentity must not be blank')
     }
     if (!target.exists()) {
       if (!target.mkdirs() && !target.isDirectory()) {

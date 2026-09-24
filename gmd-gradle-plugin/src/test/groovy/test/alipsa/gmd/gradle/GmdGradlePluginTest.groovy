@@ -82,28 +82,22 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void classpathIdentityIsTheOnlyRuntimeSelectionInput() {
+  void runtimeClasspathIsTrackedAsAClasspathInput() {
     def project = ProjectBuilder.builder().build()
     ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
-    task.classpathIdentity.set('declared-runtime-dependencies')
+    File sourceDir = new File(project.projectDir, 'src/gmd')
+    sourceDir.mkdirs()
+    new File(sourceDir, 'test.gmd').text = '# Greetings\n'
+    File runtimeJar = new File(project.buildDir, 'runtime.jar')
+    runtimeJar.parentFile.mkdirs()
+    runtimeJar.createNewFile()
+    task.sourceDir.set(sourceDir)
+    task.classpath.from(runtimeJar)
 
-    Set<String> inputs = task.inputs.properties.keySet()
-    Assertions.assertTrue(inputs.contains('classpathIdentity'))
-    Assertions.assertTrue(inputs.intersect(
-        ['groovyVersion', 'log4jVersion', 'gmdVersion', 'ivyVersion'] as Set).isEmpty(),
-        'classpathIdentity must be the sole runtime-selection task input')
-  }
-
-  @Test
-  void classpathIdentityHasNoConventionForDirectRegistration() {
-    // classpathIdentity is deliberately required with no convention: a direct
-    // registrant who does not wire it must fail validation loudly rather than
-    // have a classpath swap pass up-to-date checks silently.
-    def project = ProjectBuilder.builder().build()
-    ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
-
-    Assertions.assertFalse(task.classpathIdentity.isPresent(),
-        'classpathIdentity must stay unwired so Gradle reports a missing value')
+    Assertions.assertTrue(task.inputs.files.files.contains(runtimeJar),
+        'The resolved processor runtime must participate in up-to-date checks')
+    Assertions.assertFalse(task.inputs.properties.containsKey('classpathIdentity'),
+        'A declared-version identity must not replace the actual runtime classpath')
   }
 
   @Test
@@ -295,75 +289,10 @@ class GmdGradlePluginTest {
   }
 
   @Test
-  void directlyRegisteredTaskWithoutUsableClasspathIdentityFailsLoudly() {
-    // classpathIdentity is the required task input; leaving it unwired must
-    // fail validation, while setting it blank must fail in the task action.
-    File testProjectDir = new File('build/gmdDirectTaskMissingIdentityTest')
-    try {
-      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
-      File srcDir = new File(testProjectDir, 'src/test/gmd')
-      srcDir.mkdirs()
-      new File(srcDir, 'test.gmd').text = '# Greetings\n'
-      // Own settings file: the test project lives under this build's directory,
-      // so without one Gradle would adopt the plugin build's settings.gradle.
-      new File(testProjectDir, 'settings.gradle').text = "rootProject.name = 'gmd-direct-task-missing-identity'\n"
-      File buildFile = new File(testProjectDir, 'build.gradle')
-      String buildScript = '''
-      import se.alipsa.gmd.gradle.ProcessGmdTask
-
-      plugins {
-          id('base')
-          // Applied for its classes only; the task below is registered directly,
-          // bypassing GmdGradlePlugin's processGmd wiring.
-          id 'se.alipsa.gmd.gmd-gradle-plugin'
-      }
-
-      repositories { mavenCentral() }
-
-      def gmdRuntime = configurations.detachedConfiguration(
-          dependencies.create('se.alipsa.gmd:gmd-core:3.1.0')
-      )
-
-      tasks.register('directGmd', ProcessGmdTask) {
-          sourceDir = file('src/test/gmd')
-          targetDir = file('build/target')
-          outputType = 'html'
-          classpath.from(gmdRuntime)
-      }
-      '''.stripIndent()
-      buildFile.text = buildScript
-
-      def result = GradleRunner.create()
-          .withProjectDir(testProjectDir)
-          .withArguments('directGmd')
-          .withPluginClasspath()
-          .forwardOutput()
-          .buildAndFail()
-
-      Assertions.assertTrue(result.output.contains(
-          "property 'classpathIdentity' doesn't have a configured value"),
-          "An unwired classpathIdentity must fail loudly:\n${result.output}")
-
-      buildFile.text = buildScript.replace(
-          'classpath.from(gmdRuntime)', "classpath.from(gmdRuntime)\n          classpathIdentity = ''")
-      def blankResult = GradleRunner.create()
-          .withProjectDir(testProjectDir)
-          .withArguments('directGmd')
-          .withPluginClasspath()
-          .forwardOutput()
-          .buildAndFail()
-      Assertions.assertTrue(blankResult.output.contains('classpathIdentity must not be blank'),
-          "A blank classpathIdentity must fail loudly:\n${blankResult.output}")
-    } finally {
-      new AntBuilder().delete(dir: testProjectDir, failonerror: false)
-    }
-  }
-
-  @Test
-  void directlyRegisteredTaskInvalidatesWhenItsWiredClasspathIdentityChanges() {
+  void directlyRegisteredTaskInvalidatesWhenItsRuntimeClasspathChanges() {
     // End-to-end proof of the fix for silent stale up-to-date checks on a
-    // directly registered task: wiring classpathIdentity from declared runtime
-    // dependencies must invalidate the task when that selection changes. The swap
+    // directly registered task: its actual runtime classpath must invalidate
+    // the task when a dependency changes. The swap
     // changes only log4j-core so the runnable gmd-core:3.1.0 stays in place
     // (pre-3.1.0 gmd-core releases carry a JavaFX dependency graph).
     File testProjectDir = new File('build/gmdDirectTaskIdentityTest')
@@ -405,11 +334,6 @@ class GmdGradlePluginTest {
           targetDir = file('build/target')
           outputType = 'html'
           classpath.from(gmdRuntime)
-          // The supported direct-registration contract: derive the identity from
-          // declared dependencies, without resolving the configuration eagerly.
-          classpathIdentity = gmdRuntime.allDependencies.collect {
-              "${it.group}:${it.name}:${it.version}"
-          }.sort().join(',')
       }
       '''.stripIndent()
 
@@ -535,8 +459,8 @@ class GmdGradlePluginTest {
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
           'A custom target must retain Gradle up-to-date checks')
 
-      // This proves end-to-end that classpathIdentity invalidates the task when
-      // the plugin changes a declared runtime dependency version.
+      // This proves end-to-end that the resolved classpath invalidates the task
+      // when the plugin changes a runtime dependency version.
       buildFile.text = buildFile.text.replace("log4jVersion = '2.26.1'", "log4jVersion = '2.25.1'")
       def changedVersionResult = GradleRunner.create()
           .withProjectDir(testProjectDir)
