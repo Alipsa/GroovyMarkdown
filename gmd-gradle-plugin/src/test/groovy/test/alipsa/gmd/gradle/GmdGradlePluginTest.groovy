@@ -336,7 +336,8 @@ class GmdGradlePluginTest {
             targetDir = 'build/target'
             outputType = 'html'
             gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
-            runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning 
+            log4jVersion = '2.26.1' // set explicitly so the invalidation check below can swap it
+            runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning
         }
         """.stripIndent()
 
@@ -369,7 +370,7 @@ class GmdGradlePluginTest {
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
           'A custom target must retain Gradle up-to-date checks')
 
-      buildFile.text = buildFile.text.replace("gmdVersion = '3.1.0'", "gmdVersion = '3.0.1'")
+      buildFile.text = buildFile.text.replace("log4jVersion = '2.26.1'", "log4jVersion = '2.25.1'")
       def changedVersionResult = GradleRunner.create()
           .withProjectDir(testProjectDir)
           .withArguments('processGmd', '--configuration-cache', '--parallel')
