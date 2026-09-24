@@ -22,16 +22,22 @@ class GmdGradlePlugin implements Plugin<Project> {
 
   private static final List<String> MAVEN_CENTRAL_HOSTS = ['repo.maven.apache.org', 'repo1.maven.org']
 
+  // Shared with ProcessGmdTask's fail-safe conventions for direct task registration,
+  // so the two cannot silently diverge.
+  static final String DEFAULT_GROOVY_VERSION = '5.1.3'
+  static final String DEFAULT_LOG4J_VERSION = '2.26.1'
+  static final String DEFAULT_IVY_VERSION = '2.6.0'
+
   @Override
   void apply(Project project) {
     GmdGradlePluginParams extension = project.extensions.create('gmdPlugin', GmdGradlePluginParams)
     extension.sourceDir.convention('src/main/gmd')
     extension.targetDir.convention('build/gmd')
     extension.outputType.convention('md')
-    extension.groovyVersion.convention('5.1.3')
-    extension.log4jVersion.convention('2.26.1')
+    extension.groovyVersion.convention(DEFAULT_GROOVY_VERSION)
+    extension.log4jVersion.convention(DEFAULT_LOG4J_VERSION)
     extension.gmdVersion.convention(project.providers.provider { defaultGmdVersion() })
-    extension.ivyVersion.convention('2.6.0')
+    extension.ivyVersion.convention(DEFAULT_IVY_VERSION)
     extension.runTaskBefore.convention('test')
 
     TaskProvider<ProcessGmdTask> processGmdTask = project.tasks.register('processGmd', ProcessGmdTask)
@@ -83,7 +89,7 @@ class GmdGradlePlugin implements Plugin<Project> {
     }
   }
 
-  private static String defaultGmdVersion() {
+  static String defaultGmdVersion() {
     InputStream stream = GmdGradlePlugin.class.getResourceAsStream('/gmd-version.properties')
     if (stream == null) {
       throw new IllegalStateException(

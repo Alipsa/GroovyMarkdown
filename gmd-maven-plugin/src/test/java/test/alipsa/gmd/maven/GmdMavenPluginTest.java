@@ -149,7 +149,7 @@ public class GmdMavenPluginTest {
     Process process = Mockito.mock(Process.class);
     when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(true);
 
-    assertTrue(invokeDestroyForciblyAndAwaitTermination(process));
+    assertEquals("TERMINATED", invokeDestroyForciblyAndAwaitTermination(process).name());
 
     Mockito.verify(process).destroyForcibly();
     Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
@@ -164,7 +164,7 @@ public class GmdMavenPluginTest {
         .thenThrow(new InterruptedException("interrupted while awaiting forced termination"));
 
     Thread.interrupted(); // clear any stray flag left over from another test
-    assertFalse(invokeDestroyForciblyAndAwaitTermination(process));
+    assertEquals("INTERRUPTED", invokeDestroyForciblyAndAwaitTermination(process).name());
 
     assertTrue(Thread.interrupted(),
         "A second interrupt during the forced-kill wait must be restored on the caller's thread");
@@ -177,16 +177,17 @@ public class GmdMavenPluginTest {
     Process process = Mockito.mock(Process.class);
     when(process.waitFor(30, TimeUnit.SECONDS)).thenReturn(false);
 
-    assertFalse(invokeDestroyForciblyAndAwaitTermination(process));
+    assertEquals("TIMED_OUT", invokeDestroyForciblyAndAwaitTermination(process).name());
 
     Mockito.verify(process).destroyForcibly();
     Mockito.verify(process).waitFor(30, TimeUnit.SECONDS);
   }
 
-  private static boolean invokeDestroyForciblyAndAwaitTermination(Process process) throws Exception {
+  @SuppressWarnings("rawtypes")
+  private static Enum invokeDestroyForciblyAndAwaitTermination(Process process) throws Exception {
     Method method = GmdMavenPlugin.class.getDeclaredMethod("destroyForciblyAndAwaitTermination", Process.class);
     method.setAccessible(true);
-    return (boolean) method.invoke(null, process);
+    return (Enum) method.invoke(null, process);
   }
 
   private static void deleteDirectory(File directory) throws IOException {

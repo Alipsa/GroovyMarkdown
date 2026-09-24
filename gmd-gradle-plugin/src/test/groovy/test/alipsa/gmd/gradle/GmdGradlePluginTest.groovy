@@ -96,6 +96,20 @@ class GmdGradlePluginTest {
   }
 
   @Test
+  void directlyRegisteredTaskHasVersionInputDefaults() {
+    // Registering the task directly (bypassing GmdGradlePlugin's afterEvaluate wiring)
+    // must not leave the @Input version properties without values; Gradle would reject
+    // the task with "property 'groovyVersion' doesn't have a configured value".
+    def project = ProjectBuilder.builder().build()
+    ProcessGmdTask task = project.tasks.register('siteGmd', ProcessGmdTask).get()
+
+    Assertions.assertEquals(GmdGradlePlugin.DEFAULT_GROOVY_VERSION, task.groovyVersion.get())
+    Assertions.assertEquals(GmdGradlePlugin.DEFAULT_LOG4J_VERSION, task.log4jVersion.get())
+    Assertions.assertEquals(GmdGradlePlugin.DEFAULT_IVY_VERSION, task.ivyVersion.get())
+    Assertions.assertFalse(task.gmdVersion.get().isBlank())
+  }
+
+  @Test
   void mavenCentralIsAddedOnlyWhenTheProjectHasNone() {
     def project = ProjectBuilder.builder().build()
     Assertions.assertEquals(0, project.repositories.size())
@@ -336,7 +350,8 @@ class GmdGradlePluginTest {
             targetDir = 'build/target'
             outputType = 'html'
             gmdVersion = '3.1.0' // Keep the standalone TestKit test independent of unpublished snapshots.
-            log4jVersion = '2.26.1' // set explicitly so the invalidation check below can swap it
+            log4jVersion = '2.26.1' // set explicitly so the invalidation check below can swap it;
+            // note this duplicates the plugin's default in GmdGradlePlugin.DEFAULT_LOG4J_VERSION
             runTaskBefore = 'build' // we dont have tests so specify the task to not get a warning
         }
         """.stripIndent()
@@ -370,6 +385,11 @@ class GmdGradlePluginTest {
       Assertions.assertEquals(org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE, cachedResult.task(":processGmd").outcome,
           'A custom target must retain Gradle up-to-date checks')
 
+      // This proves end-to-end that a version @Input invalidates the task, but only
+      // for log4jVersion; the runtimeVersionsAreTrackedAsTaskInputs unit test above
+      // asserts all four version properties (groovyVersion, log4jVersion, gmdVersion,
+      // ivyVersion) are registered as inputs. The two tests are coupled on purpose —
+      // do not delete the unit test as redundant; together they cover every version.
       buildFile.text = buildFile.text.replace("log4jVersion = '2.26.1'", "log4jVersion = '2.25.1'")
       def changedVersionResult = GradleRunner.create()
           .withProjectDir(testProjectDir)

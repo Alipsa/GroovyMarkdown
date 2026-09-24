@@ -153,37 +153,51 @@ class GmdTemplateEngine {
                     } else {
                         String contentLine = withoutDocumentAndBlockQuotePrefixes(line, documentIndent)
                         boolean isBlockQuote = contentLine != withoutDocumentIndent(line, documentIndent)
-                        if (isBlockQuote && !previousLineWasBlockQuote) {
+                        if (contentLine.isBlank()) {
+                            // A block-quote line with no content (">" or "> ") is a blank
+                            // line in CommonMark; classify it as one so a following
+                            // indented line still counts as a code block, not a
+                            // paragraph continuation.
                             previousLineWasParagraph = false
-                            listContentColumn = -1
-                        }
-                        int relativeIndent = leadingSpaces(contentLine)
-                        def listMarker = contentLine =~ /^\s*([-*+]|\d+[.)])\s+/
-                        boolean isLeafBlock = isNonParagraphLeafBlock(contentLine)
-                        if (isLeafBlock) {
-                            // CommonMark gives thematic breaks precedence over list markers
-                            // such as the leading "* " in "* * *".
-                            inIndentedCode = false
-                            listContentColumn = -1
-                        } else if (relativeIndent < 4 && listMarker.find()) {
-                            listContentColumn = listMarker.end()
-                            inIndentedCode = false
+                            previousLineWasBlockQuote = isBlockQuote
                         } else {
-                            if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                            if (isBlockQuote && !previousLineWasBlockQuote) {
+                                previousLineWasParagraph = false
                                 listContentColumn = -1
                             }
-                            if (listContentColumn >= 0 && relativeIndent < listContentColumn + 4) {
+                            int relativeIndent = leadingSpaces(contentLine)
+                            def listMarker = contentLine =~ /^\s*([-*+]|\d+[.)])\s+/
+                            boolean isLeafBlock = isNonParagraphLeafBlock(contentLine)
+                            if (isLeafBlock) {
+                                // CommonMark gives thematic breaks precedence over list markers
+                                // such as the leading "* " in "* * *".
+                                inIndentedCode = false
+                                // A thematic break dedented past the list content column ends
+                                // the list; one aligned with it (like "  --- " in a list item)
+                                // keeps the list context for the lines that follow.
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                                    listContentColumn = -1
+                                }
+                            } else if (relativeIndent < 4 && listMarker.find()) {
+                                listContentColumn = listMarker.end()
                                 inIndentedCode = false
                             } else {
-                                if (relativeIndent < 4) {
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn) {
+                                    listContentColumn = -1
+                                }
+                                if (listContentColumn >= 0 && relativeIndent < listContentColumn + 4) {
                                     inIndentedCode = false
-                                } else if (!previousLineWasParagraph) {
-                                    inIndentedCode = true
+                                } else {
+                                    if (relativeIndent < 4) {
+                                        inIndentedCode = false
+                                    } else if (!previousLineWasParagraph) {
+                                        inIndentedCode = true
+                                    }
                                 }
                             }
+                            previousLineWasParagraph = !inIndentedCode && !isLeafBlock
+                            previousLineWasBlockQuote = isBlockQuote
                         }
-                        previousLineWasParagraph = !inIndentedCode && !isLeafBlock
-                        previousLineWasBlockQuote = isBlockQuote
                     }
                     if (plainFenceChar == null && !inIndentedCode && line.contains('`=')) {
                         shouldBeProcessed = true

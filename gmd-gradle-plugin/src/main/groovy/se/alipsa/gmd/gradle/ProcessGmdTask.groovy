@@ -31,6 +31,14 @@ abstract class ProcessGmdTask extends DefaultTask {
     // going through GmdGradlePlugin's afterEvaluate wiring: skip cleanup
     // rather than fail validation or delete files in a directory it does not own.
     targetDirIsDefaultGmdOutput.convention(false)
+    // Fail-safe defaults mirroring GmdGradlePlugin's extension conventions, so
+    // direct registration also passes @Input validation. A direct registrant
+    // with a custom classpath should set these to its actual resolved versions
+    // to keep up-to-date checks accurate (classpath itself is @Internal).
+    groovyVersion.convention(GmdGradlePlugin.DEFAULT_GROOVY_VERSION)
+    log4jVersion.convention(GmdGradlePlugin.DEFAULT_LOG4J_VERSION)
+    gmdVersion.convention(project.provider { GmdGradlePlugin.defaultGmdVersion() })
+    ivyVersion.convention(GmdGradlePlugin.DEFAULT_IVY_VERSION)
   }
 
   @InputDirectory
